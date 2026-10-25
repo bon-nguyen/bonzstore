@@ -1,0 +1,27 @@
+{
+  "name": "bonzstore-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "packageManager": "yarn@1.22.22",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "dev:all": "docker compose up -d postgres redis && turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "docker:dev": "docker compose up -d postgres redis",
+    "docker:up": "docker compose up --build -d",
+    "docker:down": "docker compose down",
+    "db:generate": "yarn --cwd apps/api prisma:generate",
+    "db:migrate": "yarn --cwd apps/api prisma:migrate",
+    "db:seed": "yarn --cwd apps/api prisma:seed"
+  },
+  "devDependencies": {
+    "turbo": "^2.1.0",
+    "typescript": "^5.5.4"
+  }
+}
+

@@ -1,0 +1,113 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 20% 98%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --primary: 168 76% 36%;
+    --primary-foreground: 0 0% 100%;
+    --muted: 210 20% 94%;
+    --muted-foreground: 215 16% 47%;
+    --border: 214 32% 91%;
+  }
+
+  .dark {
+    --background: 220 20% 14%;
+    --foreground: 210 40% 98%;
+    --card: 220 22% 18%;
+    --card-foreground: 210 40% 98%;
+    --primary: 168 76% 36%;
+    --primary-foreground: 0 0% 100%;
+    --muted: 220 18% 22%;
+    --muted-foreground: 215 20% 65%;
+    --border: 220 18% 26%;
+  }
+}
+
+@layer components {
+  /* 1. Cards & Stats */
+  .stat-card {
+    @apply rounded-xl border border-border bg-card p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md;
+  }
+
+  .stat-card-icon {
+    @apply flex h-11 w-11 items-center justify-center rounded-lg bg-primary/15 text-primary;
+  }
+
+  /* 2. Buttons & Actions */
+  .action-btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all duration-150 active:scale-95 disabled:pointer-events-none disabled:opacity-50;
+  }
+
+  .action-btn-primary {
+    @apply action-btn bg-primary text-primary-foreground shadow-sm hover:opacity-90;
+  }
+
+  .action-btn-secondary {
+    @apply action-btn border border-border bg-card text-foreground hover:bg-muted;
+  }
+
+  .table-action-btn {
+    @apply inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground;
+  }
+
+  /* 3. Tables & Data Display */
+  .table-row-interactive {
+    @apply border-b border-border border-l-2 border-l-transparent transition-colors hover:border-l-primary hover:bg-muted/50;
+  }
+
+  .table-header-cell {
+    @apply px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground;
+  }
+
+  /* 4. Status & Priority Badges */
+  .status-badge {
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+
+  .status-active {
+    @apply bg-emerald-500/15 text-emerald-400 border border-emerald-500/30;
+  }
+
+  .status-maintenance {
+    @apply bg-amber-500/15 text-amber-400 border border-amber-500/30;
+  }
+
+  .status-inactive {
+    @apply bg-rose-500/15 text-rose-400 border border-rose-500/30;
+  }
+
+  .priority-high {
+    @apply font-semibold text-rose-400;
+  }
+
+  .priority-medium {
+    @apply font-medium text-amber-400;
+  }
+
+  .priority-low {
+    @apply font-normal text-emerald-400;
+  }
+
+  /* 5. Layout & Typography */
+  .page-header {
+    @apply mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between;
+  }
+
+  .page-title {
+    @apply text-2xl font-bold tracking-tight text-foreground sm:text-3xl;
+  }
+
+  .page-subtitle {
+    @apply text-xs font-semibold uppercase tracking-widest text-primary;
+  }
+
+  .filter-panel {
+    @apply mb-6 rounded-xl border border-border bg-card p-4 shadow-sm;
+  }
+}
+

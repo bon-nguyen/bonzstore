@@ -1,0 +1,72 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: bonzstore-db-${TENANT_NAME:-main}
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: bonzstore-redis-${TENANT_NAME:-main}
+    restart: always
+    networks:
+      - app-network
+
+  api:
+    image: ${DOCKERHUB_USERNAME}/bonzstore-api:latest
+    container_name: bonzstore-api-${TENANT_NAME:-main}
+    restart: always
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}?schema=public
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      CORS_ORIGIN: ${CORS_ORIGIN}
+    networks:
+      - app-network
+      - global-proxy-network
+
+  dashboard:
+    image: ${DOCKERHUB_USERNAME}/bonzstore-dashboard:latest
+    container_name: bonzstore-dashboard-${TENANT_NAME:-main}
+    restart: always
+    depends_on:
+      - api
+    networks:
+      - app-network
+      - global-proxy-network
+
+  web:
+    image: ${DOCKERHUB_USERNAME}/bonzstore-web:latest
+    container_name: bonzstore-web-${TENANT_NAME:-main}
+    restart: always
+    depends_on:
+      - api
+    networks:
+      - app-network
+      - global-proxy-network
+
+volumes:
+  postgres_prod_data:
+
+networks:
+  app-network:
+    driver: bridge
+  global-proxy-network:
+    external: true
+
