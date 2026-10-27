@@ -54,8 +54,10 @@ async function bootstrap() {
     .setVersion('1.0.0')
     .addBearerAuth()
     .addTag('auth', 'Xác thực & Phiên đăng nhập')
-    .addTag('users', 'Quản lý người dùng')
+    .addTag('users', 'Quản lý người dùng (Admin, Nhân viên, Khách hàng)')
     .addTag('roles', 'Quản lý Vai trò & Phân quyền (RBAC)')
+    .addTag('categories', 'Danh mục ngành hàng chuẩn TikTok Shop 202405')
+    .addTag('products', 'Sản phẩm (SPU/SKU) & Đồng bộ Sàn')
     .addTag('health', 'Kiểm tra hệ thống')
     .build();
 

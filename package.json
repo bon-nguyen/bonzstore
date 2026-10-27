@@ -12,12 +12,15 @@
     "build": "turbo run build",
     "lint": "turbo run lint",
     "test": "turbo run test",
-    "docker:dev": "docker compose up -d postgres redis",
+    "docker:dev": "docker compose up -d postgres redis adminer",
     "docker:up": "docker compose up --build -d",
     "docker:down": "docker compose down",
     "db:generate": "yarn --cwd apps/api prisma:generate",
+    "db:push": "yarn --cwd apps/api prisma:push",
     "db:migrate": "yarn --cwd apps/api prisma:migrate",
-    "db:seed": "yarn --cwd apps/api prisma:seed"
+    "db:seed": "yarn --cwd apps/api prisma:seed",
+    "db:studio": "yarn --cwd apps/api prisma:studio",
+    "db:setup": "yarn --cwd apps/api prisma:setup"
   },
   "devDependencies": {
     "turbo": "^2.1.0",

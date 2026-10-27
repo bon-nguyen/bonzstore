@@ -3,6 +3,7 @@
 @tailwind utilities;
 
 body {
-  @apply bg-slate-950 text-slate-100 antialiased;
+  background-color: #0b0b0d;
+  color: #f2f9f9;
+  -webkit-font-smoothing: antialiased;
 }
-

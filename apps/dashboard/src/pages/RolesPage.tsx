@@ -2,6 +2,8 @@ import { Check, Plus, Shield } from 'lucide-react';
 import { FormEvent, useState } from 'react';
 import { RoleItem } from '../api/types/role.types';
 import { PermissionGate } from '../features/auth/components/PermissionGate';
+import { useAuthContext } from '../features/auth/context/AuthContext';
+import { useI18n } from '../features/i18n/I18nContext';
 import {
   useCreateRole,
   usePermissionsCatalog,
@@ -12,6 +14,9 @@ import { PageHeader } from '../features/shared/PageHeader';
 import { StatusBadge } from '../features/shared/StatusBadge';
 
 export function RolesPage() {
+  const { hasPermission } = useAuthContext();
+  const { t } = useI18n();
+  const canManageRoles = hasPermission('roles.manage');
   const { data: roles, isLoading } = useRoles();
   const { data: permissions } = usePermissionsCatalog();
   const updateRoleMutation = useUpdateRole();
@@ -31,6 +36,7 @@ export function RolesPage() {
     : roles?.[0] || null;
 
   const handleTogglePermission = (role: RoleItem, permCode: string) => {
+    if (!canManageRoles) return;
     const exists = role.permissionCodes.includes(permCode);
     const nextCodes = exists
       ? role.permissionCodes.filter((c) => c !== permCode)
@@ -55,9 +61,9 @@ export function RolesPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        subtitle="Role-Based Access Control (RBAC)"
-        title="Vai trò & Ma trận Phân quyền"
-        description="Quản lý động các Role và gán từng Permission chi tiết cho Admin/Nhân viên"
+        subtitle={t('roles.subtitle')}
+        title={t('roles.title')}
+        description={t('roles.desc')}
         actions={
           <PermissionGate permission="roles.manage">
             <button
@@ -66,7 +72,7 @@ export function RolesPage() {
               className="action-btn-primary"
             >
               <Plus className="h-4 w-4" />
-              <span>Tạo Vai trò mới</span>
+              <span>{t('roles.addBtn')}</span>
             </button>
           </PermissionGate>
         }
@@ -74,11 +80,10 @@ export function RolesPage() {
 
       {isLoading ? (
         <div className="stat-card p-8 text-center text-sm text-muted-foreground">
-          Đang tải danh sách vai trò và quyền hạn...
+          {t('app.loading')}
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-          {/* Roles List */}
           <div className="space-y-3 lg:col-span-4">
             {roles?.map((role) => {
               const isSelected = activeRole?.id === role.id;
@@ -93,43 +98,48 @@ export function RolesPage() {
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Shield className="h-4 w-4 text-primary" />
-                      <span className="font-bold text-foreground">
+                      <Shield className="h-4 w-4 text-foreground dark:text-primary" />
+                      <span className="font-display font-bold text-foreground">
                         {role.name}
                       </span>
                     </div>
                     <StatusBadge status={role.status} />
                   </div>
-                  <p className="mt-1 font-mono text-xs text-primary">
+                  <p className="mt-1 font-mono text-xs text-foreground/80 dark:text-primary">
                     {role.code}
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    {role.description || 'Không có mô tả'}
+                    {role.description || '—'}
                   </p>
                   <div className="mt-3 flex items-center justify-between border-t border-border pt-2 text-xs text-muted-foreground">
-                    <span>{role.userCount} tài khoản</span>
-                    <span>{role.permissionCodes.length} quyền</span>
+                    <span>
+                      {role.userCount} {t('roles.accountsCount')}
+                    </span>
+                    <span>
+                      {role.permissionCodes.length} {t('roles.permsCount')}
+                    </span>
                   </div>
                 </button>
               );
             })}
           </div>
 
-          {/* Permission Matrix for Selected Role */}
-          <div className=" lg:col-span-8">
+          <div className="lg:col-span-8">
             {activeRole ? (
               <div className="stat-card space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-4">
                   <div>
-                    <h2 className="text-lg font-bold">
-                      Ma trận Quyền hạn: {activeRole.name} ({activeRole.code})
+                    <h2 className="font-display text-lg font-bold">
+                      {t('roles.matrixTitle')}: {activeRole.name} ({activeRole.code})
                     </h2>
                     <p className="text-xs text-muted-foreground">
-                      Bật/tắt các quyền hạn bên dưới để cập nhật tức thì vào cơ sở dữ liệu
+                      {t('roles.matrixDesc')}
                     </p>
                   </div>
                   <span className="status-badge status-active">
-                    {activeRole.isAdminPanel ? 'Cho phép vào Admin' : 'Storefront Only'}
+                    {activeRole.isAdminPanel
+                      ? t('users.portalYes')
+                      : t('users.portalNo')}
                   </span>
                 </div>
 
@@ -140,9 +150,11 @@ export function RolesPage() {
                       <div
                         key={perm.id}
                         onClick={() => handleTogglePermission(activeRole, perm.code)}
-                        className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3.5 transition ${
+                        className={`flex items-start gap-3 rounded-lg border p-3.5 transition ${
+                          canManageRoles ? 'cursor-pointer' : 'cursor-default'
+                        } ${
                           checked
-                            ? 'border-primary/50 bg-primary/10'
+                            ? 'border-primary bg-primary/15'
                             : 'border-border bg-muted/20 hover:bg-muted/40'
                         }`}
                       >
@@ -159,7 +171,7 @@ export function RolesPage() {
                           <p className="font-semibold text-foreground">
                             {perm.name}
                           </p>
-                          <p className="font-mono text-[11px] text-primary">
+                          <p className="font-mono text-[11px] text-foreground/80 dark:text-primary">
                             {perm.code}
                           </p>
                           <p className="mt-0.5 text-muted-foreground">
@@ -179,16 +191,18 @@ export function RolesPage() {
       {showCreateModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
           <div className="stat-card w-full max-w-md space-y-4 p-6">
-            <h2 className="text-lg font-bold">Tạo Vai trò (Role) mới</h2>
+            <h2 className="font-display text-lg font-bold">
+              {t('roles.addBtn')}
+            </h2>
             <form onSubmit={handleCreateRole} className="space-y-3">
               <div>
                 <label className="mb-1 block text-xs font-semibold text-muted-foreground">
-                  Mã Role (Viết hoa, không dấu)
+                  Role Code
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder="VD: WAREHOUSE_MANAGER"
+                  placeholder="ANIME_CURATOR"
                   value={newRole.code}
                   onChange={(e) =>
                     setNewRole({ ...newRole, code: e.target.value.toUpperCase() })
@@ -198,12 +212,12 @@ export function RolesPage() {
               </div>
               <div>
                 <label className="mb-1 block text-xs font-semibold text-muted-foreground">
-                  Tên hiển thị
+                  Role Name
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder="VD: Quản lý kho"
+                  placeholder="Nhân viên Phụ trách Figure"
                   value={newRole.name}
                   onChange={(e) =>
                     setNewRole({ ...newRole, name: e.target.value })
@@ -213,7 +227,7 @@ export function RolesPage() {
               </div>
               <div>
                 <label className="mb-1 block text-xs font-semibold text-muted-foreground">
-                  Mô tả
+                  Description
                 </label>
                 <input
                   type="text"
@@ -230,14 +244,14 @@ export function RolesPage() {
                   onClick={() => setShowCreateModal(false)}
                   className="action-btn-secondary"
                 >
-                  Hủy
+                  {t('app.cancel')}
                 </button>
                 <button
                   type="submit"
                   disabled={createRoleMutation.isPending}
                   className="action-btn-primary"
                 >
-                  {createRoleMutation.isPending ? 'Đang lưu...' : 'Tạo Vai trò'}
+                  {t('app.save')}
                 </button>
               </div>
             </form>
@@ -247,4 +261,3 @@ export function RolesPage() {
     </div>
   );
 }
-

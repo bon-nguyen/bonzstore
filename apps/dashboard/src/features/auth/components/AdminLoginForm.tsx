@@ -1,11 +1,14 @@
-import { AlertCircle, KeyRound, Lock, Mail, ShieldCheck } from 'lucide-react';
+import { AlertCircle, KeyRound, Lock, Mail, Sparkles } from 'lucide-react';
 import { FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { LanguageToggle, useI18n } from '../../i18n/I18nContext';
+import { ThemeToggle } from '../../theme/ThemeContext';
 import { useAdminLogin } from '../hooks/useAuth';
 
 export function AdminLoginForm() {
   const navigate = useNavigate();
   const loginMutation = useAdminLogin();
+  const { t } = useI18n();
 
   const [email, setEmail] = useState('admin@bonzstore.com');
   const [password, setPassword] = useState('Admin@123');
@@ -30,29 +33,35 @@ export function AdminLoginForm() {
 
   return (
     <div className="stat-card w-full max-w-md p-6 sm:p-8">
-      <div className="mb-6 flex items-center gap-3">
-        <div className="stat-card-icon">
-          <ShieldCheck className="h-6 w-6" />
+      <div className="mb-6 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-3">
+          <div className="stat-card-icon">
+            <Sparkles className="h-6 w-6" />
+          </div>
+          <div>
+            <p className="page-subtitle">{t('login.subtitle')}</p>
+            <h1 className="font-display text-xl font-bold tracking-tight text-foreground">
+              {t('login.title')}
+            </h1>
+          </div>
         </div>
-        <div>
-          <p className="page-subtitle">BonzStore Admin</p>
-          <h1 className="text-xl font-bold tracking-tight text-foreground">
-            Đăng nhập Quản trị viên
-          </h1>
+        <div className="flex items-center gap-1.5">
+          <LanguageToggle />
+          <ThemeToggle />
         </div>
       </div>
 
       {errorMessage ? (
-        <div className="mb-4 flex items-start gap-2.5 rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-300">
-          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-400" />
+        <div className="mb-4 flex items-start gap-2.5 rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-500 dark:text-rose-300">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
           <span>{errorMessage}</span>
         </div>
       ) : null}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Email Quản trị
+          <label className="mb-1.5 block font-display text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            {t('login.email')}
           </label>
           <div className="relative">
             <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -68,8 +77,8 @@ export function AdminLoginForm() {
         </div>
 
         <div>
-          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Mật khẩu
+          <label className="mb-1.5 block font-display text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            {t('login.password')}
           </label>
           <div className="relative">
             <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -87,47 +96,50 @@ export function AdminLoginForm() {
         <button
           type="submit"
           disabled={loginMutation.isPending}
-          className="action-btn-primary w-full py-2.5"
+          className="action-btn-primary w-full py-2.5 font-display"
         >
           <KeyRound className="h-4 w-4" />
-          {loginMutation.isPending
-            ? 'Đang xác thực quyền Admin...'
-            : 'Đăng nhập vào Dashboard'}
+          {loginMutation.isPending ? t('login.submitting') : t('login.submit')}
         </button>
       </form>
 
       <div className="mt-6 border-t border-border pt-4">
         <p className="mb-2.5 text-xs font-medium text-muted-foreground">
-          Tài khoản mẫu (RBAC Seed):
+          {t('login.demoTitle')}
         </p>
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+        <div className="grid grid-cols-2 gap-2">
           <button
             type="button"
             onClick={() => fillDemoAccount('admin@bonzstore.com', 'Admin@123')}
             className="action-btn-secondary py-1.5 text-xs"
           >
-            Super Admin
+            {t('login.demoAdmin')}
           </button>
           <button
             type="button"
             onClick={() => fillDemoAccount('manager@bonzstore.com', 'Manager@123')}
             className="action-btn-secondary py-1.5 text-xs"
           >
-            Store Manager
+            {t('login.demoManager')}
+          </button>
+          <button
+            type="button"
+            onClick={() => fillDemoAccount('staff@bonzstore.com', 'Staff@123')}
+            className="action-btn-secondary py-1.5 text-xs"
+          >
+            {t('login.demoStaff')}
           </button>
           <button
             type="button"
             onClick={() =>
               fillDemoAccount('customer@bonzstore.com', 'Customer@123')
             }
-            className="action-btn-secondary py-1.5 text-xs"
-            title="Thử nghiệm bị chặn bởi Guard vì không có quyền Admin"
+            className="action-btn-secondary py-1.5 text-xs text-rose-500 dark:text-rose-400"
           >
-            Customer (403)
+            {t('login.demoCustomer')}
           </button>
         </div>
       </div>
     </div>
   );
 }
-

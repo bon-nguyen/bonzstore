@@ -37,6 +37,19 @@ services:
     networks:
       - bonzstore-network
 
+  adminer:
+    image: adminer:latest
+    container_name: bonzstore-adminer
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+    ports:
+      - "8080:8080"
+    networks:
+      - bonzstore-network
+
   api:
     build:
       context: .

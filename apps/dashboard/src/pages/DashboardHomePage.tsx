@@ -1,6 +1,7 @@
 import { CheckCircle2, KeyRound, Lock, ShieldCheck, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuthContext } from '../features/auth/context/AuthContext';
+import { useI18n } from '../features/i18n/I18nContext';
 import { useRoles } from '../features/roles/hooks/useRoles';
 import { PageHeader } from '../features/shared/PageHeader';
 import { StatusBadge } from '../features/shared/StatusBadge';
@@ -8,31 +9,33 @@ import { useUserStats } from '../features/users/hooks/useUsers';
 
 export function DashboardHomePage() {
   const { user } = useAuthContext();
+  const { t } = useI18n();
   const { data: userStats } = useUserStats();
   const { data: roles } = useRoles();
 
   return (
     <div className="space-y-6">
       <PageHeader
-        subtitle="Authentication & Authorization Center"
-        title={`Xin chào, ${user?.fullName || 'Quản trị viên'}`}
-        description="Hệ thống quản trị BonzStore với phân quyền RBAC động (Role-Based Access Control)"
+        subtitle={t('home.subtitle')}
+        title={`${t('home.welcome')}, ${user?.fullName || 'Admin'}`}
+        description={t('home.desc')}
         actions={
           <Link to="/roles" className="action-btn-primary">
             <KeyRound className="h-4 w-4" />
-            <span>Cấu hình RBAC</span>
+            <span>{t('home.configRbac')}</span>
           </Link>
         }
       />
 
-      {/* Metric Cards using .stat-card & .stat-card-icon */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="stat-card flex items-center justify-between">
           <div>
-            <p className="text-xs font-medium uppercase text-muted-foreground">
-              Tổng tài khoản
+            <p className="font-display text-xs font-bold uppercase text-muted-foreground">
+              {t('home.totalUsers')}
             </p>
-            <p className="mt-1 text-2xl font-bold">{userStats?.total ?? '—'}</p>
+            <p className="mt-1 font-display text-2xl font-bold">
+              {userStats?.total ?? '—'}
+            </p>
           </div>
           <div className="stat-card-icon">
             <Users className="h-5 w-5" />
@@ -41,10 +44,10 @@ export function DashboardHomePage() {
 
         <div className="stat-card flex items-center justify-between">
           <div>
-            <p className="text-xs font-medium uppercase text-muted-foreground">
-              Đang hoạt động
+            <p className="font-display text-xs font-bold uppercase text-muted-foreground">
+              {t('home.activeUsers')}
             </p>
-            <p className="mt-1 text-2xl font-bold text-emerald-400">
+            <p className="mt-1 font-display text-2xl font-bold text-foreground dark:text-primary">
               {userStats?.active ?? '—'}
             </p>
           </div>
@@ -55,10 +58,10 @@ export function DashboardHomePage() {
 
         <div className="stat-card flex items-center justify-between">
           <div>
-            <p className="text-xs font-medium uppercase text-muted-foreground">
-              Nhân sự Admin Panel
+            <p className="font-display text-xs font-bold uppercase text-muted-foreground">
+              {t('home.adminStaff')}
             </p>
-            <p className="mt-1 text-2xl font-bold text-primary">
+            <p className="mt-1 font-display text-2xl font-bold">
               {userStats?.adminUsers ?? '—'}
             </p>
           </div>
@@ -69,10 +72,12 @@ export function DashboardHomePage() {
 
         <div className="stat-card flex items-center justify-between">
           <div>
-            <p className="text-xs font-medium uppercase text-muted-foreground">
-              Vai trò (Roles)
+            <p className="font-display text-xs font-bold uppercase text-muted-foreground">
+              {t('home.totalRoles')}
             </p>
-            <p className="mt-1 text-2xl font-bold">{roles?.length ?? '—'}</p>
+            <p className="mt-1 font-display text-2xl font-bold">
+              {roles?.length ?? '—'}
+            </p>
           </div>
           <div className="stat-card-icon">
             <Lock className="h-5 w-5" />
@@ -80,15 +85,14 @@ export function DashboardHomePage() {
         </div>
       </div>
 
-      {/* Current Session RBAC Profile */}
       <div className="stat-card space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-4">
           <div>
-            <h2 className="text-base font-bold">
-              Phiên đăng nhập & Quyền hạn hiện tại của bạn
+            <h2 className="font-display text-base font-bold">
+              {t('home.sessionTitle')}
             </h2>
             <p className="text-xs text-muted-foreground">
-              Dữ liệu lấy trực tiếp từ JWT Guard & endpoint <code>GET /api/auth/me</code>
+              {t('home.sessionSub')}
             </p>
           </div>
           <StatusBadge status={user?.status || 'ACTIVE'} />
@@ -100,24 +104,28 @@ export function DashboardHomePage() {
             <p className="font-medium">{user?.email}</p>
           </div>
           <div>
-            <span className="text-xs text-muted-foreground">Vai trò (Role):</span>
-            <p className="font-semibold text-primary">
+            <span className="text-xs text-muted-foreground">
+              {t('home.roleLabel')}
+            </span>
+            <p className="font-semibold text-foreground dark:text-primary">
               {user?.role?.name} ({user?.role?.code})
             </p>
           </div>
           <div>
             <span className="text-xs text-muted-foreground">
-              Quyền truy cập Admin Panel:
+              {t('home.portalLabel')}
             </span>
             <p className="font-medium">
-              {user?.role?.isAdminPanel ? 'Được phép (isAdminPanel = true)' : 'Hạn chế'}
+              {user?.role?.isAdminPanel
+                ? t('home.portalAllowed')
+                : t('home.portalRestricted')}
             </p>
           </div>
         </div>
 
         <div>
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Danh sách Permissions được cấp ({user?.permissions?.length || 0}):
+          <p className="mb-2 font-display text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            {t('home.grantedPerms')} ({user?.permissions?.length || 0}):
           </p>
           <div className="flex flex-wrap gap-2">
             {user?.permissions?.map((code) => (
@@ -134,4 +142,3 @@ export function DashboardHomePage() {
     </div>
   );
 }
-

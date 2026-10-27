@@ -4,6 +4,11 @@ export default {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+        display: ['"Chakra Petch"', '"Plus Jakarta Sans"', 'sans-serif'],
+        mono: ['"JetBrains Mono"', 'monospace'],
+      },
       colors: {
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
@@ -20,9 +25,10 @@ export default {
           foreground: 'hsl(var(--muted-foreground))',
         },
         border: 'hsl(var(--border))',
+        mint: '#bddbd9',
+        tiktok: '#0f0f0f',
       },
     },
   },
   plugins: [],
 };
-

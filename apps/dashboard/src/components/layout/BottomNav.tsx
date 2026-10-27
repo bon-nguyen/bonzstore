@@ -1,10 +1,12 @@
 import { NavLink } from 'react-router-dom';
 import { useAuthContext } from '../../features/auth/context/AuthContext';
+import { useI18n } from '../../features/i18n/I18nContext';
 import { cn } from '../../lib/utils';
 import { ADMIN_NAV_ITEMS } from './AppSidebar';
 
 export function BottomNav() {
   const { hasPermission } = useAuthContext();
+  const { t } = useI18n();
   const visibleItems = ADMIN_NAV_ITEMS.filter(
     (item) => !item.permission || hasPermission(item.permission),
   );
@@ -20,17 +22,18 @@ export function BottomNav() {
             end={item.to === '/'}
             className={({ isActive }) =>
               cn(
-                'flex flex-col items-center gap-1 px-3 py-1.5 text-xs font-medium',
-                isActive ? 'text-primary' : 'text-muted-foreground',
+                'flex flex-col items-center gap-1 px-2 py-1.5 text-[11px] font-semibold',
+                isActive
+                  ? 'text-foreground dark:text-primary'
+                  : 'text-muted-foreground',
               )
             }
           >
             <Icon className="h-5 w-5" />
-            <span>{item.label}</span>
+            <span>{t(item.labelKey)}</span>
           </NavLink>
         );
       })}
     </nav>
   );
 }
-

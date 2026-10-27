@@ -18,9 +18,27 @@ enum RoleStatus {
   INACTIVE
 }
 
+enum CategoryStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum ProductStatus {
+  DRAFT
+  ACTIVE
+  INACTIVE
+  FREEZE
+}
+
+enum SourcePlatform {
+  LOCAL
+  TIKTOK_SHOP
+  SHOPEE
+}
+
 model Role {
   id           String           @id @default(uuid())
-  code         String           @unique // e.g., SUPER_ADMIN, MANAGER, STAFF, CUSTOMER
+  code         String           @unique // e.g., SUPER_ADMIN, STORE_MANAGER, STAFF, CUSTOMER
   name         String
   description  String?
   isSystem     Boolean          @default(false)
@@ -36,7 +54,7 @@ model Role {
 
 model Permission {
   id          String           @id @default(uuid())
-  code        String           @unique // e.g., dashboard.view, users.read, users.write, roles.manage
+  code        String           @unique // e.g., dashboard.view, users.read, products.sync
   name        String
   module      String           // e.g., DASHBOARD, USERS, ROLES, PRODUCTS, ORDERS
   description String?
@@ -92,3 +110,70 @@ model RefreshToken {
   @@map("refresh_tokens")
 }
 
+model Category {
+  id                 String         @id @default(uuid())
+  externalCategoryId String?        @unique // TikTok Shop / Shopee category.id (e.g. "600001")
+  parentId           String?
+  parent             Category?      @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children           Category[]     @relation("CategoryHierarchy")
+  externalParentId   String?        @default("0") // "0" for root categories in TikTok Shop
+  localName          String         // category.local_name
+  slug               String         @unique
+  level              Int            @default(1)
+  isLeaf             Boolean        @default(false) // category.is_leaf
+  categoryVersion    String         @default("v2")  // version ("v1" | "v2")
+  permissionStatuses String[]       @default(["AVAILABLE"]) // permission_statuses
+  status             CategoryStatus @default(ACTIVE)
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+  products           Product[]
+
+  @@index([parentId])
+  @@index([isLeaf])
+  @@map("categories")
+}
+
+model Product {
+  id                String         @id @default(uuid())
+  title             String
+  slug              String         @unique
+  descriptionHtml   String?
+  categoryId        String
+  category          Category       @relation(fields: [categoryId], references: [id])
+  brandName         String?
+  mainImages        Json           @default("[]") // [{ url, width, height }]
+  packageWeight     Float?         @default(0.5)  // kg
+  packageDimensions Json?          // { length, width, height, unit }
+  status            ProductStatus  @default(ACTIVE)
+  sourcePlatform    SourcePlatform @default(LOCAL)
+  externalProductId String?        @unique
+  externalShopId    String?
+  lastSyncedAt      DateTime?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  skus              ProductSku[]
+
+  @@index([categoryId])
+  @@index([sourcePlatform])
+  @@index([status])
+  @@map("products")
+}
+
+model ProductSku {
+  id              String   @id @default(uuid())
+  productId       String
+  product         Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  externalSkuId   String?
+  sellerSku       String
+  salesAttributes Json     @default("[]") // [{ name: "Màu sắc", value_name: "Đen" }, { name: "Size", value_name: "L" }]
+  originalPrice   Float    @default(0)
+  salePrice       Float    @default(0)
+  currency        String   @default("VND")
+  stockQuantity   Int      @default(0)
+  warehouseId     String?  @default("WH-VN-01")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([productId])
+  @@map("product_skus")
+}

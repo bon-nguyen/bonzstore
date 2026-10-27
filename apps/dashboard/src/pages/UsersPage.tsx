@@ -1,7 +1,8 @@
-import { Lock, Unlock, UserPlus } from 'lucide-react';
+import { Lock, ShieldCheck, Unlock, UserPlus } from 'lucide-react';
 import { FormEvent, useState } from 'react';
 import { UserItem, UserStatus } from '../api/types/user.types';
 import { PermissionGate } from '../features/auth/components/PermissionGate';
+import { TranslationKey, useI18n } from '../features/i18n/I18nContext';
 import { useRoles } from '../features/roles/hooks/useRoles';
 import { PageHeader } from '../features/shared/PageHeader';
 import { Column, ResponsiveTable } from '../features/shared/ResponsiveTable';
@@ -12,14 +13,25 @@ import {
   useUsers,
 } from '../features/users/hooks/useUsers';
 
+const ROLE_TABS: Array<{ labelKey: TranslationKey; roleCode: string }> = [
+  { labelKey: 'users.tabAll', roleCode: '' },
+  { labelKey: 'users.tabAdmin', roleCode: 'SUPER_ADMIN' },
+  { labelKey: 'users.tabManager', roleCode: 'STORE_MANAGER' },
+  { labelKey: 'users.tabStaff', roleCode: 'STAFF' },
+  { labelKey: 'users.tabCustomer', roleCode: 'CUSTOMER' },
+];
+
 export function UsersPage() {
+  const { t } = useI18n();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<UserStatus | ''>('');
+  const [roleFilter, setRoleFilter] = useState<string>('');
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   const { data: usersResponse, isLoading } = useUsers({
     search: search || undefined,
     status: statusFilter || undefined,
+    roleCode: roleFilter || undefined,
   });
   const { data: roles } = useRoles();
   const createUserMutation = useCreateUser();
@@ -47,7 +59,8 @@ export function UsersPage() {
   };
 
   const handleToggleLock = (user: UserItem) => {
-    const nextStatus: UserStatus = user.status === 'ACTIVE' ? 'LOCKED' : 'ACTIVE';
+    const nextStatus: UserStatus =
+      user.status === 'ACTIVE' ? 'LOCKED' : 'ACTIVE';
     updateUserMutation.mutate({
       id: user.id,
       data: { status: nextStatus },
@@ -64,7 +77,7 @@ export function UsersPage() {
   const columns: Column<UserItem>[] = [
     {
       key: 'user',
-      header: 'Người dùng',
+      header: t('users.colAccount'),
       isPrimary: true,
       render: (item) => (
         <div>
@@ -75,12 +88,12 @@ export function UsersPage() {
     },
     {
       key: 'role',
-      header: 'Vai trò (RBAC Role)',
+      header: t('users.colRole'),
       render: (item) => (
         <PermissionGate
           permission="users.update"
           fallback={
-            <span className="font-medium text-primary">
+            <span className="font-medium text-foreground dark:text-primary">
               {item.role?.name} ({item.role?.code})
             </span>
           }
@@ -100,36 +113,48 @@ export function UsersPage() {
       ),
     },
     {
+      key: 'portalAccess',
+      header: t('users.colPortal'),
+      render: (item) =>
+        item.role?.isAdminPanel ? (
+          <span className="status-badge status-active">
+            <ShieldCheck className="h-3.5 w-3.5" />
+            {t('users.portalYes')}
+          </span>
+        ) : (
+          <span className="status-badge status-maintenance">
+            {t('users.portalNo')}
+          </span>
+        ),
+    },
+    {
       key: 'status',
-      header: 'Trạng thái',
+      header: t('app.status'),
       render: (item) => <StatusBadge status={item.status} />,
     },
     {
       key: 'permissions',
-      header: 'Số quyền',
+      header: t('users.colPerms'),
       render: (item) => (
         <span className="text-xs font-medium text-muted-foreground">
-          {item.permissions?.length || 0} quyền
+          {item.permissions?.length || 0} {t('roles.permsCount')}
         </span>
       ),
     },
     {
       key: 'actions',
-      header: 'Thao tác',
+      header: t('app.actions'),
       render: (item) => (
         <PermissionGate permission="users.update">
           <button
             type="button"
             onClick={() => handleToggleLock(item)}
             className="table-action-btn"
-            title={
-              item.status === 'ACTIVE' ? 'Khóa tài khoản' : 'Mở khóa tài khoản'
-            }
           >
             {item.status === 'ACTIVE' ? (
-              <Lock className="h-4 w-4 text-rose-400" />
+              <Lock className="h-4 w-4 text-rose-500 dark:text-rose-400" />
             ) : (
-              <Unlock className="h-4 w-4 text-emerald-400" />
+              <Unlock className="h-4 w-4 text-emerald-500 dark:text-emerald-400" />
             )}
           </button>
         </PermissionGate>
@@ -140,9 +165,9 @@ export function UsersPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        subtitle="Identity & Access Management"
-        title="Quản lý Người dùng"
-        description="Phân công Vai trò (Role) và kiểm soát trạng thái tài khoản truy cập hệ thống"
+        subtitle={t('users.subtitle')}
+        title={t('users.title')}
+        description={t('users.desc')}
         actions={
           <PermissionGate permission="users.create">
             <button
@@ -151,18 +176,35 @@ export function UsersPage() {
               className="action-btn-primary"
             >
               <UserPlus className="h-4 w-4" />
-              <span>Thêm tài khoản</span>
+              <span>{t('users.addBtn')}</span>
             </button>
           </PermissionGate>
         }
       />
+
+      <div className="flex flex-wrap gap-2">
+        {ROLE_TABS.map((tab) => (
+          <button
+            key={tab.roleCode}
+            type="button"
+            onClick={() => setRoleFilter(tab.roleCode)}
+            className={
+              roleFilter === tab.roleCode
+                ? 'action-btn-primary py-1.5 text-xs'
+                : 'action-btn-secondary py-1.5 text-xs'
+            }
+          >
+            {t(tab.labelKey)}
+          </button>
+        ))}
+      </div>
 
       <div className="filter-panel flex flex-col gap-3 sm:flex-row sm:items-center">
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Tìm theo tên hoặc email..."
+          placeholder={t('users.searchPlaceholder')}
           className="flex-1 rounded-lg border border-border bg-muted/40 px-3.5 py-2 text-sm text-foreground outline-none focus:border-primary"
         />
         <select
@@ -170,10 +212,10 @@ export function UsersPage() {
           onChange={(e) => setStatusFilter(e.target.value as UserStatus | '')}
           className="rounded-lg border border-border bg-muted/40 px-3.5 py-2 text-sm text-foreground outline-none focus:border-primary"
         >
-          <option value="">Tất cả trạng thái</option>
-          <option value="ACTIVE">Đang hoạt động (ACTIVE)</option>
-          <option value="LOCKED">Đã khóa (LOCKED)</option>
-          <option value="INACTIVE">Ngừng hoạt động (INACTIVE)</option>
+          <option value="">{t('users.allStatus')}</option>
+          <option value="ACTIVE">ACTIVE</option>
+          <option value="LOCKED">LOCKED</option>
+          <option value="INACTIVE">INACTIVE</option>
         </select>
       </div>
 
@@ -187,11 +229,13 @@ export function UsersPage() {
       {showCreateModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
           <div className="stat-card w-full max-w-md space-y-4 p-6">
-            <h2 className="text-lg font-bold">Tạo tài khoản mới</h2>
+            <h2 className="font-display text-lg font-bold">
+              {t('users.modalTitle')}
+            </h2>
             <form onSubmit={handleCreateUser} className="space-y-3">
               <div>
                 <label className="mb-1 block text-xs font-semibold text-muted-foreground">
-                  Họ và tên
+                  {t('users.fullName')}
                 </label>
                 <input
                   type="text"
@@ -219,7 +263,7 @@ export function UsersPage() {
               </div>
               <div>
                 <label className="mb-1 block text-xs font-semibold text-muted-foreground">
-                  Mật khẩu khởi tạo
+                  {t('users.initPassword')}
                 </label>
                 <input
                   type="password"
@@ -234,7 +278,7 @@ export function UsersPage() {
               </div>
               <div>
                 <label className="mb-1 block text-xs font-semibold text-muted-foreground">
-                  Vai trò (Role)
+                  {t('users.colRole')}
                 </label>
                 <select
                   value={formState.roleIdOrCode}
@@ -256,14 +300,14 @@ export function UsersPage() {
                   onClick={() => setShowCreateModal(false)}
                   className="action-btn-secondary"
                 >
-                  Hủy
+                  {t('app.cancel')}
                 </button>
                 <button
                   type="submit"
                   disabled={createUserMutation.isPending}
                   className="action-btn-primary"
                 >
-                  {createUserMutation.isPending ? 'Đang tạo...' : 'Tạo tài khoản'}
+                  {t('app.save')}
                 </button>
               </div>
             </form>
@@ -273,4 +317,3 @@ export function UsersPage() {
     </div>
   );
 }
-

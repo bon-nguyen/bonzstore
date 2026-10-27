@@ -3,52 +3,54 @@
 @tailwind utilities;
 
 @layer base {
+  /* Light Mode: Nền sáng pha sắc Mint dịu + Chữ Đen TikTok (#0f0f0f) + Điểm nhấn #bddbd9 */
   :root {
-    --background: 210 20% 98%;
-    --foreground: 222 47% 11%;
+    --background: 176 22% 96%;
+    --foreground: 0 0% 6%;
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-    --primary: 168 76% 36%;
-    --primary-foreground: 0 0% 100%;
-    --muted: 210 20% 94%;
-    --muted-foreground: 215 16% 47%;
-    --border: 214 32% 91%;
+    --card-foreground: 0 0% 6%;
+    --primary: 176 30% 80%; /* #bddbd9 */
+    --primary-foreground: 0 0% 6%; /* TikTok Black #0f0f0f */
+    --muted: 176 18% 91%;
+    --muted-foreground: 0 0% 36%;
+    --border: 176 20% 84%;
   }
 
+  /* Dark Mode: Nền Đen TikTok (#0b0b0d / #121214) + Điểm nhấn chủ đạo #bddbd9 */
   .dark {
-    --background: 220 20% 14%;
-    --foreground: 210 40% 98%;
-    --card: 220 22% 18%;
-    --card-foreground: 210 40% 98%;
-    --primary: 168 76% 36%;
-    --primary-foreground: 0 0% 100%;
-    --muted: 220 18% 22%;
-    --muted-foreground: 215 20% 65%;
-    --border: 220 18% 26%;
+    --background: 240 8% 5%; /* TikTok Deep Black #0b0b0d */
+    --foreground: 176 25% 96%;
+    --card: 240 6% 9%; /* TikTok Card Surface #151518 */
+    --card-foreground: 176 25% 96%;
+    --primary: 176 30% 80%; /* #bddbd9 */
+    --primary-foreground: 240 10% 6%; /* TikTok Black text on #bddbd9 */
+    --muted: 240 5% 14%;
+    --muted-foreground: 176 10% 64%;
+    --border: 240 5% 18%;
   }
 }
 
 @layer components {
   /* 1. Cards & Stats */
   .stat-card {
-    @apply rounded-xl border border-border bg-card p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md;
+    @apply rounded-xl border border-border bg-card p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/60 hover:shadow-md;
   }
 
   .stat-card-icon {
-    @apply flex h-11 w-11 items-center justify-center rounded-lg bg-primary/15 text-primary;
+    @apply flex h-11 w-11 items-center justify-center rounded-lg border border-primary/30 bg-primary/20 text-foreground dark:text-primary;
   }
 
   /* 2. Buttons & Actions */
   .action-btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all duration-150 active:scale-95 disabled:pointer-events-none disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-150 active:scale-95 disabled:pointer-events-none disabled:opacity-50;
   }
 
   .action-btn-primary {
-    @apply action-btn bg-primary text-primary-foreground shadow-sm hover:opacity-90;
+    @apply action-btn border border-black/15 bg-primary text-primary-foreground shadow-sm hover:brightness-95 dark:border-primary/40 dark:hover:brightness-105;
   }
 
   .action-btn-secondary {
-    @apply action-btn border border-border bg-card text-foreground hover:bg-muted;
+    @apply action-btn border border-border bg-card text-foreground hover:border-primary/50 hover:bg-muted;
   }
 
   .table-action-btn {
@@ -61,36 +63,36 @@
   }
 
   .table-header-cell {
-    @apply px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground;
+    @apply px-4 py-3 text-left font-display text-xs font-bold uppercase tracking-wider text-muted-foreground;
   }
 
   /* 4. Status & Priority Badges */
   .status-badge {
-    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium;
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold;
   }
 
   .status-active {
-    @apply bg-emerald-500/15 text-emerald-400 border border-emerald-500/30;
+    @apply border border-primary/50 bg-primary/25 text-foreground dark:text-primary;
   }
 
   .status-maintenance {
-    @apply bg-amber-500/15 text-amber-400 border border-amber-500/30;
+    @apply border border-amber-500/30 bg-amber-500/15 text-amber-600 dark:text-amber-300;
   }
 
   .status-inactive {
-    @apply bg-rose-500/15 text-rose-400 border border-rose-500/30;
+    @apply border border-rose-500/30 bg-rose-500/15 text-rose-600 dark:text-rose-400;
   }
 
   .priority-high {
-    @apply font-semibold text-rose-400;
+    @apply font-semibold text-rose-500 dark:text-rose-400;
   }
 
   .priority-medium {
-    @apply font-medium text-amber-400;
+    @apply font-medium text-amber-500 dark:text-amber-400;
   }
 
   .priority-low {
-    @apply font-normal text-emerald-400;
+    @apply font-normal text-emerald-600 dark:text-emerald-400;
   }
 
   /* 5. Layout & Typography */
@@ -99,15 +101,14 @@
   }
 
   .page-title {
-    @apply text-2xl font-bold tracking-tight text-foreground sm:text-3xl;
+    @apply font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl;
   }
 
   .page-subtitle {
-    @apply text-xs font-semibold uppercase tracking-widest text-primary;
+    @apply font-display text-xs font-bold uppercase tracking-widest text-foreground/70 dark:text-primary;
   }
 
   .filter-panel {
     @apply mb-6 rounded-xl border border-border bg-card p-4 shadow-sm;
   }
 }
-
