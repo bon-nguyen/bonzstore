@@ -21,6 +21,7 @@ import {
 import { canActorManageRole } from '../../../lib/utils';
 import { PermissionGate } from '../../auth/components/PermissionGate';
 import { useAuthContext } from '../../auth/context/AuthContext';
+import { useI18n } from '../../i18n/I18nContext';
 import { StatusBadge } from '../../shared/StatusBadge';
 import { useUserDetail } from '../hooks/useUsers';
 
@@ -32,18 +33,6 @@ export interface UserDetailDialogProps {
   onRequestResetPassword: (user: UserItem) => void;
 }
 
-function formatDateTime(dateStr?: string | null): string {
-  if (!dateStr) return 'Chưa có dữ liệu';
-  try {
-    return new Intl.DateTimeFormat('vi-VN', {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    }).format(new Date(dateStr));
-  } catch {
-    return dateStr;
-  }
-}
-
 export function UserDetailDialog({
   user,
   open,
@@ -51,11 +40,27 @@ export function UserDetailDialog({
   onRequestEdit,
   onRequestResetPassword,
 }: UserDetailDialogProps) {
-  const { user: currentUser } = useAuthContext();
-  const { data: fetchedDetail } = useUserDetail(open ? user?.id : null);
+  const { t, locale } = useI18n();
+  const { user: currentUser, hasAnyRole } = useAuthContext();
+  const canViewDetail = hasAnyRole(['SUPER_ADMIN', 'STORE_MANAGER']);
+  const { data: fetchedDetail } = useUserDetail(
+    open && canViewDetail ? user?.id : null,
+  );
 
   const detail = fetchedDetail || user;
-  if (!detail) return null;
+  if (!detail || !canViewDetail) return null;
+
+  const formatDateTime = (dateStr?: string | null): string => {
+    if (!dateStr) return t('users.noDateData');
+    try {
+      return new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : 'vi-VN', {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+      }).format(new Date(dateStr));
+    } catch {
+      return dateStr;
+    }
+  };
 
   const actorRoleCode = currentUser?.role?.code;
   const canManage =
@@ -74,7 +79,7 @@ export function UserDetailDialog({
       <DialogContent className="max-w-xl">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between gap-2 pr-6">
-            <span>Hồ sơ chi tiết tài khoản</span>
+            <span>{t('users.detailModalTitle')}</span>
             <StatusBadge status={detail.status} />
           </DialogTitle>
         </DialogHeader>
@@ -91,9 +96,12 @@ export function UserDetailDialog({
                   {detail.fullName}
                 </h3>
                 {detail.isEmailMasked ? (
-                  <span className="inline-flex items-center gap-1 rounded border border-amber-500/40 bg-amber-500/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-amber-600 dark:text-amber-300">
+                  <span
+                    className="inline-flex items-center gap-1 rounded border border-amber-500/40 bg-amber-500/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-amber-600 dark:text-amber-300"
+                    title={t('users.hashedTooltip')}
+                  >
                     <ShieldAlert className="h-3 w-3" />
-                    Email Hashed (Cấp cao hơn)
+                    {t('users.hashedBadge')}
                   </span>
                 ) : null}
               </div>
@@ -108,7 +116,7 @@ export function UserDetailDialog({
             <div className="rounded-lg border border-border p-3">
               <span className="flex items-center gap-1.5 text-muted-foreground">
                 <Mail className="h-3.5 w-3.5" />
-                Email đăng nhập
+                Email
               </span>
               <p className="mt-1 break-all font-mono font-semibold text-foreground">
                 {detail.email}
@@ -118,17 +126,17 @@ export function UserDetailDialog({
             <div className="rounded-lg border border-border p-3">
               <span className="flex items-center gap-1.5 text-muted-foreground">
                 <Phone className="h-3.5 w-3.5" />
-                Số điện thoại
+                {t('users.phone')}
               </span>
               <p className="mt-1 font-mono font-semibold text-foreground">
-                {detail.phone || 'Chưa cập nhật'}
+                {detail.phone || t('users.phoneEmpty')}
               </p>
             </div>
 
             <div className="rounded-lg border border-border p-3">
               <span className="flex items-center gap-1.5 text-muted-foreground">
                 <ShieldCheck className="h-3.5 w-3.5" />
-                Vai trò (RBAC Role)
+                {t('users.colRole')}
               </span>
               <p className="mt-1 font-display font-bold text-foreground dark:text-primary">
                 {detail.role?.name} ({detail.role?.code})
@@ -138,15 +146,17 @@ export function UserDetailDialog({
             <div className="rounded-lg border border-border p-3">
               <span className="flex items-center gap-1.5 text-muted-foreground">
                 <UserCheck className="h-3.5 w-3.5" />
-                Quyền cổng & Phiên hoạt động
+                {t('users.portalAndSessions')}
               </span>
               <p className="mt-1 font-semibold text-foreground">
                 {detail.role?.isAdminPanel
-                  ? 'Cho phép vào Admin'
-                  : 'Chỉ Web Storefront'}{' '}
+                  ? t('users.portalYes')
+                  : t('users.portalNo')}{' '}
                 •{' '}
                 <span className="font-mono text-foreground dark:text-primary">
-                  {detail.activeSessions ?? 0} phiên
+                  {t('users.activeSessionsCount', {
+                    count: detail.activeSessions ?? 0,
+                  })}
                 </span>
               </p>
             </div>
@@ -154,7 +164,7 @@ export function UserDetailDialog({
             <div className="rounded-lg border border-border p-3">
               <span className="flex items-center gap-1.5 text-muted-foreground">
                 <Calendar className="h-3.5 w-3.5" />
-                Ngày tạo tài khoản
+                {t('users.createdAtLabel')}
               </span>
               <p className="mt-1 font-medium text-foreground">
                 {formatDateTime(detail.createdAt)}
@@ -164,7 +174,7 @@ export function UserDetailDialog({
             <div className="rounded-lg border border-border p-3">
               <span className="flex items-center gap-1.5 text-muted-foreground">
                 <Clock className="h-3.5 w-3.5" />
-                Đăng nhập gần nhất
+                {t('users.lastLoginLabel')}
               </span>
               <p className="mt-1 font-medium text-foreground">
                 {formatDateTime(detail.lastLoginAt)}
@@ -175,7 +185,7 @@ export function UserDetailDialog({
           {/* Permissions Matrix Summary */}
           <div className="rounded-lg border border-border p-3">
             <p className="mb-2 font-display text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              Danh sách quyền được cấp ({detail.permissions?.length || 0} quyền)
+              {t('home.grantedPerms')} ({detail.permissions?.length || 0}):
             </p>
             {detail.permissions?.length ? (
               <div className="flex flex-wrap gap-1.5">
@@ -190,7 +200,7 @@ export function UserDetailDialog({
               </div>
             ) : (
               <p className="text-xs text-muted-foreground">
-                Không có quyền quản trị (Tài khoản Khách hàng Storefront).
+                {t('users.noAdminPerms')}
               </p>
             )}
           </div>
@@ -208,7 +218,7 @@ export function UserDetailDialog({
                 }}
               >
                 <KeyRound className="h-4 w-4" />
-                <span>Reset Password</span>
+                <span>{t('users.resetBtn')}</span>
               </Button>
               <Button
                 type="button"
@@ -218,7 +228,7 @@ export function UserDetailDialog({
                 }}
               >
                 <Pencil className="h-4 w-4" />
-                <span>Chỉnh sửa</span>
+                <span>{t('users.editBtn')}</span>
               </Button>
             </PermissionGate>
           ) : null}
@@ -228,11 +238,10 @@ export function UserDetailDialog({
             variant="secondary"
             onClick={() => onOpenChange(false)}
           >
-            Đóng
+            {t('app.close')}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
-

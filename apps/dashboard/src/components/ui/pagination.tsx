@@ -1,4 +1,5 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useI18n } from '../../features/i18n/I18nContext';
 import { cn } from '../../lib/utils';
 import { Button } from './button';
 
@@ -19,6 +20,7 @@ export function Pagination({
   onPageChange,
   className,
 }: PaginationProps) {
+  const { t } = useI18n();
   const safeTotalPages = Math.max(totalPages, 1);
   const startItem = total === 0 ? 0 : (page - 1) * limit + 1;
   const endItem = Math.min(page * limit, total);
@@ -32,16 +34,13 @@ export function Pagination({
         className,
       )}
     >
-      <div className="text-muted-foreground">
-        Hiển thị{' '}
-        <span className="font-semibold text-foreground">{startItem}</span>–
-        <span className="font-semibold text-foreground">{endItem}</span> trên
-        tổng số <span className="font-semibold text-foreground">{total}</span>{' '}
-        bản ghi (Tối đa{' '}
-        <span className="font-mono font-semibold text-foreground dark:text-primary">
-          {limit}
-        </span>{' '}
-        / trang)
+      <div className="font-medium text-muted-foreground">
+        {t('app.paginationInfo', {
+          start: startItem,
+          end: endItem,
+          total,
+          limit,
+        })}
       </div>
 
       <div className="flex items-center gap-1.5">
@@ -54,7 +53,7 @@ export function Pagination({
           className="h-8 px-2.5 text-xs"
         >
           <ChevronLeft className="h-3.5 w-3.5" />
-          <span>Trước</span>
+          <span>{t('app.prev')}</span>
         </Button>
 
         {pageNumbers.map((num) => (
@@ -78,11 +77,10 @@ export function Pagination({
           onClick={() => onPageChange(page + 1)}
           className="h-8 px-2.5 text-xs"
         >
-          <span>Sau</span>
+          <span>{t('app.next')}</span>
           <ChevronRight className="h-3.5 w-3.5" />
         </Button>
       </div>
     </div>
   );
 }
-

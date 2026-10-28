@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import { rolesApi } from '../../../api/endpoints/roles.api';
 import { CreateRoleDto, UpdateRoleDto } from '../../../api/types/role.types';
 import { getErrorMessage } from '../../../lib/utils';
+import { useI18n } from '../../i18n/I18nContext';
 
 export function useRoles() {
   return useQuery({
@@ -22,29 +23,35 @@ export function usePermissionsCatalog() {
 
 export function useCreateRole() {
   const queryClient = useQueryClient();
+  const { t } = useI18n();
+
   return useMutation({
     mutationFn: (data: CreateRoleDto) => rolesApi.create(data),
     onSuccess: (created) => {
       queryClient.invalidateQueries({ queryKey: ['roles'] });
-      toast.success(`Đã tạo vai trò ${created.name} (${created.code})`);
+      toast.success(
+        t('api.roleCreateSuccess', { name: created.name, code: created.code }),
+      );
     },
     onError: (err: unknown) => {
-      toast.error(getErrorMessage(err, 'Tạo vai trò thất bại'));
+      toast.error(getErrorMessage(err, t('api.roleCreateError')));
     },
   });
 }
 
 export function useUpdateRole() {
   const queryClient = useQueryClient();
+  const { t } = useI18n();
+
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateRoleDto }) =>
       rolesApi.update(id, data),
     onSuccess: (updated) => {
       queryClient.invalidateQueries({ queryKey: ['roles'] });
-      toast.success(`Đã cập nhật quyền hạn cho ${updated.name}`);
+      toast.success(t('api.roleUpdateSuccess', { name: updated.name }));
     },
     onError: (err: unknown) => {
-      toast.error(getErrorMessage(err, 'Cập nhật quyền thất bại'));
+      toast.error(getErrorMessage(err, t('api.roleUpdateError')));
     },
   });
 }

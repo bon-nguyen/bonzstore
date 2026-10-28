@@ -63,7 +63,10 @@ export function App() {
                     <Route
                       path="users"
                       element={
-                        <ProtectedRoute requiredPermission="users.read">
+                        <ProtectedRoute
+                          requiredPermission="users.read"
+                          requiredRoles={['SUPER_ADMIN', 'STORE_MANAGER']}
+                        >
                           <UsersPage />
                         </ProtectedRoute>
                       }

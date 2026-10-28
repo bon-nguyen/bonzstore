@@ -1,5 +1,6 @@
 import { Inbox, Loader2 } from 'lucide-react';
 import { ReactNode } from 'react';
+import { useI18n } from '../../features/i18n/I18nContext';
 import { cn } from '../../lib/utils';
 
 export interface LoadingStateProps {
@@ -7,10 +8,8 @@ export interface LoadingStateProps {
   className?: string;
 }
 
-export function LoadingState({
-  message = 'Đang tải dữ liệu...',
-  className,
-}: LoadingStateProps) {
+export function LoadingState({ message, className }: LoadingStateProps) {
+  const { t } = useI18n();
   return (
     <div
       className={cn(
@@ -19,7 +18,7 @@ export function LoadingState({
       )}
     >
       <Loader2 className="h-5 w-5 animate-spin text-foreground dark:text-primary" />
-      <span>{message}</span>
+      <span>{message || t('app.loading')}</span>
     </div>
   );
 }
@@ -32,11 +31,12 @@ export interface EmptyStateProps {
 }
 
 export function EmptyState({
-  title = 'Không có dữ liệu phù hợp',
+  title,
   description,
   action,
   className,
 }: EmptyStateProps) {
+  const { t } = useI18n();
   return (
     <div
       className={cn(
@@ -47,7 +47,9 @@ export function EmptyState({
       <div className="stat-card-icon h-10 w-10">
         <Inbox className="h-5 w-5" />
       </div>
-      <p className="text-sm font-medium text-foreground">{title}</p>
+      <p className="text-sm font-medium text-foreground">
+        {title || t('app.empty')}
+      </p>
       {description ? (
         <p className="max-w-sm text-xs text-muted-foreground">{description}</p>
       ) : null}
@@ -55,4 +57,3 @@ export function EmptyState({
     </div>
   );
 }
-

@@ -59,7 +59,7 @@ export function CreateProductDialog({
           <DialogTitle>{t('products.addBtn')}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-3">
-          <FormField label="Anime Product Title" required>
+          <FormField label={t('products.titleLabel')} required>
             <Input
               type="text"
               required
@@ -71,7 +71,7 @@ export function CreateProductDialog({
             />
           </FormField>
 
-          <FormField label="Leaf Category (is_leaf = true)" required>
+          <FormField label={t('products.leafCategoryLabel')} required>
             <Select
               value={formState.categoryId || leafCategories[0]?.id || ''}
               onChange={(e) =>
@@ -85,7 +85,7 @@ export function CreateProductDialog({
           </FormField>
 
           <div className="grid grid-cols-2 gap-3">
-            <FormField label="Seller SKU" required>
+            <FormField label={t('products.sellerSkuLabel')} required>
               <Input
                 type="text"
                 required
@@ -96,7 +96,7 @@ export function CreateProductDialog({
               />
             </FormField>
 
-            <FormField label="Stock Quantity" required>
+            <FormField label={t('products.stockLabel')} required>
               <Input
                 type="number"
                 required
@@ -112,7 +112,7 @@ export function CreateProductDialog({
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <FormField label="Original Price (VND)" required>
+            <FormField label={t('products.originalPriceLabel')} required>
               <Input
                 type="number"
                 required
@@ -126,7 +126,7 @@ export function CreateProductDialog({
               />
             </FormField>
 
-            <FormField label="Sale Price (VND)" required>
+            <FormField label={t('products.salePriceLabel')} required>
               <Input
                 type="number"
                 required
@@ -158,4 +158,3 @@ export function CreateProductDialog({
     </Dialog>
   );
 }
-

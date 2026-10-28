@@ -22,19 +22,19 @@ Trang `/users` quản lý tập trung cả **4 nhóm vai trò** theo thứ bậc
 
 | Thứ bậc (Rank) | Mã Vai Trò (`role.code`) | Quyền hạn trên trang `/users` |
 | :-: | :--- | :--- |
-| **100 (Cao nhất)** | **`SUPER_ADMIN`** | **Toàn quyền thao tác**: Xem đầy đủ email/SĐT của mọi tài khoản, tạo/sửa/khóa/reset password bất kỳ tài khoản nào và được phép gán quyền `SUPER_ADMIN`. |
+| **100 (Cao nhất & Duy nhất)** | **`SUPER_ADMIN`** | **Duy nhất 1 tài khoản trong toàn hệ thống (`admin@bonzstore.com`)**:<br>- Toàn quyền xem đầy đủ email/SĐT của mọi tài khoản, tạo/sửa/khóa/reset password các tài khoản cấp dưới.<br>- **Quy tắc bất biến (Singleton)**: Không ai (kể cả chính `SUPER_ADMIN`) được phép tạo thêm tài khoản `SUPER_ADMIN` thứ 2 hoặc nâng quyền bất kỳ tài khoản nào khác lên `SUPER_ADMIN`. |
 | **50** | **`STORE_MANAGER`** | **Quản lý cấp dưới (`STAFF`, `CUSTOMER`)**:<br>- Các tài khoản cấp cao hơn (`SUPER_ADMIN` như `admin@bonzstore.com`) sẽ **bị mã hóa/hash email** (`ad***#a1b2@bonzstore.com`) kèm nhãn `Hashed`.<br>- **Chặn hoàn toàn ở cả FE & BE (`403 Forbidden`)** không cho sửa thông tin, khóa, reset mật khẩu tài khoản `SUPER_ADMIN` hoặc nâng quyền bất kỳ ai lên `SUPER_ADMIN`. |
-| **20** | **`STAFF`** | Bị chặn vào trang `/users` theo mặc định (nếu được cấp `users.read` thì chỉ được xem và bị ẩn email của các cấp cao hơn). |
+| **20** | **`STAFF`** | **Bị chặn hoàn toàn quyền xem ở cả FE & BE (`403 Forbidden`)**: Không hiển thị menu `/users` trên Sidebar/BottomNav, bị đẩy sang `/forbidden` nếu truy cập URL, và bị chặn tại `RolesGuard` + `UsersService` ở Backend. |
 | **10** | **`CUSTOMER`** | Chặn hoàn toàn khỏi cổng Admin Dashboard (`403 Forbidden`). |
 
 ---
 
 ## 2. Ma Trận Phân Quyền Truy Cập & Thao Tác Trên Trang `/users`
 
-| Thao tác trên giao diện | Mã Quyền Yêu Cầu | Điều kiện Cấp Bậc (Hierarchy) | Hành vi khi KHÔNG đủ quyền / cấp bậc |
+| Thao tác trên giao diện | Mã Quyền & Vai Trò Yêu Cầu | Điều kiện Cấp Bậc (Hierarchy) | Hành vi khi KHÔNG đủ quyền / cấp bậc |
 | :--- | :--- | :--- | :--- |
-| **Vào trang `/users` & xem bảng** | `users.read` | `isAdminPanel = true` | Ẩn menu trên Sidebar; truy cập URL trực tiếp sẽ chuyển hướng sang `/forbidden` (`403`) |
-| **Xem chi tiết (`UserDetailDialog`)** | `users.read` | Mọi cấp trong Dashboard | Hiển thị Modal chi tiết; nếu xem cấp cao hơn (`SUPER_ADMIN`) thì email/SĐT vẫn bị hash và ẩn nút Sửa/Reset Password |
+| **Vào trang `/users` & xem bảng** | `users.read` + Role `SUPER_ADMIN` / `STORE_MANAGER` | Chỉ `SUPER_ADMIN` & `STORE_MANAGER` | Ẩn menu trên Sidebar; truy cập URL trực tiếp sẽ chuyển hướng sang `/forbidden` (`403`) |
+| **Xem chi tiết (`UserDetailDialog`)** | `users.read` + Role `SUPER_ADMIN` / `STORE_MANAGER` | Chỉ `SUPER_ADMIN` & `STORE_MANAGER` | Chặn ở cả FE (`canViewDetail`) và BE (`@Roles('SUPER_ADMIN', 'STORE_MANAGER')` + `assertCanViewUsers`) |
 | **Bấm nút `+ Thêm Nhân viên / Quản lý`** | `users.create` | `SUPER_ADMIN` hoặc `STORE_MANAGER` | Nếu là `STORE_MANAGER`, dropdown chọn Role trong Modal tự động **loại bỏ `SUPER_ADMIN`** |
 | **Sửa thông tin (`EditUserDialog`)** | `users.update` | `canActorManageRole(actor, target)` | Ẩn nút `Pencil` trên dòng `SUPER_ADMIN` khi đăng nhập bằng `STORE_MANAGER`; chặn `403` ở Backend |
 | **Reset Password (`ResetPasswordDialog`)** | `users.update` | `canActorManageRole(actor, target)` | Ẩn nút `KeyRound` trên dòng `SUPER_ADMIN` khi đăng nhập bằng `STORE_MANAGER`; chặn `403` ở Backend |
@@ -54,9 +54,13 @@ Trang `/users` quản lý tập trung cả **4 nhóm vai trò** theo thứ bậc
 ### 3.3 Đồng Bộ Toàn Bộ Bộ Lọc & Phân Trang Lên URL (`http://localhost:5173/users`)
 - Mọi thao tác tìm kiếm, chọn Tab vai trò, lọc trạng thái, sắp xếp cột và chuyển trang đều cập nhật trực tiếp lên thanh địa chỉ trình duyệt thông qua `useSearchParams`.
 
-### 3.4 Sắp Xếp Mặc Định Theo Vai Trò (`role`) & Sort Trực Tiếp Trên Cột Table
+### 3.4 Sắp Xếp Mặc Định Theo Vai Trò (`role`), Sort Cột & Cột Tổng Hợp (`Tổng các vai trò` / `Tổng trạng thái`)
 - **Mặc định**: API và bảng tự động sắp xếp theo **Vai trò (`sortBy=role`, `sortOrder=asc`)**.
 - **Sort trên Header cột**: Bấm trực tiếp vào tiêu đề các cột **Vai trò (`role`)**, **Trạng thái (`status`)**, **Tài khoản (`fullName`)** để đảo chiều sắp xếp (`asc` ↔ `desc`).
+- **2 Khối thống kê đầu trang & 2 Cột Tổng hợp trực tiếp trong Bảng (`ResponsiveTable`)**:
+  - **Cột `Tổng các vai trò` (`roleTotal`)**: Hiển thị số lượng tài khoản đang giữ vai trò của dòng đó trên tổng số tài khoản toàn hệ thống (`roleUserCount / totalSystemUsers`) kèm tổng số vai trò hệ thống (`totalRoles`).
+  - **Cột `Tổng trạng thái` (`statusTotal`)**: Hiển thị số lượng tài khoản đang có cùng trạng thái (`statusUserCount / totalSystemUsers`) kèm thống kê nhanh `Active` / `Locked`.
+  - **Khối thẻ Tổng các vai trò & Tổng trạng thái phía trên bảng**: Cho phép xem nhanh số lượng từng Role (`SUPER_ADMIN`, `STORE_MANAGER`, `STAFF`, `CUSTOMER`) và từng Status (`ACTIVE`, `LOCKED`, `INACTIVE`), bấm trực tiếp vào từng ô để lọc tức thì và đồng bộ lên URL.
 
 ### 3.5 Phân Trang Tối Đa 20 Bản Ghi / Lần (`limit = 20`)
 - Giới hạn tối đa mỗi lần tải là **20 người dùng / trang** (`MAX_USERS_PER_PAGE = 20`).

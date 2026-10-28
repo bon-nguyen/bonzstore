@@ -62,7 +62,7 @@ export function CreateCategoryDialog({
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-3">
-          <FormField label="local_name (Anime Category)" required>
+          <FormField label={t('categories.localNameLabel')} required>
             <Input
               type="text"
               required
@@ -74,7 +74,7 @@ export function CreateCategoryDialog({
             />
           </FormField>
 
-          <FormField label="externalCategoryId (TikTok / Shopee ID)">
+          <FormField label={t('categories.externalIdLabel')}>
             <Input
               type="text"
               placeholder="VD: 605088"
@@ -88,13 +88,13 @@ export function CreateCategoryDialog({
             />
           </FormField>
 
-          <FormField label="Parent Category">
+          <FormField label={t('categories.parentLabel')}>
             <Select
               value={formState.parentId}
               onChange={(e) =>
                 setFormState({ ...formState, parentId: e.target.value })
               }
-              placeholder="-- Root Category (parent_id = 0) --"
+              placeholder={t('categories.rootOption')}
               options={parentCandidates.map((c) => ({
                 value: c.id,
                 label: `${c.localName} (${c.externalCategoryId})`,
@@ -104,7 +104,7 @@ export function CreateCategoryDialog({
 
           <div className="flex items-center justify-between rounded-lg border border-border p-3">
             <span className="text-xs font-medium">
-              is_leaf = true (Cho phép gắn sản phẩm SPU)
+              {t('categories.isLeafLabel')}
             </span>
             <Switch
               checked={formState.isLeaf}
@@ -131,4 +131,3 @@ export function CreateCategoryDialog({
     </Dialog>
   );
 }
-

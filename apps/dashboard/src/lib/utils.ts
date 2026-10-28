@@ -40,8 +40,8 @@ export function getRoleRank(roleCode?: string | null): number {
 }
 
 /**
- * Kiểm tra xem người dùng hiện tại (actorRoleCode) có được phép thao tác / gán vai trò targetRoleCode hay không.
- * - Chỉ SUPER_ADMIN mới có toàn quyền thao tác trên tất cả các Role (bao gồm SUPER_ADMIN).
+ * Kiểm tra xem người dùng hiện tại (actorRoleCode) có được phép thao tác trên tài khoản có targetRoleCode hay không.
+ * - Chỉ SUPER_ADMIN mới có quyền thao tác trên mọi tài khoản.
  * - Các Role thấp hơn (VD: STORE_MANAGER) bị chặn thao tác trên SUPER_ADMIN hoặc Role cao hơn mình.
  */
 export function canActorManageRole(
@@ -51,6 +51,19 @@ export function canActorManageRole(
   if (actorRoleCode === 'SUPER_ADMIN') return true;
   if (targetRoleCode === 'SUPER_ADMIN') return false;
   return getRoleRank(actorRoleCode) >= getRoleRank(targetRoleCode);
+}
+
+/**
+ * Kiểm tra xem một vai trò (roleCode) có được phép chọn khi Tạo mới hoặc Đổi vai trò cho user hay không.
+ * - Quy tắc: Vai trò SUPER_ADMIN là DUY NHẤT trong hệ thống nên KHÔNG BAO GIỜ xuất hiện trong danh sách gán thêm.
+ */
+export function canActorAssignRole(
+  actorRoleCode?: string | null,
+  roleToAssign?: string | null,
+): boolean {
+  if (!roleToAssign || roleToAssign === 'SUPER_ADMIN') return false;
+  if (actorRoleCode === 'SUPER_ADMIN') return true;
+  return getRoleRank(actorRoleCode) >= getRoleRank(roleToAssign);
 }
 
 /**

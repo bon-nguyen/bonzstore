@@ -23,6 +23,7 @@ export interface AdminNavItem {
   labelKey: TranslationKey;
   icon: LucideIcon;
   permission: string;
+  allowedRoles?: string[];
 }
 
 export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
@@ -49,6 +50,7 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
     labelKey: 'nav.users',
     icon: Users,
     permission: 'users.read',
+    allowedRoles: ['SUPER_ADMIN', 'STORE_MANAGER'],
   },
   {
     to: '/roles',
@@ -61,7 +63,7 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
 const SIDEBAR_STORAGE_KEY = 'bonzstore_sidebar_collapsed';
 
 export function AppSidebar() {
-  const { hasPermission, user } = useAuthContext();
+  const { hasPermission, hasAnyRole, user } = useAuthContext();
   const { t } = useI18n();
 
   const [collapsed, setCollapsed] = useState<boolean>(() => {
@@ -77,7 +79,9 @@ export function AppSidebar() {
   };
 
   const visibleItems = ADMIN_NAV_ITEMS.filter(
-    (item) => !item.permission || hasPermission(item.permission),
+    (item) =>
+      (!item.permission || hasPermission(item.permission)) &&
+      (!item.allowedRoles || hasAnyRole(item.allowedRoles)),
   );
 
   return (
@@ -112,7 +116,7 @@ export function AppSidebar() {
           <div
             className="stat-card-icon h-9 w-9 cursor-pointer"
             onClick={toggleSidebar}
-            title="BonzStore Anime — Mở rộng Sidebar"
+            title={t('nav.expandSidebar')}
           >
             <Sparkles className="h-5 w-5" />
           </div>
@@ -123,7 +127,7 @@ export function AppSidebar() {
             type="button"
             onClick={toggleSidebar}
             className="table-action-btn shrink-0"
-            title="Thu gọn Sidebar"
+            title={t('nav.collapseSidebar')}
           >
             <PanelLeftClose className="h-4 w-4" />
           </button>
@@ -134,7 +138,7 @@ export function AppSidebar() {
       <button
         type="button"
         onClick={toggleSidebar}
-        title={collapsed ? 'Mở rộng Sidebar' : 'Thu gọn Sidebar'}
+        title={collapsed ? t('nav.expandSidebar') : t('nav.collapseSidebar')}
         className="absolute -right-3 top-20 z-20 flex h-6 w-6 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow-sm transition hover:border-primary hover:text-foreground"
       >
         {collapsed ? (

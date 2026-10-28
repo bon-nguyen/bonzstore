@@ -50,7 +50,7 @@ export function CreateRoleDialog({
           <DialogTitle>{t('roles.addBtn')}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-3">
-          <FormField label="Role Code" required>
+          <FormField label={t('roles.codeLabel')} required>
             <Input
               type="text"
               required
@@ -62,7 +62,7 @@ export function CreateRoleDialog({
             />
           </FormField>
 
-          <FormField label="Role Name" required>
+          <FormField label={t('roles.nameLabel')} required>
             <Input
               type="text"
               required
@@ -74,7 +74,7 @@ export function CreateRoleDialog({
             />
           </FormField>
 
-          <FormField label="Description">
+          <FormField label={t('roles.descLabel')}>
             <Input
               type="text"
               value={newRole.description}
@@ -86,7 +86,7 @@ export function CreateRoleDialog({
 
           <div className="flex items-center justify-between rounded-lg border border-border p-3">
             <span className="text-xs font-medium">
-              isAdminPanel = true (Cho phép vào cổng Admin)
+              {t('roles.isAdminPanelLabel')}
             </span>
             <Switch
               checked={newRole.isAdminPanel}
@@ -113,4 +113,3 @@ export function CreateRoleDialog({
     </Dialog>
   );
 }
-

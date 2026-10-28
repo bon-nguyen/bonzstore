@@ -13,6 +13,7 @@ import {
   CurrentUser,
 } from '../../common/decorators/current-user.decorator';
 import { RequirePermissions } from '../../common/decorators/permissions.decorator';
+import { Roles } from '../../common/decorators/roles.decorator';
 import { CreateUserDto } from './dto/create-user.dto';
 import { ResetUserPasswordDto, UpdateUserDto } from './dto/update-user.dto';
 import { UserQueryDto } from './dto/user-query.dto';
@@ -20,22 +21,26 @@ import { UsersService } from './users.service';
 
 @ApiTags('users')
 @ApiBearerAuth()
+@Roles('SUPER_ADMIN', 'STORE_MANAGER')
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get('stats')
   @RequirePermissions('users.read')
-  @ApiOperation({ summary: 'Thống kê số lượng người dùng' })
-  async getStats() {
-    return this.usersService.getStats();
+  @ApiOperation({
+    summary:
+      'Thống kê số lượng người dùng (Chỉ SUPER_ADMIN & STORE_MANAGER)',
+  })
+  async getStats(@CurrentUser() currentUser: AuthenticatedUser) {
+    return this.usersService.getStats(currentUser);
   }
 
   @Get()
   @RequirePermissions('users.read')
   @ApiOperation({
     summary:
-      'Danh sách người dùng (Mặc định sort theo vai trò, max 20/trang, ẩn/hash email cấp cao hơn)',
+      'Danh sách người dùng (Chỉ SUPER_ADMIN & STORE_MANAGER được quyền xem)',
   })
   async findAll(
     @Query() query: UserQueryDto,
@@ -48,7 +53,7 @@ export class UsersController {
   @RequirePermissions('users.read')
   @ApiOperation({
     summary:
-      'Xem chi tiết thông tin người dùng (kèm quyền hạn, lịch sử đăng nhập & số phiên hoạt động)',
+      'Xem chi tiết thông tin người dùng (Chỉ SUPER_ADMIN & STORE_MANAGER)',
   })
   async findOne(
     @Param('id') id: string,

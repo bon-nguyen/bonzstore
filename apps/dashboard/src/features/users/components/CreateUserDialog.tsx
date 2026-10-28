@@ -12,7 +12,7 @@ import {
 import { FormField } from '../../../components/ui/form-field';
 import { Input } from '../../../components/ui/input';
 import { Select } from '../../../components/ui/select';
-import { canActorManageRole } from '../../../lib/utils';
+import { canActorAssignRole } from '../../../lib/utils';
 import { useAuthContext } from '../../auth/context/AuthContext';
 import { useI18n } from '../../i18n/I18nContext';
 import { useCreateUser } from '../hooks/useUsers';
@@ -43,8 +43,9 @@ export function CreateUserDialog({
   const [validationError, setValidationError] = useState<string | null>(null);
 
   const actorRoleCode = currentUser?.role?.code;
+  // Loại bỏ hoàn toàn SUPER_ADMIN khi thêm user mới vì SUPER_ADMIN là duy nhất
   const assignableRoles = roles.filter((r) =>
-    canActorManageRole(actorRoleCode, r.code),
+    canActorAssignRole(actorRoleCode, r.code),
   );
 
   const handleSubmit = async (e: FormEvent) => {
@@ -55,14 +56,12 @@ export function CreateUserDialog({
     const cleanedName = trim(formState.fullName);
 
     if (isEmpty(cleanedEmail) || isEmpty(cleanedName)) {
-      setValidationError('Họ tên và Email không được để trống');
+      setValidationError(t('users.validationNameEmail'));
       return;
     }
 
-    if (!canActorManageRole(actorRoleCode, formState.roleIdOrCode)) {
-      setValidationError(
-        'Chỉ Super Admin (SUPER_ADMIN) mới có quyền gán vai trò này',
-      );
+    if (!canActorAssignRole(actorRoleCode, formState.roleIdOrCode)) {
+      setValidationError(t('users.validationRoleHierarchy'));
       return;
     }
 
@@ -125,11 +124,7 @@ export function CreateUserDialog({
           <FormField
             label={t('users.colRole')}
             required
-            description={
-              actorRoleCode !== 'SUPER_ADMIN'
-                ? 'Chỉ SUPER_ADMIN mới được phép tạo hoặc gán quyền SUPER_ADMIN'
-                : undefined
-            }
+            description={t('users.onlySuperAdminDesc')}
           >
             <Select
               value={formState.roleIdOrCode}

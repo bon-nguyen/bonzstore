@@ -52,7 +52,7 @@ export function ResetPasswordDialog({
   const handleCopy = async () => {
     if (isEmpty(trim(newPassword))) return;
     await navigator.clipboard.writeText(trim(newPassword));
-    toast.success('Đã sao chép mật khẩu mới vào Clipboard');
+    toast.success(t('api.copiedPassword'));
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -61,7 +61,7 @@ export function ResetPasswordDialog({
 
     const cleaned = trim(newPassword);
     if (isEmpty(cleaned) || cleaned.length < 6) {
-      setError('Mật khẩu mới phải có tối thiểu 6 ký tự');
+      setError(t('users.validationPasswordLength'));
       return;
     }
 
@@ -78,7 +78,7 @@ export function ResetPasswordDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <KeyRound className="h-4 w-4 text-foreground dark:text-primary" />
-            <span>Reset Password — Đặt lại mật khẩu</span>
+            <span>{t('users.resetModalTitle')}</span>
           </DialogTitle>
         </DialogHeader>
 
@@ -87,13 +87,12 @@ export function ResetPasswordDialog({
             <p className="font-semibold text-foreground">{user.fullName}</p>
             <p className="font-mono text-muted-foreground">{user.email}</p>
             <p className="mt-1 text-[11px] text-amber-600 dark:text-amber-300">
-              Lưu ý: Đặt lại mật khẩu sẽ tự động thu hồi toàn bộ phiên đăng nhập
-              cũ của tài khoản này.
+              {t('users.resetPasswordNotice')}
             </p>
           </div>
 
           <FormField
-            label="Mật khẩu mới (Tối thiểu 6 ký tự)"
+            label={t('users.newPasswordLabel')}
             required
             error={error || undefined}
           >
@@ -125,7 +124,7 @@ export function ResetPasswordDialog({
                 variant="outline"
                 size="icon"
                 onClick={() => setNewPassword(generateRandomPassword())}
-                title="Tạo mật khẩu ngẫu nhiên"
+                title={t('users.generateRandomPass')}
               >
                 <Sparkles className="h-4 w-4" />
               </Button>
@@ -135,7 +134,7 @@ export function ResetPasswordDialog({
                 variant="outline"
                 size="icon"
                 onClick={handleCopy}
-                title="Copy mật khẩu"
+                title={t('users.copyPassword')}
               >
                 <Copy className="h-4 w-4" />
               </Button>
@@ -151,7 +150,7 @@ export function ResetPasswordDialog({
               {t('app.cancel')}
             </Button>
             <Button type="submit" disabled={resetMutation.isPending}>
-              Xác nhận Reset
+              {t('users.confirmReset')}
             </Button>
           </DialogFooter>
         </form>
@@ -159,4 +158,3 @@ export function ResetPasswordDialog({
     </Dialog>
   );
 }
-

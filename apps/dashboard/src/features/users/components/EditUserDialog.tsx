@@ -14,7 +14,7 @@ import {
 import { FormField } from '../../../components/ui/form-field';
 import { Input } from '../../../components/ui/input';
 import { Select } from '../../../components/ui/select';
-import { canActorManageRole } from '../../../lib/utils';
+import { canActorAssignRole, canActorManageRole } from '../../../lib/utils';
 import { useAuthContext } from '../../auth/context/AuthContext';
 import { useI18n } from '../../i18n/I18nContext';
 import { useUpdateUser } from '../hooks/useUsers';
@@ -25,12 +25,6 @@ export interface EditUserDialogProps {
   onOpenChange: (open: boolean) => void;
   roles: RoleItem[];
 }
-
-const STATUS_OPTIONS = [
-  { value: 'ACTIVE', label: 'ACTIVE (Đang hoạt động)' },
-  { value: 'LOCKED', label: 'LOCKED (Đã khóa)' },
-  { value: 'INACTIVE', label: 'INACTIVE (Tạm ẩn)' },
-];
 
 export function EditUserDialog({
   user,
@@ -61,9 +55,16 @@ export function EditUserDialog({
   if (!user) return null;
 
   const actorRoleCode = currentUser?.role?.code;
+  const isTargetSuperAdmin = user.role?.code === 'SUPER_ADMIN';
   const assignableRoles = roles.filter((r) =>
-    canActorManageRole(actorRoleCode, r.code),
+    canActorAssignRole(actorRoleCode, r.code),
   );
+
+  const statusOptions = [
+    { value: 'ACTIVE', label: `ACTIVE (${t('status.ACTIVE')})` },
+    { value: 'LOCKED', label: `LOCKED (${t('status.LOCKED')})` },
+    { value: 'INACTIVE', label: `INACTIVE (${t('status.INACTIVE')})` },
+  ];
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -71,14 +72,15 @@ export function EditUserDialog({
 
     const cleanedName = trim(fullName);
     if (isEmpty(cleanedName)) {
-      setValidationError('Họ và tên không được để trống');
+      setValidationError(t('users.validationName'));
       return;
     }
 
-    if (!canActorManageRole(actorRoleCode, roleIdOrCode)) {
-      setValidationError(
-        'Bạn không có thẩm quyền gán vai trò này (Chỉ SUPER_ADMIN)',
-      );
+    if (
+      !isTargetSuperAdmin &&
+      !canActorAssignRole(actorRoleCode, roleIdOrCode)
+    ) {
+      setValidationError(t('users.validationRoleHierarchy'));
       return;
     }
 
@@ -87,7 +89,7 @@ export function EditUserDialog({
       data: {
         fullName: cleanedName,
         phone: trim(phone) || undefined,
-        roleIdOrCode,
+        roleIdOrCode: isTargetSuperAdmin ? undefined : roleIdOrCode,
         status,
       },
     });
@@ -100,7 +102,7 @@ export function EditUserDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Pencil className="h-4 w-4 text-foreground dark:text-primary" />
-            <span>Chỉnh sửa tài khoản</span>
+            <span>{t('users.editModalTitle')}</span>
           </DialogTitle>
         </DialogHeader>
 
@@ -111,7 +113,7 @@ export function EditUserDialog({
             </p>
           ) : null}
 
-          <FormField label="Email (Không thể thay đổi)">
+          <FormField label={t('users.emailReadonly')}>
             <Input
               type="text"
               value={user.email}
@@ -129,7 +131,7 @@ export function EditUserDialog({
             />
           </FormField>
 
-          <FormField label="Số điện thoại">
+          <FormField label={t('users.phone')}>
             <Input
               type="text"
               placeholder="0901234567"
@@ -141,27 +143,32 @@ export function EditUserDialog({
           <FormField
             label={t('users.colRole')}
             required
-            description={
-              actorRoleCode !== 'SUPER_ADMIN'
-                ? 'Chỉ SUPER_ADMIN mới được phép nâng quyền lên SUPER_ADMIN'
-                : undefined
-            }
+            description={t('users.onlySuperAdminDesc')}
           >
-            <Select
-              value={roleIdOrCode}
-              onChange={(e) => setRoleIdOrCode(e.target.value)}
-              options={assignableRoles.map((r) => ({
-                value: r.code,
-                label: `${r.name} (${r.code})`,
-              }))}
-            />
+            {isTargetSuperAdmin ? (
+              <Input
+                type="text"
+                value="Super Admin (SUPER_ADMIN — Duy nhất)"
+                disabled
+                className="font-mono opacity-70"
+              />
+            ) : (
+              <Select
+                value={roleIdOrCode}
+                onChange={(e) => setRoleIdOrCode(e.target.value)}
+                options={assignableRoles.map((r) => ({
+                  value: r.code,
+                  label: `${r.name} (${r.code})`,
+                }))}
+              />
+            )}
           </FormField>
 
           <FormField label={t('app.status')} required>
             <Select
               value={status}
               onChange={(e) => setStatus(e.target.value as UserStatus)}
-              options={STATUS_OPTIONS}
+              options={statusOptions}
             />
           </FormField>
 
@@ -182,4 +189,3 @@ export function EditUserDialog({
     </Dialog>
   );
 }
-

@@ -18,6 +18,8 @@ export interface UserItem extends AuthUser {
   createdAt: string;
   updatedAt?: string;
   activeSessions?: number;
+  roleUserCount?: number;
+  statusUserCount?: number;
   isEmailMasked?: boolean;
   canManage?: boolean;
 }
@@ -26,7 +28,11 @@ export interface UserStats {
   total: number;
   active: number;
   locked: number;
+  inactive?: number;
   adminUsers: number;
+  totalRoles?: number;
+  byRole?: Record<string, number>;
+  byStatus?: Record<string, number>;
 }
 
 export interface UserQueryParams {

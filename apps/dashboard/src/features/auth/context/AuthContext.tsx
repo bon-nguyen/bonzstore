@@ -9,7 +9,11 @@ import {
 } from 'react';
 import { AUTH_TOKEN_KEY, REFRESH_TOKEN_KEY } from '../../../api/client';
 import { authApi } from '../../../api/endpoints/auth.api';
-import { AuthResponse, AuthUser, LoginPayload } from '../../../api/types/auth.types';
+import {
+  AuthResponse,
+  AuthUser,
+  LoginPayload,
+} from '../../../api/types/auth.types';
 
 interface AuthContextValue {
   user: AuthUser | null;
@@ -21,6 +25,7 @@ interface AuthContextValue {
   hasPermission: (permissionCode: string) => boolean;
   hasAnyPermission: (permissionCodes: string[]) => boolean;
   hasRole: (roleCode: string) => boolean;
+  hasAnyRole: (roleCodes: string[]) => boolean;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -101,6 +106,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [user],
   );
 
+  const hasAnyRole = useCallback(
+    (roleCodes: string[]) => {
+      if (!user || !user.role?.code) return false;
+      if (user.role.code === 'SUPER_ADMIN') return true;
+      return roleCodes.includes(user.role.code);
+    },
+    [user],
+  );
+
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
@@ -112,6 +126,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       hasPermission,
       hasAnyPermission,
       hasRole,
+      hasAnyRole,
     }),
     [
       user,
@@ -122,6 +137,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       hasPermission,
       hasAnyPermission,
       hasRole,
+      hasAnyRole,
     ],
   );
 
@@ -135,4 +151,3 @@ export function useAuthContext() {
   }
   return ctx;
 }
-

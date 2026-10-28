@@ -1,5 +1,6 @@
 import { isEmpty, trim } from 'lodash';
 import {
+  Activity,
   Eye,
   KeyRound,
   Loader2,
@@ -10,9 +11,10 @@ import {
   ShieldCheck,
   Unlock,
   UserPlus,
+  Users,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Navigate, useSearchParams } from 'react-router-dom';
 import {
   SortOrder,
   UserItem,
@@ -35,9 +37,17 @@ import { CreateUserDialog } from '../features/users/components/CreateUserDialog'
 import { EditUserDialog } from '../features/users/components/EditUserDialog';
 import { ResetPasswordDialog } from '../features/users/components/ResetPasswordDialog';
 import { UserDetailDialog } from '../features/users/components/UserDetailDialog';
-import { useUpdateUser, useUsers } from '../features/users/hooks/useUsers';
+import {
+  useUpdateUser,
+  useUsers,
+  useUserStats,
+} from '../features/users/hooks/useUsers';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
-import { buildCleanSearchParams, canActorManageRole } from '../lib/utils';
+import {
+  buildCleanSearchParams,
+  canActorAssignRole,
+  canActorManageRole,
+} from '../lib/utils';
 
 const MAX_USERS_PER_PAGE = 20;
 
@@ -49,17 +59,12 @@ const ROLE_TABS: Array<{ labelKey: TranslationKey; roleCode: string }> = [
   { labelKey: 'users.tabCustomer', roleCode: 'CUSTOMER' },
 ];
 
-const USER_STATUS_OPTIONS = [
-  { value: 'ACTIVE', label: 'ACTIVE (Hoạt động)' },
-  { value: 'LOCKED', label: 'LOCKED (Đã khóa)' },
-  { value: 'INACTIVE', label: 'INACTIVE (Đã ẩn)' },
-];
-
 export function UsersPage() {
   const { t } = useI18n();
-  const { user: currentUser } = useAuthContext();
+  const { user: currentUser, hasAnyRole } = useAuthContext();
   const actorRoleCode = currentUser?.role?.code;
   const isSuperAdmin = actorRoleCode === 'SUPER_ADMIN';
+  const canViewUsers = hasAnyRole(['SUPER_ADMIN', 'STORE_MANAGER']);
 
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -143,6 +148,7 @@ export function UsersPage() {
     setSearchParams(nextParams);
   };
 
+  const { data: userStats } = useUserStats();
   const {
     data: usersResponse,
     isLoading,
@@ -179,22 +185,32 @@ export function UsersPage() {
 
   const handleChangeRole = (targetUser: UserItem, newRoleCode: string) => {
     if (!canActorManageRole(actorRoleCode, targetUser.role?.code)) return;
-    if (!canActorManageRole(actorRoleCode, newRoleCode)) return;
+    if (!canActorAssignRole(actorRoleCode, newRoleCode)) return;
     updateUserMutation.mutate({
       id: targetUser.id,
       data: { roleIdOrCode: newRoleCode },
     });
   };
 
+  // SUPER_ADMIN là duy nhất trong hệ thống nên không bao giờ xuất hiện trong dropdown gán Role
   const assignableRoleOptions = roles
-    .filter((r) => canActorManageRole(actorRoleCode, r.code))
+    .filter((r) => canActorAssignRole(actorRoleCode, r.code))
     .map((r) => ({
       value: r.code,
       label: `${r.name} (${r.code})`,
     }));
 
+  const userStatusOptions = [
+    { value: 'ACTIVE', label: `ACTIVE (${t('status.ACTIVE')})` },
+    { value: 'LOCKED', label: `LOCKED (${t('status.LOCKED')})` },
+    { value: 'INACTIVE', label: `INACTIVE (${t('status.INACTIVE')})` },
+  ];
+
   const isSearching =
     isFetching || trim(searchInput) !== trim(debouncedSearch);
+
+  const totalSystemUsers = userStats?.total || usersResponse?.meta?.total || 0;
+  const totalRolesCount = userStats?.totalRoles || roles.length || 0;
 
   const columns: Column<UserItem>[] = [
     {
@@ -204,9 +220,9 @@ export function UsersPage() {
       isPrimary: true,
       render: (item) => (
         <div
-          className="cursor-pointer group"
-          onClick={() => setViewingUser(item)}
-          title="Bấm để xem hồ sơ chi tiết"
+          className="group cursor-pointer"
+          onClick={() => canViewUsers && setViewingUser(item)}
+          title={t('users.viewDetailTooltip')}
         >
           <div className="flex items-center gap-1.5">
             <p className="font-semibold text-foreground group-hover:underline dark:group-hover:text-primary">
@@ -215,10 +231,10 @@ export function UsersPage() {
             {item.isEmailMasked ? (
               <span
                 className="inline-flex items-center gap-1 rounded border border-amber-500/40 bg-amber-500/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-amber-600 dark:text-amber-300"
-                title="Email của tài khoản cấp cao hơn (SUPER_ADMIN) đã được mã hóa/hash bảo vệ"
+                title={t('users.hashedTooltip')}
               >
                 <ShieldAlert className="h-3 w-3" />
-                Hashed
+                {t('users.hashedBadge')}
               </span>
             ) : null}
           </div>
@@ -233,18 +249,19 @@ export function UsersPage() {
       header: t('users.colRole'),
       sortKey: 'role',
       render: (item) => {
+        const isRowSuperAdmin = item.role?.code === 'SUPER_ADMIN';
         const canManageRow =
           item.canManage !== false &&
           canActorManageRole(actorRoleCode, item.role?.code);
 
-        if (!canManageRow) {
+        if (isRowSuperAdmin || !canManageRow) {
           return (
             <div className="flex items-center gap-1.5">
               <span className="font-display text-xs font-bold text-foreground dark:text-primary">
                 {item.role?.name} ({item.role?.code})
               </span>
               <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-                Protected
+                {t('users.protectedBadge')}
               </span>
             </div>
           );
@@ -270,6 +287,29 @@ export function UsersPage() {
       },
     },
     {
+      key: 'roleTotal',
+      header: t('users.colRoleTotal'),
+      render: (item) => {
+        const roleCount =
+          item.roleUserCount ??
+          (item.role?.code ? userStats?.byRole?.[item.role.code] : 0) ??
+          0;
+        return (
+          <div className="text-xs">
+            <span className="font-display font-bold text-foreground dark:text-primary">
+              {roleCount}
+            </span>{' '}
+            <span className="text-muted-foreground">
+              / {totalSystemUsers} user
+            </span>
+            <p className="text-[11px] text-muted-foreground">
+              {t('users.systemRolesCount', { count: totalRolesCount })}
+            </p>
+          </div>
+        );
+      },
+    },
+    {
       key: 'portalAccess',
       header: t('users.colPortal'),
       render: (item) =>
@@ -291,6 +331,28 @@ export function UsersPage() {
       render: (item) => <StatusBadge status={item.status} />,
     },
     {
+      key: 'statusTotal',
+      header: t('users.colStatusTotal'),
+      render: (item) => {
+        const statusCount =
+          item.statusUserCount ?? userStats?.byStatus?.[item.status] ?? 0;
+        return (
+          <div className="text-xs">
+            <span className="font-display font-bold text-foreground dark:text-primary">
+              {statusCount}
+            </span>{' '}
+            <span className="text-muted-foreground">
+              {item.status} / {totalSystemUsers}
+            </span>
+            <p className="text-[11px] text-muted-foreground">
+              Active: {userStats?.active ?? 0} • Locked:{' '}
+              {userStats?.locked ?? 0}
+            </p>
+          </div>
+        );
+      },
+    },
+    {
       key: 'permissions',
       header: t('users.colPerms'),
       render: (item) => (
@@ -309,42 +371,42 @@ export function UsersPage() {
 
         return (
           <div className="flex items-center gap-1">
-            {/* Nút Xem chi tiết (Luôn hiển thị cho người có quyền xem danh sách) */}
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={() => setViewingUser(item)}
-              title="Xem thông tin chi tiết"
-            >
-              <Eye className="h-4 w-4 text-foreground dark:text-primary" />
-            </Button>
+            {canViewUsers ? (
+              <PermissionGate permission="users.read">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setViewingUser(item)}
+                  title={t('users.viewDetailTooltip')}
+                >
+                  <Eye className="h-4 w-4 text-foreground dark:text-primary" />
+                </Button>
+              </PermissionGate>
+            ) : null}
 
             {canManageRow ? (
               <PermissionGate permission="users.update">
-                {/* Nút Sửa thông tin */}
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
                   onClick={() => setEditingUser(item)}
-                  title="Chỉnh sửa thông tin tài khoản"
+                  title={t('users.editTooltip')}
                 >
                   <Pencil className="h-4 w-4 text-muted-foreground hover:text-foreground" />
                 </Button>
 
-                {/* Nút Reset Password */}
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
                   onClick={() => setResetPasswordUser(item)}
-                  title="Reset mật khẩu tài khoản"
+                  title={t('users.resetPasswordTooltip')}
                 >
                   <KeyRound className="h-4 w-4 text-amber-500 dark:text-amber-400" />
                 </Button>
 
-                {/* Nút Khóa / Mở khóa */}
                 <Button
                   type="button"
                   variant="ghost"
@@ -352,8 +414,8 @@ export function UsersPage() {
                   onClick={() => handleToggleLock(item)}
                   title={
                     item.status === 'ACTIVE'
-                      ? 'Khóa tài khoản'
-                      : 'Mở khóa tài khoản'
+                      ? t('users.lockTooltip')
+                      : t('users.unlockTooltip')
                   }
                 >
                   {item.status === 'ACTIVE' ? (
@@ -366,10 +428,10 @@ export function UsersPage() {
             ) : (
               <span
                 className="ml-1 inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground"
-                title="Chỉ SUPER_ADMIN mới được phép sửa, khóa hoặc reset mật khẩu tài khoản này"
+                title={t('users.onlySuperAdminDesc')}
               >
                 <Lock className="h-3.5 w-3.5" />
-                Chỉ SUPER_ADMIN
+                {t('users.onlySuperAdmin')}
               </span>
             )}
           </div>
@@ -380,6 +442,10 @@ export function UsersPage() {
 
   const meta = usersResponse?.meta;
 
+  if (!canViewUsers) {
+    return <Navigate to="/forbidden" replace />;
+  }
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -387,8 +453,8 @@ export function UsersPage() {
         title={t('users.title')}
         description={
           isSuperAdmin
-            ? `${t('users.desc')} — Bạn đang có toàn quyền SUPER_ADMIN.`
-            : `${t('users.desc')} — Chế độ ${actorRoleCode}: Các tài khoản cấp cao hơn (SUPER_ADMIN) được mã hóa email và khóa chỉnh sửa.`
+            ? `${t('users.desc')} — ${t('users.descSuperAdmin')}`
+            : `${t('users.desc')} — ${t('users.descManager', { role: actorRoleCode || 'STORE_MANAGER' })}`
         }
         actions={
           <PermissionGate permission="users.create">
@@ -400,16 +466,155 @@ export function UsersPage() {
         }
       />
 
+      {/* Bảng Tổng hợp: Tổng các vai trò & Tổng trạng thái */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="stat-card space-y-3">
+          <div className="flex items-center justify-between border-b border-border pb-2.5">
+            <div className="flex items-center gap-2">
+              <div className="stat-card-icon h-8 w-8">
+                <Users className="h-4 w-4" />
+              </div>
+              <div>
+                <h3 className="font-display text-xs font-bold uppercase tracking-wider text-foreground">
+                  {t('users.summaryRolesTitle', { count: totalRolesCount })}
+                </h3>
+                <p className="text-[11px] text-muted-foreground">
+                  {t('users.summaryRolesSub', { total: totalSystemUsers })}
+                </p>
+              </div>
+            </div>
+            <span className="status-badge status-active font-mono text-xs">
+              {totalSystemUsers} Users
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {roles.map((r) => {
+              const count = userStats?.byRole?.[r.code] ?? r.userCount ?? 0;
+              const active = roleFilter === r.code;
+              return (
+                <button
+                  key={r.id}
+                  type="button"
+                  onClick={() =>
+                    updateUrlParams({
+                      roleCode: active ? 'ALL' : r.code,
+                      page: 1,
+                    })
+                  }
+                  className={`rounded-lg border p-2.5 text-left transition ${
+                    active
+                      ? 'border-primary bg-primary/15'
+                      : 'border-border bg-muted/20 hover:bg-muted/40'
+                  }`}
+                >
+                  <p className="truncate font-mono text-[10px] font-semibold text-muted-foreground">
+                    {r.code}
+                  </p>
+                  <p className="mt-0.5 font-display text-lg font-bold text-foreground dark:text-primary">
+                    {count}
+                  </p>
+                  <p className="truncate text-[11px] text-muted-foreground">
+                    {r.name}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="stat-card space-y-3">
+          <div className="flex items-center justify-between border-b border-border pb-2.5">
+            <div className="flex items-center gap-2">
+              <div className="stat-card-icon h-8 w-8">
+                <Activity className="h-4 w-4" />
+              </div>
+              <div>
+                <h3 className="font-display text-xs font-bold uppercase tracking-wider text-foreground">
+                  {t('users.summaryStatusTitle')}
+                </h3>
+                <p className="text-[11px] text-muted-foreground">
+                  {t('users.summaryStatusSub')}
+                </p>
+              </div>
+            </div>
+            <span className="status-badge status-active font-mono text-xs">
+              Active: {userStats?.active ?? 0}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2">
+            {(
+              [
+                {
+                  key: 'ACTIVE',
+                  label: t('status.ACTIVE'),
+                  count: userStats?.active ?? 0,
+                },
+                {
+                  key: 'LOCKED',
+                  label: t('status.LOCKED'),
+                  count: userStats?.locked ?? 0,
+                },
+                {
+                  key: 'INACTIVE',
+                  label: t('status.INACTIVE'),
+                  count: userStats?.inactive ?? 0,
+                },
+              ] as const
+            ).map((st) => {
+              const active = statusFilter === st.key;
+              return (
+                <button
+                  key={st.key}
+                  type="button"
+                  onClick={() =>
+                    updateUrlParams({
+                      status: active ? '' : st.key,
+                      page: 1,
+                    })
+                  }
+                  className={`rounded-lg border p-2.5 text-left transition ${
+                    active
+                      ? 'border-primary bg-primary/15'
+                      : 'border-border bg-muted/20 hover:bg-muted/40'
+                  }`}
+                >
+                  <p className="font-mono text-[10px] font-semibold text-muted-foreground">
+                    {st.key}
+                  </p>
+                  <p className="mt-0.5 font-display text-lg font-bold text-foreground dark:text-primary">
+                    {st.count}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {st.label}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
       <Tabs
         value={roleFilter}
         onValueChange={(val) => updateUrlParams({ roleCode: val, page: 1 })}
       >
         <TabsList className="flex h-auto flex-wrap justify-start gap-1">
-          {ROLE_TABS.map((tab) => (
-            <TabsTrigger key={tab.roleCode} value={tab.roleCode}>
-              {t(tab.labelKey)}
-            </TabsTrigger>
-          ))}
+          {ROLE_TABS.map((tab) => {
+            const tabCount =
+              tab.roleCode === 'ALL'
+                ? totalSystemUsers
+                : (userStats?.byRole?.[tab.roleCode] ?? 0);
+            return (
+              <TabsTrigger key={tab.roleCode} value={tab.roleCode}>
+                <span>{t(tab.labelKey)}</span>
+                <span className="ml-1.5 rounded bg-background/60 px-1.5 py-0.2 font-mono text-[10px]">
+                  {tabCount}
+                </span>
+              </TabsTrigger>
+            );
+          })}
         </TabsList>
       </Tabs>
 
@@ -437,7 +642,7 @@ export function UsersPage() {
             })
           }
           placeholder={t('users.allStatus')}
-          options={USER_STATUS_OPTIONS}
+          options={userStatusOptions}
           className="sm:w-52"
         />
       </div>

@@ -11,11 +11,11 @@
 
 | Method & Endpoint | Permission Yêu Cầu | Quy Tắc Phân Cấp Bậc (`Role Rank`) | Mô tả |
 | :--- | :--- | :--- | :--- |
-| `GET /api/users/stats` | `users.read` | Cho phép Admin & Manager | Thống kê tổng số user, số user `ACTIVE`, `LOCKED`, và số nhân sự Admin (`isAdminPanel = true`) |
-| `GET /api/users` | `users.read` | Nếu người gọi `< SUPER_ADMIN`, tự động **hash/mask email & SĐT** của các tài khoản `SUPER_ADMIN` | Lấy danh sách tài khoản (mặc định sort theo `role`, phân trang **tối đa 20 bản ghi/lần**) |
+| `GET /api/users/stats` | `users.read` | Cho phép Admin & Manager | Thống kê tổng số user, **Tổng các vai trò (`totalRoles`, `byRole`)** và **Tổng trạng thái (`byStatus`: `ACTIVE`, `LOCKED`, `INACTIVE`)** |
+| `GET /api/users` | `users.read` | Nếu người gọi `< SUPER_ADMIN`, tự động **hash/mask email & SĐT** của các tài khoản `SUPER_ADMIN` | Lấy danh sách tài khoản kèm `roleUserCount` (tổng user cùng vai trò), `statusUserCount` (tổng user cùng trạng thái), mặc định sort theo `role`, phân trang **tối đa 20 bản ghi/lần** |
 | `GET /api/users/:id` | `users.read` | Nếu người gọi `< SUPER_ADMIN`, tự động **hash/mask email & SĐT** nếu xem `SUPER_ADMIN` | Xem chi tiết hồ sơ người dùng kèm số phiên hoạt động (`activeSessions`) và danh sách quyền |
-| `POST /api/users` | `users.create` | Chặn `403 Forbidden` nếu người gọi `!= SUPER_ADMIN` cố tình tạo user có quyền `SUPER_ADMIN` | Tạo mới tài khoản và gán Role |
-| `PATCH /api/users/:id` | `users.update` | Chặn `403 Forbidden` nếu `STORE_MANAGER` cố sửa/khóa tài khoản `SUPER_ADMIN` hoặc nâng quyền lên `SUPER_ADMIN` | Chỉnh sửa thông tin (`fullName`, `phone`, `roleIdOrCode`, `status`) |
+| `POST /api/users` | `users.create` | **Chặn tuyệt đối `403 Forbidden`** nếu truyền `roleIdOrCode: "SUPER_ADMIN"` (vì `SUPER_ADMIN` là duy nhất trong hệ thống) | Tạo mới tài khoản và gán Role (`STORE_MANAGER`, `STAFF`, `CUSTOMER`...) |
+| `PATCH /api/users/:id` | `users.update` | **Chặn tuyệt đối `403 Forbidden`** nếu cố gán thêm `SUPER_ADMIN` hoặc thay đổi vai trò của tài khoản `SUPER_ADMIN` duy nhất | Chỉnh sửa thông tin (`fullName`, `phone`, `roleIdOrCode`, `status`) |
 | `PATCH /api/users/:id/reset-password` | `users.update` | Chặn `403 Forbidden` nếu `STORE_MANAGER` cố reset mật khẩu của `SUPER_ADMIN` | Đặt lại mật khẩu mới (`newPassword`) và xóa toàn bộ `refreshTokens` cũ của user đó |
 
 ---

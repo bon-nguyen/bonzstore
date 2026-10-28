@@ -21,6 +21,7 @@ const ROLE_RANK: Record<string, number> = {
   CUSTOMER: 10,
 };
 
+const ALLOWED_VIEWER_ROLES = ['SUPER_ADMIN', 'STORE_MANAGER'];
 const MAX_PAGE_LIMIT = 20;
 
 @Injectable()
@@ -34,6 +35,18 @@ export class UsersService implements OnModuleInit {
   private getRoleRank(roleCode?: string | null): number {
     if (!roleCode) return 0;
     return ROLE_RANK[roleCode] ?? 30;
+  }
+
+  /**
+   * Chặn cứng ở tầng Service: Chỉ SUPER_ADMIN và STORE_MANAGER mới có quyền xem / truy cập module Users
+   */
+  private assertCanViewUsers(currentUser?: AuthenticatedUser): void {
+    const roleCode = currentUser?.role?.code || '';
+    if (!ALLOWED_VIEWER_ROLES.includes(roleCode)) {
+      throw new ForbiddenException(
+        'Chỉ quyền SUPER_ADMIN và Quản lý cửa hàng (STORE_MANAGER) mới được phép xem và truy cập danh sách người dùng',
+      );
+    }
   }
 
   /**
@@ -58,20 +71,60 @@ export class UsersService implements OnModuleInit {
     return `${phone.slice(0, 3)}****${phone.slice(-3)}`;
   }
 
-  async getStats() {
-    const [total, active, locked, adminUsers] = await Promise.all([
+  async getStats(currentUser?: AuthenticatedUser) {
+    this.assertCanViewUsers(currentUser);
+
+    const [
+      total,
+      active,
+      locked,
+      inactive,
+      adminUsers,
+      rolesWithCounts,
+    ] = await Promise.all([
       this.prisma.client.user.count(),
       this.prisma.client.user.count({ where: { status: 'ACTIVE' } }),
       this.prisma.client.user.count({ where: { status: 'LOCKED' } }),
+      this.prisma.client.user.count({ where: { status: 'INACTIVE' } }),
       this.prisma.client.user.count({
         where: { role: { isAdminPanel: true } },
       }),
+      this.prisma.client.role.findMany({
+        include: {
+          _count: {
+            select: { users: true },
+          },
+        },
+        orderBy: { createdAt: 'asc' },
+      }),
     ]);
 
-    return { total, active, locked, adminUsers };
+    const byRole: Record<string, number> = {};
+    for (const r of rolesWithCounts) {
+      byRole[r.code] = r._count.users;
+    }
+
+    const byStatus: Record<string, number> = {
+      ACTIVE: active,
+      LOCKED: locked,
+      INACTIVE: inactive,
+    };
+
+    return {
+      total,
+      active,
+      locked,
+      inactive,
+      adminUsers,
+      totalRoles: rolesWithCounts.length,
+      byRole,
+      byStatus,
+    };
   }
 
   async findAll(query: UserQueryDto, currentUser?: AuthenticatedUser) {
+    this.assertCanViewUsers(currentUser);
+
     const page = Math.max(Number(query.page) || 1, 1);
     const limit = Math.min(
       Math.max(Number(query.limit) || MAX_PAGE_LIMIT, 1),
@@ -117,7 +170,7 @@ export class UsersService implements OnModuleInit {
           ? [{ status: sortOrder }, { createdAt: 'desc' as const }]
           : [{ [sortBy]: sortOrder }];
 
-    const [data, total] = await Promise.all([
+    const [data, total, statusGroups] = await Promise.all([
       this.prisma.client.user.findMany({
         where,
         skip,
@@ -127,6 +180,7 @@ export class UsersService implements OnModuleInit {
           role: {
             include: {
               permissions: { include: { permission: true } },
+              _count: { select: { users: true } },
             },
           },
           _count: {
@@ -135,12 +189,23 @@ export class UsersService implements OnModuleInit {
         },
       }),
       this.prisma.client.user.count({ where }),
+      this.prisma.client.user.groupBy({
+        by: ['status'],
+        _count: { _all: true },
+      }),
     ]);
+
+    const statusCountMap: Record<string, number> = {};
+    for (const grp of statusGroups) {
+      statusCountMap[grp.status] = grp._count._all;
+    }
 
     const totalPages = Math.max(Math.ceil(total / limit), 1);
 
     return {
-      data: data.map((u) => this.transformEntity(u, currentUser)),
+      data: data.map((u) =>
+        this.transformEntity(u, currentUser, statusCountMap),
+      ),
       meta: {
         page,
         limit,
@@ -155,12 +220,15 @@ export class UsersService implements OnModuleInit {
   }
 
   async findOne(id: string, currentUser?: AuthenticatedUser) {
+    this.assertCanViewUsers(currentUser);
+
     const user = await this.prisma.client.user.findUnique({
       where: { id },
       include: {
         role: {
           include: {
             permissions: { include: { permission: true } },
+            _count: { select: { users: true } },
           },
         },
         _count: {
@@ -173,10 +241,18 @@ export class UsersService implements OnModuleInit {
       throw new NotFoundException('Không tìm thấy người dùng');
     }
 
-    return this.transformEntity(user, currentUser);
+    const statusCount = await this.prisma.client.user.count({
+      where: { status: user.status },
+    });
+
+    return this.transformEntity(user, currentUser, {
+      [user.status]: statusCount,
+    });
   }
 
   async create(dto: CreateUserDto, currentUser?: AuthenticatedUser) {
+    this.assertCanViewUsers(currentUser);
+
     const requesterRoleCode = currentUser?.role?.code || '';
     const requesterRank = this.getRoleRank(requesterRoleCode);
 
@@ -203,12 +279,16 @@ export class UsersService implements OnModuleInit {
 
     const targetRoleRank = this.getRoleRank(role.code);
 
-    if (
-      requesterRoleCode !== 'SUPER_ADMIN' &&
-      (role.code === 'SUPER_ADMIN' || targetRoleRank > requesterRank)
-    ) {
+    // Quy tắc bất biến: Vai trò SUPER_ADMIN là duy nhất trong hệ thống, không ai được phép tạo thêm
+    if (role.code === 'SUPER_ADMIN') {
       throw new ForbiddenException(
-        `Chỉ Super Admin (SUPER_ADMIN) mới có quyền tạo tài khoản hoặc gán vai trò ${role.code}`,
+        'Vai trò SUPER_ADMIN là duy nhất trong hệ thống, không được phép tạo thêm tài khoản SUPER_ADMIN',
+      );
+    }
+
+    if (requesterRoleCode !== 'SUPER_ADMIN' && targetRoleRank > requesterRank) {
+      throw new ForbiddenException(
+        `Tài khoản ${requesterRoleCode} không có quyền tạo tài khoản với vai trò cấp cao hơn (${role.code})`,
       );
     }
 
@@ -224,7 +304,10 @@ export class UsersService implements OnModuleInit {
       },
       include: {
         role: {
-          include: { permissions: { include: { permission: true } } },
+          include: {
+            permissions: { include: { permission: true } },
+            _count: { select: { users: true } },
+          },
         },
         _count: {
           select: { refreshTokens: true },
@@ -240,6 +323,8 @@ export class UsersService implements OnModuleInit {
     dto: UpdateUserDto,
     currentUser?: AuthenticatedUser,
   ) {
+    this.assertCanViewUsers(currentUser);
+
     const requesterRoleCode = currentUser?.role?.code || '';
     const requesterRank = this.getRoleRank(requesterRoleCode);
 
@@ -279,12 +364,32 @@ export class UsersService implements OnModuleInit {
 
       const nextRoleRank = this.getRoleRank(nextRole.code);
 
+      // Quy tắc bất biến: SUPER_ADMIN là duy nhất, không thể nâng bất kỳ tài khoản nào khác lên SUPER_ADMIN
       if (
-        requesterRoleCode !== 'SUPER_ADMIN' &&
-        (nextRole.code === 'SUPER_ADMIN' || nextRoleRank > requesterRank)
+        nextRole.code === 'SUPER_ADMIN' &&
+        user.role?.code !== 'SUPER_ADMIN'
       ) {
         throw new ForbiddenException(
-          `Không thể gán vai trò ${nextRole.code}. Chỉ SUPER_ADMIN mới có toàn quyền phân cấp này.`,
+          'Vai trò SUPER_ADMIN là duy nhất trong hệ thống, không thể gán thêm cho tài khoản khác',
+        );
+      }
+
+      // Không cho phép hạ quyền của tài khoản SUPER_ADMIN duy nhất
+      if (
+        user.role?.code === 'SUPER_ADMIN' &&
+        nextRole.code !== 'SUPER_ADMIN'
+      ) {
+        throw new ForbiddenException(
+          'Tài khoản SUPER_ADMIN là duy nhất trong hệ thống, không thể thay đổi vai trò của tài khoản này',
+        );
+      }
+
+      if (
+        requesterRoleCode !== 'SUPER_ADMIN' &&
+        nextRoleRank > requesterRank
+      ) {
+        throw new ForbiddenException(
+          `Không thể gán vai trò ${nextRole.code} cao hơn cấp bậc hiện tại của bạn.`,
         );
       }
 
@@ -300,7 +405,10 @@ export class UsersService implements OnModuleInit {
       data: updateData,
       include: {
         role: {
-          include: { permissions: { include: { permission: true } } },
+          include: {
+            permissions: { include: { permission: true } },
+            _count: { select: { users: true } },
+          },
         },
         _count: {
           select: { refreshTokens: true },
@@ -316,6 +424,8 @@ export class UsersService implements OnModuleInit {
     newPassword: string,
     currentUser?: AuthenticatedUser,
   ) {
+    this.assertCanViewUsers(currentUser);
+
     const requesterRoleCode = currentUser?.role?.code || '';
     const requesterRank = this.getRoleRank(requesterRoleCode);
 
@@ -351,7 +461,10 @@ export class UsersService implements OnModuleInit {
         data: { passwordHash },
         include: {
           role: {
-            include: { permissions: { include: { permission: true } } },
+            include: {
+              permissions: { include: { permission: true } },
+              _count: { select: { users: true } },
+            },
           },
           _count: {
             select: { refreshTokens: true },
@@ -369,7 +482,11 @@ export class UsersService implements OnModuleInit {
     };
   }
 
-  private transformEntity(entity: any, currentUser?: AuthenticatedUser) {
+  private transformEntity(
+    entity: any,
+    currentUser?: AuthenticatedUser,
+    statusCountMap?: Record<string, number>,
+  ) {
     const requesterRoleCode = currentUser?.role?.code || 'SUPER_ADMIN';
     const requesterRank = this.getRoleRank(requesterRoleCode);
     const targetRoleCode = entity.role?.code || '';
@@ -395,6 +512,8 @@ export class UsersService implements OnModuleInit {
         : entity.phone,
       avatarUrl: entity.avatarUrl,
       status: entity.status,
+      statusUserCount: statusCountMap?.[entity.status] ?? 0,
+      roleUserCount: entity.role?._count?.users ?? 0,
       lastLoginAt: entity.lastLoginAt,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
@@ -423,22 +542,41 @@ export class UsersService implements OnModuleInit {
         this.prisma.client.role.findUnique({ where: { code: 'CUSTOMER' } }),
       ]);
 
+      const userPerms = await this.prisma.client.permission.findMany({
+        where: {
+          code: {
+            in: ['users.read', 'users.create', 'users.update', 'users.delete'],
+          },
+        },
+      });
+
       if (managerRole) {
-        const userPerms = await this.prisma.client.permission.findMany({
-          where: { code: { in: ['users.read', 'users.create', 'users.update'] } },
-        });
         for (const perm of userPerms) {
-          await this.prisma.client.rolePermission.upsert({
-            where: {
-              roleId_permissionId: {
-                roleId: managerRole.id,
-                permissionId: perm.id,
+          if (perm.code !== 'users.delete') {
+            await this.prisma.client.rolePermission.upsert({
+              where: {
+                roleId_permissionId: {
+                  roleId: managerRole.id,
+                  permissionId: perm.id,
+                },
               },
-            },
-            update: {},
-            create: { roleId: managerRole.id, permissionId: perm.id },
-          });
+              update: {},
+              create: { roleId: managerRole.id, permissionId: perm.id },
+            });
+          }
         }
+      }
+
+      // Đảm bảo các role ngoài SUPER_ADMIN và STORE_MANAGER không giữ quyền users.*
+      if (userPerms.length > 0) {
+        await this.prisma.client.rolePermission.deleteMany({
+          where: {
+            permissionId: { in: userPerms.map((p) => p.id) },
+            role: {
+              code: { notIn: ALLOWED_VIEWER_ROLES },
+            },
+          },
+        });
       }
 
       const currentCount = await this.prisma.client.user.count();

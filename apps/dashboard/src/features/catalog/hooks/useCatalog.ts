@@ -8,6 +8,7 @@ import {
   ProductStatus,
 } from '../../../api/types/catalog.types';
 import { getErrorMessage } from '../../../lib/utils';
+import { useI18n } from '../../i18n/I18nContext';
 
 export function useCategories() {
   return useQuery({
@@ -27,28 +28,32 @@ export function useTikTokCategoryAssets() {
 
 export function useCreateCategory() {
   const queryClient = useQueryClient();
+  const { t } = useI18n();
+
   return useMutation({
     mutationFn: (data: CreateCategoryDto) => categoriesApi.create(data),
     onSuccess: (created) => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
-      toast.success(`Đã tạo danh mục ${created.localName}`);
+      toast.success(t('api.categoryCreateSuccess', { name: created.localName }));
     },
     onError: (err: unknown) => {
-      toast.error(getErrorMessage(err, 'Tạo danh mục thất bại'));
+      toast.error(getErrorMessage(err, t('api.categoryCreateError')));
     },
   });
 }
 
 export function useSyncTikTokCategories() {
   const queryClient = useQueryClient();
+  const { t } = useI18n();
+
   return useMutation({
     mutationFn: () => categoriesApi.syncTikTok(),
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
-      toast.success(`${res.message} (${res.syncedCount} danh mục)`);
+      toast.success(t('api.categorySyncSuccess', { count: res.syncedCount }));
     },
     onError: (err: unknown) => {
-      toast.error(getErrorMessage(err, 'Đồng bộ danh mục thất bại'));
+      toast.error(getErrorMessage(err, t('api.categorySyncError')));
     },
   });
 }
@@ -71,48 +76,54 @@ export function useProductStats() {
 
 export function useCreateProduct() {
   const queryClient = useQueryClient();
+  const { t } = useI18n();
+
   return useMutation({
     mutationFn: (data: CreateProductDto) => productsApi.create(data),
     onSuccess: (created) => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['categories'] });
-      toast.success(`Đã thêm sản phẩm ${created.title}`);
+      toast.success(t('api.productCreateSuccess', { title: created.title }));
     },
     onError: (err: unknown) => {
-      toast.error(getErrorMessage(err, 'Thêm sản phẩm thất bại'));
+      toast.error(getErrorMessage(err, t('api.productCreateError')));
     },
   });
 }
 
 export function useUpdateProductStatus() {
   const queryClient = useQueryClient();
+  const { t } = useI18n();
+
   return useMutation({
     mutationFn: ({ id, status }: { id: string; status: ProductStatus }) =>
       productsApi.updateStatus(id, status),
     onSuccess: (updated) => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
-      toast.success(`Đã chuyển trạng thái sang ${updated.status}`);
+      toast.success(t('api.productStatusSuccess', { status: updated.status }));
     },
     onError: (err: unknown) => {
-      toast.error(getErrorMessage(err, 'Cập nhật trạng thái thất bại'));
+      toast.error(getErrorMessage(err, t('api.productStatusError')));
     },
   });
 }
 
 export function useImportPlatformProduct() {
   const queryClient = useQueryClient();
+  const { t } = useI18n();
+
   return useMutation({
     mutationFn: (payload: {
       platform: 'TIKTOK_SHOP' | 'SHOPEE';
       externalShopId?: string;
     }) => productsApi.importFromPlatform(payload),
-    onSuccess: (res) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['categories'] });
-      toast.success(res.message);
+      toast.success(t('api.productImportSuccess'));
     },
     onError: (err: unknown) => {
-      toast.error(getErrorMessage(err, 'Đồng bộ sản phẩm thất bại'));
+      toast.error(getErrorMessage(err, t('api.productImportError')));
     },
   });
 }

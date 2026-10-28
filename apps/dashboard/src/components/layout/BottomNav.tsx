@@ -5,10 +5,12 @@ import { cn } from '../../lib/utils';
 import { ADMIN_NAV_ITEMS } from './AppSidebar';
 
 export function BottomNav() {
-  const { hasPermission } = useAuthContext();
+  const { hasPermission, hasAnyRole } = useAuthContext();
   const { t } = useI18n();
   const visibleItems = ADMIN_NAV_ITEMS.filter(
-    (item) => !item.permission || hasPermission(item.permission),
+    (item) =>
+      (!item.permission || hasPermission(item.permission)) &&
+      (!item.allowedRoles || hasAnyRole(item.allowedRoles)),
   );
 
   return (

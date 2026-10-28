@@ -10,6 +10,7 @@ import {
   TableRow,
 } from '../../components/ui/table';
 import { cn } from '../../lib/utils';
+import { useI18n } from '../i18n/I18nContext';
 
 export interface Column<T> {
   key: string;
@@ -38,14 +39,16 @@ export function ResponsiveTable<T>({
   columns,
   data,
   keyExtractor,
-  emptyMessage = 'Không có dữ liệu phù hợp',
+  emptyMessage,
   isLoading = false,
   isFetching = false,
   sortBy,
   sortOrder = 'asc',
   onSortChange,
 }: ResponsiveTableProps<T>) {
+  const { t } = useI18n();
   const showLoading = isLoading || isFetching;
+  const resolvedEmptyMessage = emptyMessage || t('app.empty');
 
   const renderSortIcon = (colSortKey?: string) => {
     if (!colSortKey || !onSortChange) return null;
@@ -99,7 +102,7 @@ export function ResponsiveTable<T>({
                 <TableCell colSpan={columns.length} className="h-48 text-center">
                   <div className="flex flex-col items-center justify-center gap-2 text-sm text-muted-foreground">
                     <Loader2 className="h-6 w-6 animate-spin text-foreground dark:text-primary" />
-                    <span>Đang tải dữ liệu...</span>
+                    <span>{t('app.loading')}</span>
                   </div>
                 </TableCell>
               </tr>
@@ -107,7 +110,7 @@ export function ResponsiveTable<T>({
               <tr>
                 <TableCell colSpan={columns.length} className="p-6">
                   <EmptyState
-                    title={emptyMessage}
+                    title={resolvedEmptyMessage}
                     className="border-none bg-transparent p-4"
                   />
                 </TableCell>
@@ -130,7 +133,7 @@ export function ResponsiveTable<T>({
         {showLoading ? (
           <LoadingState />
         ) : !data.length ? (
-          <EmptyState title={emptyMessage} />
+          <EmptyState title={resolvedEmptyMessage} />
         ) : (
           data.map((item) => (
             <div key={keyExtractor(item)} className="stat-card space-y-2.5 p-4">

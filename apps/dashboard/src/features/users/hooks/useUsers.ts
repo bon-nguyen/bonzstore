@@ -7,6 +7,7 @@ import {
   UserQueryParams,
 } from '../../../api/types/user.types';
 import { getErrorMessage } from '../../../lib/utils';
+import { useI18n } from '../../i18n/I18nContext';
 
 export function useUsers(params?: UserQueryParams) {
   return useQuery({
@@ -35,44 +36,50 @@ export function useUserStats() {
 
 export function useCreateUser() {
   const queryClient = useQueryClient();
+  const { t } = useI18n();
+
   return useMutation({
     mutationFn: (data: CreateUserDto) => usersApi.create(data),
     onSuccess: (created) => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
-      toast.success(`Đã tạo tài khoản ${created.email}`);
+      toast.success(t('api.userCreateSuccess', { email: created.email }));
     },
     onError: (err: unknown) => {
-      toast.error(getErrorMessage(err, 'Tạo tài khoản thất bại'));
+      toast.error(getErrorMessage(err, t('api.userCreateError')));
     },
   });
 }
 
 export function useUpdateUser() {
   const queryClient = useQueryClient();
+  const { t } = useI18n();
+
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateUserDto }) =>
       usersApi.update(id, data),
     onSuccess: (updated) => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
-      toast.success(`Đã cập nhật tài khoản ${updated.fullName}`);
+      toast.success(t('api.userUpdateSuccess', { name: updated.fullName }));
     },
     onError: (err: unknown) => {
-      toast.error(getErrorMessage(err, 'Cập nhật thất bại'));
+      toast.error(getErrorMessage(err, t('api.userUpdateError')));
     },
   });
 }
 
 export function useResetUserPassword() {
   const queryClient = useQueryClient();
+  const { t } = useI18n();
+
   return useMutation({
     mutationFn: ({ id, newPassword }: { id: string; newPassword: string }) =>
       usersApi.resetPassword(id, newPassword),
-    onSuccess: (res) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
-      toast.success(res.message);
+      toast.success(t('api.userResetPassSuccess'));
     },
     onError: (err: unknown) => {
-      toast.error(getErrorMessage(err, 'Đặt lại mật khẩu thất bại'));
+      toast.error(getErrorMessage(err, t('api.userResetPassError')));
     },
   });
 }
