@@ -1,5 +1,7 @@
 import { AuthUser, UserStatus } from './auth.types';
 
+export type { UserStatus };
+
 export type UserSortField =
   | 'role'
   | 'status'
@@ -10,7 +12,12 @@ export type UserSortField =
 export type SortOrder = 'asc' | 'desc';
 
 export interface UserItem extends AuthUser {
+  phone?: string | null;
+  avatarUrl?: string | null;
+  lastLoginAt?: string | null;
   createdAt: string;
+  updatedAt?: string;
+  activeSessions?: number;
   isEmailMasked?: boolean;
   canManage?: boolean;
 }
@@ -47,4 +54,9 @@ export interface UpdateUserDto {
   roleIdOrCode?: string;
   status?: UserStatus;
   password?: string;
+}
+
+export interface ResetPasswordResponse {
+  user: UserItem;
+  message: string;
 }

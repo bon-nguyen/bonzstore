@@ -1,7 +1,10 @@
 import { isEmpty, trim } from 'lodash';
 import {
+  Eye,
+  KeyRound,
   Loader2,
   Lock,
+  Pencil,
   Search,
   ShieldAlert,
   ShieldCheck,
@@ -29,6 +32,9 @@ import { PageHeader } from '../features/shared/PageHeader';
 import { Column, ResponsiveTable } from '../features/shared/ResponsiveTable';
 import { StatusBadge } from '../features/shared/StatusBadge';
 import { CreateUserDialog } from '../features/users/components/CreateUserDialog';
+import { EditUserDialog } from '../features/users/components/EditUserDialog';
+import { ResetPasswordDialog } from '../features/users/components/ResetPasswordDialog';
+import { UserDetailDialog } from '../features/users/components/UserDetailDialog';
 import { useUpdateUser, useUsers } from '../features/users/hooks/useUsers';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import { buildCleanSearchParams, canActorManageRole } from '../lib/utils';
@@ -67,7 +73,14 @@ export function UsersPage() {
 
   const [searchInput, setSearchInput] = useState(initialSearch);
   const debouncedSearch = useDebouncedValue(searchInput, 400);
+
+  // State quản lý các Modal (Tạo mới, Xem chi tiết, Chỉnh sửa, Reset mật khẩu)
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [viewingUser, setViewingUser] = useState<UserItem | null>(null);
+  const [editingUser, setEditingUser] = useState<UserItem | null>(null);
+  const [resetPasswordUser, setResetPasswordUser] = useState<UserItem | null>(
+    null,
+  );
 
   // Đồng bộ từ khóa sau khi debounce lên URL query params & đưa về trang 1
   useEffect(() => {
@@ -173,7 +186,6 @@ export function UsersPage() {
     });
   };
 
-  // Lọc danh sách Role được phép gán dựa theo cấp bậc của người đang đăng nhập
   const assignableRoleOptions = roles
     .filter((r) => canActorManageRole(actorRoleCode, r.code))
     .map((r) => ({
@@ -191,9 +203,15 @@ export function UsersPage() {
       sortKey: 'fullName',
       isPrimary: true,
       render: (item) => (
-        <div>
+        <div
+          className="cursor-pointer group"
+          onClick={() => setViewingUser(item)}
+          title="Bấm để xem hồ sơ chi tiết"
+        >
           <div className="flex items-center gap-1.5">
-            <p className="font-semibold text-foreground">{item.fullName}</p>
+            <p className="font-semibold text-foreground group-hover:underline dark:group-hover:text-primary">
+              {item.fullName}
+            </p>
             {item.isEmailMasked ? (
               <span
                 className="inline-flex items-center gap-1 rounded border border-amber-500/40 bg-amber-500/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-amber-600 dark:text-amber-300"
@@ -289,38 +307,72 @@ export function UsersPage() {
           item.canManage !== false &&
           canActorManageRole(actorRoleCode, item.role?.code);
 
-        if (!canManageRow) {
-          return (
-            <span
-              className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground"
-              title="Chỉ SUPER_ADMIN mới được phép thao tác trên tài khoản này"
-            >
-              <Lock className="h-3.5 w-3.5" />
-              Chỉ SUPER_ADMIN
-            </span>
-          );
-        }
-
         return (
-          <PermissionGate permission="users.update">
+          <div className="flex items-center gap-1">
+            {/* Nút Xem chi tiết (Luôn hiển thị cho người có quyền xem danh sách) */}
             <Button
               type="button"
               variant="ghost"
               size="icon"
-              onClick={() => handleToggleLock(item)}
-              title={
-                item.status === 'ACTIVE'
-                  ? 'Khóa tài khoản'
-                  : 'Mở khóa tài khoản'
-              }
+              onClick={() => setViewingUser(item)}
+              title="Xem thông tin chi tiết"
             >
-              {item.status === 'ACTIVE' ? (
-                <Lock className="h-4 w-4 text-rose-500 dark:text-rose-400" />
-              ) : (
-                <Unlock className="h-4 w-4 text-emerald-500 dark:text-emerald-400" />
-              )}
+              <Eye className="h-4 w-4 text-foreground dark:text-primary" />
             </Button>
-          </PermissionGate>
+
+            {canManageRow ? (
+              <PermissionGate permission="users.update">
+                {/* Nút Sửa thông tin */}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setEditingUser(item)}
+                  title="Chỉnh sửa thông tin tài khoản"
+                >
+                  <Pencil className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+                </Button>
+
+                {/* Nút Reset Password */}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setResetPasswordUser(item)}
+                  title="Reset mật khẩu tài khoản"
+                >
+                  <KeyRound className="h-4 w-4 text-amber-500 dark:text-amber-400" />
+                </Button>
+
+                {/* Nút Khóa / Mở khóa */}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleToggleLock(item)}
+                  title={
+                    item.status === 'ACTIVE'
+                      ? 'Khóa tài khoản'
+                      : 'Mở khóa tài khoản'
+                  }
+                >
+                  {item.status === 'ACTIVE' ? (
+                    <Lock className="h-4 w-4 text-rose-500 dark:text-rose-400" />
+                  ) : (
+                    <Unlock className="h-4 w-4 text-emerald-500 dark:text-emerald-400" />
+                  )}
+                </Button>
+              </PermissionGate>
+            ) : (
+              <span
+                className="ml-1 inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground"
+                title="Chỉ SUPER_ADMIN mới được phép sửa, khóa hoặc reset mật khẩu tài khoản này"
+              >
+                <Lock className="h-3.5 w-3.5" />
+                Chỉ SUPER_ADMIN
+              </span>
+            )}
+          </div>
         );
       },
     },
@@ -409,10 +461,41 @@ export function UsersPage() {
         onPageChange={(nextPage) => updateUrlParams({ page: nextPage })}
       />
 
+      {/* Modal 1: Tạo tài khoản mới */}
       <CreateUserDialog
         open={showCreateModal}
         onOpenChange={setShowCreateModal}
         roles={roles}
+      />
+
+      {/* Modal 2: Xem chi tiết tài khoản */}
+      <UserDetailDialog
+        user={viewingUser}
+        open={Boolean(viewingUser)}
+        onOpenChange={(open) => {
+          if (!open) setViewingUser(null);
+        }}
+        onRequestEdit={(target) => setEditingUser(target)}
+        onRequestResetPassword={(target) => setResetPasswordUser(target)}
+      />
+
+      {/* Modal 3: Chỉnh sửa thông tin tài khoản */}
+      <EditUserDialog
+        user={editingUser}
+        open={Boolean(editingUser)}
+        onOpenChange={(open) => {
+          if (!open) setEditingUser(null);
+        }}
+        roles={roles}
+      />
+
+      {/* Modal 4: Reset Password */}
+      <ResetPasswordDialog
+        user={resetPasswordUser}
+        open={Boolean(resetPasswordUser)}
+        onOpenChange={(open) => {
+          if (!open) setResetPasswordUser(null);
+        }}
       />
     </div>
   );

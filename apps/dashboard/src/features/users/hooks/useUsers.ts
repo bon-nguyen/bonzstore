@@ -12,7 +12,16 @@ export function useUsers(params?: UserQueryParams) {
   return useQuery({
     queryKey: ['users', params],
     queryFn: () => usersApi.getAll(params),
-    staleTime: 60 * 1000,
+    staleTime: 30 * 1000,
+  });
+}
+
+export function useUserDetail(id?: string | null) {
+  return useQuery({
+    queryKey: ['users', 'detail', id],
+    queryFn: () => usersApi.getById(id!),
+    enabled: Boolean(id),
+    staleTime: 30 * 1000,
   });
 }
 
@@ -45,10 +54,25 @@ export function useUpdateUser() {
       usersApi.update(id, data),
     onSuccess: (updated) => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
-      toast.success(`Đã cập nhật tài khoản ${updated.email}`);
+      toast.success(`Đã cập nhật tài khoản ${updated.fullName}`);
     },
     onError: (err: unknown) => {
       toast.error(getErrorMessage(err, 'Cập nhật thất bại'));
+    },
+  });
+}
+
+export function useResetUserPassword() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, newPassword }: { id: string; newPassword: string }) =>
+      usersApi.resetPassword(id, newPassword),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      toast.success(res.message);
+    },
+    onError: (err: unknown) => {
+      toast.error(getErrorMessage(err, 'Đặt lại mật khẩu thất bại'));
     },
   });
 }

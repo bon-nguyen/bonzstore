@@ -14,7 +14,7 @@ import {
 } from '../../common/decorators/current-user.decorator';
 import { RequirePermissions } from '../../common/decorators/permissions.decorator';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { ResetUserPasswordDto, UpdateUserDto } from './dto/update-user.dto';
 import { UserQueryDto } from './dto/user-query.dto';
 import { UsersService } from './users.service';
 
@@ -44,6 +44,19 @@ export class UsersController {
     return this.usersService.findAll(query, currentUser);
   }
 
+  @Get(':id')
+  @RequirePermissions('users.read')
+  @ApiOperation({
+    summary:
+      'Xem chi tiết thông tin người dùng (kèm quyền hạn, lịch sử đăng nhập & số phiên hoạt động)',
+  })
+  async findOne(
+    @Param('id') id: string,
+    @CurrentUser() currentUser: AuthenticatedUser,
+  ) {
+    return this.usersService.findOne(id, currentUser);
+  }
+
   @Post()
   @RequirePermissions('users.create')
   @ApiOperation({
@@ -69,5 +82,19 @@ export class UsersController {
     @CurrentUser() currentUser: AuthenticatedUser,
   ) {
     return this.usersService.update(id, dto, currentUser);
+  }
+
+  @Patch(':id/reset-password')
+  @RequirePermissions('users.update')
+  @ApiOperation({
+    summary:
+      'Reset mật khẩu người dùng & thu hồi các phiên đăng nhập cũ (Chặn STORE_MANAGER reset mật khẩu SUPER_ADMIN)',
+  })
+  async resetPassword(
+    @Param('id') id: string,
+    @Body() dto: ResetUserPasswordDto,
+    @CurrentUser() currentUser: AuthenticatedUser,
+  ) {
+    return this.usersService.resetPassword(id, dto.newPassword, currentUser);
   }
 }

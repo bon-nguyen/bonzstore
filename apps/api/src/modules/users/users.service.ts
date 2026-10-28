@@ -38,7 +38,7 @@ export class UsersService implements OnModuleInit {
 
   /**
    * Hash / Mask email đối với các tài khoản có quyền cao hơn người đang đăng nhập
-   * Ví dụ: admin@bonzstore.com -> ad***n#a1b2@bonzstore.com
+   * Ví dụ: admin@bonzstore.com -> ad***#a1b2@bonzstore.com
    */
   private maskEmailForLowerRole(email: string): string {
     if (isEmpty(email) || !email.includes('@')) return '***';
@@ -129,6 +129,9 @@ export class UsersService implements OnModuleInit {
               permissions: { include: { permission: true } },
             },
           },
+          _count: {
+            select: { refreshTokens: true },
+          },
         },
       }),
       this.prisma.client.user.count({ where }),
@@ -149,6 +152,28 @@ export class UsersService implements OnModuleInit {
         sortOrder,
       },
     };
+  }
+
+  async findOne(id: string, currentUser?: AuthenticatedUser) {
+    const user = await this.prisma.client.user.findUnique({
+      where: { id },
+      include: {
+        role: {
+          include: {
+            permissions: { include: { permission: true } },
+          },
+        },
+        _count: {
+          select: { refreshTokens: true },
+        },
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Không tìm thấy người dùng');
+    }
+
+    return this.transformEntity(user, currentUser);
   }
 
   async create(dto: CreateUserDto, currentUser?: AuthenticatedUser) {
@@ -178,7 +203,6 @@ export class UsersService implements OnModuleInit {
 
     const targetRoleRank = this.getRoleRank(role.code);
 
-    // Chặn tài khoản không phải SUPER_ADMIN tạo hoặc gán quyền SUPER_ADMIN / quyền cao hơn
     if (
       requesterRoleCode !== 'SUPER_ADMIN' &&
       (role.code === 'SUPER_ADMIN' || targetRoleRank > requesterRank)
@@ -201,6 +225,9 @@ export class UsersService implements OnModuleInit {
       include: {
         role: {
           include: { permissions: { include: { permission: true } } },
+        },
+        _count: {
+          select: { refreshTokens: true },
         },
       },
     });
@@ -226,7 +253,6 @@ export class UsersService implements OnModuleInit {
 
     const targetCurrentRank = this.getRoleRank(user.role?.code);
 
-    // 1. Chặn người dùng cấp thấp hơn (VD: STORE_MANAGER) chỉnh sửa hoặc khóa tài khoản SUPER_ADMIN
     if (
       requesterRoleCode !== 'SUPER_ADMIN' &&
       (user.role?.code === 'SUPER_ADMIN' || targetCurrentRank > requesterRank)
@@ -238,7 +264,7 @@ export class UsersService implements OnModuleInit {
 
     const updateData: Record<string, unknown> = {};
     if (!isNil(dto.fullName)) updateData.fullName = trim(dto.fullName);
-    if (!isNil(dto.phone)) updateData.phone = trim(dto.phone);
+    if (!isNil(dto.phone)) updateData.phone = trim(dto.phone) || null;
     if (!isNil(dto.status)) updateData.status = dto.status;
 
     if (!isEmpty(dto.roleIdOrCode)) {
@@ -253,7 +279,6 @@ export class UsersService implements OnModuleInit {
 
       const nextRoleRank = this.getRoleRank(nextRole.code);
 
-      // 2. Chặn STORE_MANAGER nâng quyền bất kỳ ai lên SUPER_ADMIN hoặc quyền cao hơn mình
       if (
         requesterRoleCode !== 'SUPER_ADMIN' &&
         (nextRole.code === 'SUPER_ADMIN' || nextRoleRank > requesterRank)
@@ -277,10 +302,71 @@ export class UsersService implements OnModuleInit {
         role: {
           include: { permissions: { include: { permission: true } } },
         },
+        _count: {
+          select: { refreshTokens: true },
+        },
       },
     });
 
     return this.transformEntity(updated, currentUser);
+  }
+
+  async resetPassword(
+    id: string,
+    newPassword: string,
+    currentUser?: AuthenticatedUser,
+  ) {
+    const requesterRoleCode = currentUser?.role?.code || '';
+    const requesterRank = this.getRoleRank(requesterRoleCode);
+
+    const cleanedPassword = trim(newPassword);
+    if (isEmpty(cleanedPassword) || cleanedPassword.length < 6) {
+      throw new BadRequestException('Mật khẩu mới phải có ít nhất 6 ký tự');
+    }
+
+    const user = await this.prisma.client.user.findUnique({
+      where: { id },
+      include: { role: true },
+    });
+    if (!user) {
+      throw new NotFoundException('Không tìm thấy người dùng');
+    }
+
+    const targetCurrentRank = this.getRoleRank(user.role?.code);
+
+    if (
+      requesterRoleCode !== 'SUPER_ADMIN' &&
+      (user.role?.code === 'SUPER_ADMIN' || targetCurrentRank > requesterRank)
+    ) {
+      throw new ForbiddenException(
+        `Tài khoản ${requesterRoleCode} không đủ thẩm quyền đặt lại mật khẩu cho tài khoản cấp cao hơn (${user.role?.code})`,
+      );
+    }
+
+    const passwordHash = await bcrypt.hash(cleanedPassword, 10);
+
+    const [updated] = await this.prisma.client.$transaction([
+      this.prisma.client.user.update({
+        where: { id },
+        data: { passwordHash },
+        include: {
+          role: {
+            include: { permissions: { include: { permission: true } } },
+          },
+          _count: {
+            select: { refreshTokens: true },
+          },
+        },
+      }),
+      this.prisma.client.refreshToken.deleteMany({
+        where: { userId: id },
+      }),
+    ]);
+
+    return {
+      user: this.transformEntity(updated, currentUser),
+      message: `Đã đặt lại mật khẩu và đăng xuất các phiên cũ của ${user.fullName}`,
+    };
   }
 
   private transformEntity(entity: any, currentUser?: AuthenticatedUser) {
@@ -289,7 +375,6 @@ export class UsersService implements OnModuleInit {
     const targetRoleCode = entity.role?.code || '';
     const targetRank = this.getRoleRank(targetRoleCode);
 
-    // Nếu người xem có quyền thấp hơn tài khoản mục tiêu (VD: STORE_MANAGER xem SUPER_ADMIN admin@bonzstore.com)
     const isProtectedHigherRole =
       requesterRoleCode !== 'SUPER_ADMIN' &&
       (targetRoleCode === 'SUPER_ADMIN' || targetRank > requesterRank);
@@ -312,11 +397,14 @@ export class UsersService implements OnModuleInit {
       status: entity.status,
       lastLoginAt: entity.lastLoginAt,
       createdAt: entity.createdAt,
+      updatedAt: entity.updatedAt,
+      activeSessions: entity._count?.refreshTokens ?? 0,
       role: entity.role
         ? {
             id: entity.role.id,
             code: entity.role.code,
             name: entity.role.name,
+            description: entity.role.description,
             isAdminPanel: entity.role.isAdminPanel,
           }
         : null,
@@ -325,10 +413,6 @@ export class UsersService implements OnModuleInit {
     };
   }
 
-  /**
-   * Đảm bảo STORE_MANAGER có quyền thao tác quản lý nhân sự cấp dưới để kiểm thử
-   * và có đủ > 20 bản ghi người dùng để kiểm thử phân trang (max 20/lần).
-   */
   private async ensureManagerPermissionsAndSampleUsers() {
     try {
       const [managerRole, staffRole, customerRole] = await Promise.all([
