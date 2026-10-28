@@ -1,7 +1,18 @@
 import { AuthUser, UserStatus } from './auth.types';
 
+export type UserSortField =
+  | 'role'
+  | 'status'
+  | 'createdAt'
+  | 'fullName'
+  | 'email';
+
+export type SortOrder = 'asc' | 'desc';
+
 export interface UserItem extends AuthUser {
   createdAt: string;
+  isEmailMasked?: boolean;
+  canManage?: boolean;
 }
 
 export interface UserStats {
@@ -17,6 +28,8 @@ export interface UserQueryParams {
   search?: string;
   status?: UserStatus | '';
   roleCode?: string;
+  sortBy?: UserSortField;
+  sortOrder?: SortOrder;
 }
 
 export interface CreateUserDto {
@@ -35,4 +48,3 @@ export interface UpdateUserDto {
   status?: UserStatus;
   password?: string;
 }
-

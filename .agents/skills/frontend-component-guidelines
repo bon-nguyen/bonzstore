@@ -1,0 +1,284 @@
+---
+name: frontend-component-guidelines
+description: Guidelines for AI coding agents to write maintainable React and TypeScript code, reuse existing components, avoid duplication, and follow the project's architecture.
+---
+
+# Frontend Component Guidelines
+
+## 1. Core Principles
+
+When writing or modifying code, follow these principles:
+
+- **Reuse Before Creating:** Always check whether an existing component, hook, utility, or service can be reused before creating a new one.
+- **DRY (Don't Repeat Yourself):** Avoid duplicating code, business logic, validation, and UI implementations.
+- **Single Responsibility Principle (SRP):** Each component, hook, function, and module should have a clear responsibility.
+- **Separation of Concerns:** Separate UI, business logic, data fetching, and state management when appropriate.
+- **KISS (Keep It Simple, Stupid):** Prefer simple, readable solutions over unnecessary abstractions.
+- **YAGNI (You Aren't Gonna Need It):** Do not implement features or abstractions that are not currently required.
+- **Consistency:** Follow the existing project's coding conventions, architecture, and naming patterns.
+
+Do not sacrifice readability or maintainability merely to minimize the number of lines of code.
+
+## 2. Inspect Before Coding
+
+Before implementing any feature or fixing a bug:
+
+1. Inspect the relevant files and understand the existing implementation.
+2. Identify the application's framework, libraries, and architectural patterns.
+3. Search for existing components, hooks, utilities, and services that solve similar problems.
+4. Check whether the required functionality already exists elsewhere in the project.
+5. Understand the existing data flow and component dependencies.
+6. Determine the smallest appropriate change that solves the problem.
+
+Do not create new files or components until you understand whether existing implementations can be reused.
+
+Never assume that a component or utility does not exist without checking the codebase.
+
+## 3. Component Reusability
+
+### 3.1. Before Creating a Component
+
+Ask the following questions:
+
+- Does a component with similar functionality already exist?
+- Can an existing component be extended through props or composition?
+- Is the component needed in multiple places?
+- Does the component contain business-specific logic that should remain inside its feature?
+- Would creating a shared component actually simplify the codebase?
+
+Prefer reusing or extending an existing component when appropriate.
+
+Do not create multiple components with essentially the same responsibility.
+
+### 3.2. Shared Components
+
+Shared components should:
+
+- Have a clear and reusable purpose.
+- Accept explicit props for configurable behavior.
+- Avoid dependencies on a specific business feature.
+- Avoid accessing feature-specific state or data directly.
+- Remain independent of individual pages whenever practical.
+- Have well-defined interfaces and predictable behavior.
+
+Examples of shared components:
+
+- Button
+- Input
+- Select
+- Checkbox
+- Modal
+- Dialog
+- Loading
+- EmptyState
+- Pagination
+- DataTable
+- FormField
+
+Do not move every component into a shared directory. Only share components that have a meaningful common purpose.
+
+### 3.3. Feature-Specific Components
+
+Components that contain business-specific behavior should remain within their respective feature.
+
+For example:
+
+- `UserProfileCard`
+- `ProductInventoryTable`
+- `AppointmentStatusBadge`
+- `OrderPaymentForm`
+
+A component may use shared UI components without becoming a shared component itself.
+
+### 3.4. Component Composition
+
+Prefer composing smaller components over creating one large component with too many responsibilities.
+
+Use props, children, and composition to support different use cases.
+
+Avoid excessive boolean props that create many combinations of behavior.
+
+For example, prefer an explicit variant:
+
+`<Button variant="primary">Save</Button>`
+
+Instead of accumulating unrelated flags:
+
+`<Button isBlue isLarge isRounded isForSave />`
+
+Follow the project's existing API conventions when they differ from these examples.
+
+## 4. Code Duplication
+
+Before duplicating code:
+
+1. Search for existing implementations.
+2. Determine whether the logic is genuinely identical.
+3. Reuse an existing implementation if its behavior matches the requirement.
+4. Extract common logic only when doing so improves clarity and maintainability.
+5. Keep different business rules separate when their behavior or requirements differ.
+
+Do not force unrelated implementations into a single generic function merely because they look similar.
+
+When refactoring duplicated code, preserve existing behavior unless a behavior change is explicitly required.
+
+## 5. React and TypeScript
+
+When working with React and TypeScript:
+
+- Use functional components and hooks according to the project's conventions.
+- Define explicit TypeScript types for component props and function parameters when appropriate.
+- Prefer precise types over `any`.
+- Avoid unnecessary type assertions and non-null assertions.
+- Follow the Rules of Hooks.
+- Use stable keys when rendering lists.
+- Avoid unnecessary state when a value can be derived from existing props or state.
+- Avoid unnecessary `useEffect` hooks.
+- Avoid premature memoization with `useMemo` and `useCallback`.
+- Keep state as close as practical to the components that need it.
+- Follow the project's existing state management approach.
+- Handle loading, error, empty, and success states when required.
+
+Do not introduce a new state management library or additional dependency without a clear need.
+
+## 6. Separation of Concerns
+
+Keep responsibilities separated when doing so improves the design.
+
+- **Components:** Render UI and coordinate user interactions.
+- **Custom Hooks:** Encapsulate reusable React stateful logic.
+- **Services/API Modules:** Handle communication with backend services.
+- **Utilities:** Provide reusable, preferably pure functions.
+- **Types:** Define shared data structures and interfaces.
+- **Feature Modules:** Contain functionality specific to a business domain.
+
+These are guidelines, not mandatory layers for every feature.
+
+Do not create extra files, hooks, services, or abstractions without a meaningful benefit.
+
+Follow the existing project architecture rather than imposing a new architecture on an established codebase.
+
+## 7. File and Folder Organization
+
+- Follow the existing folder structure.
+- Keep feature-specific code close to the feature that uses it.
+- Place genuinely reusable components in the established shared UI location.
+- Avoid circular dependencies.
+- Avoid importing internal implementation details from unrelated features.
+- Use consistent file names and exports.
+- Do not move files or rename modules unnecessarily.
+- Do not introduce a new folder structure without a clear reason.
+
+If the project has multiple applications, such as `app`, `dashboard`, and `web`, distinguish between:
+
+1. Application-specific components.
+2. Feature-specific components.
+3. Shared UI components.
+4. Shared business logic and utilities.
+
+Only share code across applications when their requirements and runtime dependencies are compatible.
+
+## 8. Modifying Existing Code
+
+When fixing bugs or implementing features:
+
+- Understand the existing behavior before making changes.
+- Preserve existing business rules unless the requirement explicitly changes them.
+- Make the smallest reasonable change.
+- Reuse existing helpers and components where appropriate.
+- Avoid unrelated refactoring.
+- Do not silently change public interfaces.
+- Check the impact on other components that depend on the modified code.
+- Update related tests when necessary.
+
+Do not rewrite an entire file or module when a smaller change is sufficient.
+
+If a larger refactor is necessary, explain why it is needed.
+
+## 9. Error Handling and Data Safety
+
+- Follow the project's existing error-handling conventions.
+- Validate data at appropriate boundaries.
+- Handle API failures and unexpected states where required.
+- Avoid swallowing errors silently.
+- Do not expose sensitive information in logs.
+- Do not bypass authorization or business validation to make a feature work.
+- Do not assume frontend validation replaces backend validation.
+- Preserve existing data integrity rules.
+
+Never change API contracts, database schemas, or authentication behavior without understanding the consequences.
+
+## 10. Performance and Maintainability
+
+- Avoid unnecessary re-renders when they have a meaningful performance impact.
+- Avoid expensive computations inside frequently rendered components when optimization is justified.
+- Avoid unnecessary network requests.
+- Avoid introducing dependencies for functionality that can be implemented simply with existing tools.
+- Prefer readable code over clever but difficult-to-maintain implementations.
+- Avoid premature optimization.
+
+Optimize based on actual requirements and observed bottlenecks rather than assumptions.
+
+## 11. Testing and Verification
+
+After implementing changes:
+
+1. Run relevant tests when available.
+2. Run the project's type checking and linting commands when appropriate.
+3. Verify that imports and exports are correct.
+4. Check that existing component usages remain compatible.
+5. Verify relevant loading, error, empty, and success states.
+6. Check for regressions in related features.
+7. Report any checks that could not be completed.
+
+Never claim that tests passed if they were not executed successfully.
+
+## 12. Required Workflow
+
+For every coding task, follow this workflow:
+
+### Step 1: Understand
+Identify the requirement, affected feature, and expected behavior.
+
+### Step 2: Inspect
+Read the relevant files and identify existing implementations that may be reused.
+
+### Step 3: Plan
+Choose the simplest implementation that fits the existing architecture.
+
+### Step 4: Implement
+Write code that follows the project's conventions and avoids unnecessary duplication.
+
+### Step 5: Verify
+Run relevant checks and inspect the changes for regressions.
+
+### Step 6: Report
+Summarize the implementation, affected files, reuse decisions, and verification results.
+
+## 13. Final Checklist
+
+Before finishing any coding task, verify the following:
+
+- [ ] Existing components and utilities were inspected before creating new ones.
+- [ ] No unnecessary duplicate components or functions were introduced.
+- [ ] Shared components remain independent of feature-specific business logic.
+- [ ] Each component and function has a clear responsibility.
+- [ ] TypeScript types are appropriate.
+- [ ] Existing business behavior is preserved unless a change was requested.
+- [ ] The solution follows the existing project architecture.
+- [ ] No unnecessary dependencies or abstractions were introduced.
+- [ ] Relevant tests and checks were performed when possible.
+- [ ] Any remaining risks or unverified behavior are clearly reported.
+
+## 14. Priority Rule
+
+When these guidelines conflict with the existing project's requirements:
+
+1. Follow explicit user requirements.
+2. Preserve established business rules and API contracts.
+3. Follow the project's existing architecture and coding conventions.
+4. Apply these guidelines where they are compatible with the above.
+
+Do not refactor unrelated code merely to comply with a general guideline.
+
+**Primary objective:** Produce code that is correct, maintainable, reusable where appropriate, consistent with the existing codebase, and easy for other developers to understand.

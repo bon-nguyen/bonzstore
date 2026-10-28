@@ -9,24 +9,46 @@
     --foreground: 0 0% 6%;
     --card: 0 0% 100%;
     --card-foreground: 0 0% 6%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 6%;
     --primary: 176 30% 80%; /* #bddbd9 */
     --primary-foreground: 0 0% 6%; /* TikTok Black #0f0f0f */
+    --secondary: 176 18% 91%;
+    --secondary-foreground: 0 0% 9%;
     --muted: 176 18% 91%;
     --muted-foreground: 0 0% 36%;
+    --accent: 176 30% 85%;
+    --accent-foreground: 0 0% 6%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
     --border: 176 20% 84%;
+    --input: 176 20% 84%;
+    --ring: 176 30% 70%;
+    --radius: 0.65rem;
   }
 
-  /* Dark Mode: Nền Đen TikTok (#0b0b0d / #121214) + Điểm nhấn chủ đạo #bddbd9 */
+  /* Dark Mode: Nền Đen TikTok (#0b0b0d / #151518) + Điểm nhấn chủ đạo #bddbd9 */
   .dark {
     --background: 240 8% 5%; /* TikTok Deep Black #0b0b0d */
     --foreground: 176 25% 96%;
     --card: 240 6% 9%; /* TikTok Card Surface #151518 */
     --card-foreground: 176 25% 96%;
+    --popover: 240 6% 9%;
+    --popover-foreground: 176 25% 96%;
     --primary: 176 30% 80%; /* #bddbd9 */
     --primary-foreground: 240 10% 6%; /* TikTok Black text on #bddbd9 */
+    --secondary: 240 5% 15%;
+    --secondary-foreground: 176 25% 96%;
     --muted: 240 5% 14%;
     --muted-foreground: 176 10% 64%;
+    --accent: 240 5% 16%;
+    --accent-foreground: 176 30% 85%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 0 0% 98%;
     --border: 240 5% 18%;
+    --input: 240 5% 18%;
+    --ring: 176 30% 80%;
+    --radius: 0.65rem;
   }
 }
 

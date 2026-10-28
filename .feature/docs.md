@@ -37,8 +37,8 @@
 
 | Đối tượng | Đăng nhập Dashboard (`/login`) | Vào trang Tổng quan (`/`) | Vào trang Người dùng (`/users`) | Tạo / Khóa User (`users.create`, `users.update`) | Vào trang Phân quyền (`/roles`) | Sửa Ma trận Quyền (`roles.manage`) |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Super Admin (`SUPER_ADMIN`)** | ✅ Cho phép | ✅ Cho phép | ✅ Cho phép | ✅ Cho phép | ✅ Cho phép | ✅ Cho phép |
-| **Quản lý (`STORE_MANAGER`)** | ✅ Cho phép | ✅ Cho phép | ✅ Chỉ xem | ❌ Ẩn nút / Chặn API | ✅ Chỉ xem | ❌ Chặn sửa |
+| **Super Admin (`SUPER_ADMIN`)** | ✅ Cho phép | ✅ Cho phép | ✅ Toàn quyền (Xem rõ mọi email) | ✅ Toàn quyền mọi Role | ✅ Cho phép | ✅ Cho phép |
+| **Quản lý (`STORE_MANAGER`)** | ✅ Cho phép | ✅ Cho phép | ✅ Xem (Hash email `SUPER_ADMIN`) | ✅ Chỉ sửa cấp dưới (Chặn sửa/gán `SUPER_ADMIN` ở BE & FE) | ✅ Chỉ xem | ❌ Chặn sửa |
 | **Nhân viên (`STAFF`)** | ✅ Cho phép | ✅ Cho phép | ❌ Ẩn menu & Chặn URL (403) | ❌ Chặn | ❌ Ẩn menu & Chặn URL (403) | ❌ Chặn |
 | **Khách hàng (`CUSTOMER`)** | ❌ **Chặn ngay từ cổng Login (403)** | ❌ Chặn | ❌ Chặn | ❌ Chặn | ❌ Chặn | ❌ Chặn |
 

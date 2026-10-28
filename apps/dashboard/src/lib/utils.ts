@@ -1,7 +1,80 @@
 import { clsx, type ClassValue } from 'clsx';
+import { get, isEmpty, isNil, omitBy, trim } from 'lodash';
 import { twMerge } from 'tailwind-merge';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export function getErrorMessage(
+  error: unknown,
+  fallback = 'Đã xảy ra lỗi không xác định',
+): string {
+  if (error instanceof Error && !isEmpty(trim(error.message))) {
+    return error.message;
+  }
+  const msg = get<string | undefined>(error, 'message', undefined);
+  if (typeof msg === 'string' && !isEmpty(trim(msg))) {
+    return msg;
+  }
+  return fallback;
+}
+
+export function formatCurrencyVND(amount: number): string {
+  return new Intl.NumberFormat('vi-VN', {
+    style: 'currency',
+    currency: 'VND',
+  }).format(amount);
+}
+
+const ROLE_RANK: Record<string, number> = {
+  SUPER_ADMIN: 100,
+  STORE_MANAGER: 50,
+  STAFF: 20,
+  CUSTOMER: 10,
+};
+
+export function getRoleRank(roleCode?: string | null): number {
+  if (!roleCode || isEmpty(trim(roleCode))) return 0;
+  return ROLE_RANK[roleCode] ?? 30;
+}
+
+/**
+ * Kiểm tra xem người dùng hiện tại (actorRoleCode) có được phép thao tác / gán vai trò targetRoleCode hay không.
+ * - Chỉ SUPER_ADMIN mới có toàn quyền thao tác trên tất cả các Role (bao gồm SUPER_ADMIN).
+ * - Các Role thấp hơn (VD: STORE_MANAGER) bị chặn thao tác trên SUPER_ADMIN hoặc Role cao hơn mình.
+ */
+export function canActorManageRole(
+  actorRoleCode?: string | null,
+  targetRoleCode?: string | null,
+): boolean {
+  if (actorRoleCode === 'SUPER_ADMIN') return true;
+  if (targetRoleCode === 'SUPER_ADMIN') return false;
+  return getRoleRank(actorRoleCode) >= getRoleRank(targetRoleCode);
+}
+
+/**
+ * Làm sạch object query params bằng lodash (loại bỏ giá trị rỗng, null, undefined hoặc mặc định)
+ */
+export function buildCleanSearchParams(
+  params: Record<string, string | number | undefined | null>,
+  defaults: Record<string, string | number> = {},
+): Record<string, string> {
+  const cleaned = omitBy(params, (val, key) => {
+    if (isNil(val)) return true;
+    const strVal = trim(String(val));
+    if (isEmpty(strVal)) return true;
+    if (defaults[key] !== undefined && String(defaults[key]) === strVal) {
+      return true;
+    }
+    return false;
+  });
+
+  const result: Record<string, string> = {};
+  for (const [key, value] of Object.entries(cleaned)) {
+    if (!isNil(value)) {
+      result[key] = trim(String(value));
+    }
+  }
+  return result;
+}

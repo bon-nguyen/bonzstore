@@ -1,7 +1,7 @@
-import { useI18n } from '../i18n/I18nContext';
 import { cn } from '../../lib/utils';
+import { TranslationKey, useI18n } from '../i18n/I18nContext';
 
-interface StatusBadgeProps {
+export interface StatusBadgeProps {
   status: string;
   label?: string;
 }
@@ -15,14 +15,20 @@ const STATUS_STYLE: Record<string, string> = {
   FREEZE: 'status-inactive',
 };
 
+const STATUS_TRANSLATION_KEY: Record<string, TranslationKey> = {
+  ACTIVE: 'status.ACTIVE',
+  INACTIVE: 'status.INACTIVE',
+  LOCKED: 'status.LOCKED',
+  DRAFT: 'status.DRAFT',
+  FREEZE: 'status.FREEZE',
+};
+
 export function StatusBadge({ status, label }: StatusBadgeProps) {
   const { t } = useI18n();
   const normalized = status?.toUpperCase() || 'INACTIVE';
   const className = STATUS_STYLE[normalized] || 'status-inactive';
-  const translated =
-    t(`status.${normalized}` as any) !== `status.${normalized}`
-      ? t(`status.${normalized}` as any)
-      : status;
+  const translationKey = STATUS_TRANSLATION_KEY[normalized];
+  const translated = translationKey ? t(translationKey) : status;
 
   return (
     <span className={cn('status-badge', className)}>

@@ -162,10 +162,12 @@ async function main() {
     });
   }
 
-  // Manager gets dashboard, users.read, roles.read, products.*, orders.*
+  // Manager gets dashboard, users.*, roles.read, products.*, orders.*
   const managerPermCodes = [
     'dashboard.view',
     'users.read',
+    'users.create',
+    'users.update',
     'roles.read',
     'products.read',
     'products.manage',

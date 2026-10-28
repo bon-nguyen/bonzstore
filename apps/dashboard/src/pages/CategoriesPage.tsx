@@ -1,10 +1,12 @@
-import { Code2, FolderTree, Plus, RefreshCw } from 'lucide-react';
-import { FormEvent, useState } from 'react';
+import { Code2, Plus, RefreshCw } from 'lucide-react';
+import { useState } from 'react';
 import { CategoryItem } from '../api/types/catalog.types';
+import { Button } from '../components/ui/button';
 import { PermissionGate } from '../features/auth/components/PermissionGate';
+import { CreateCategoryDialog } from '../features/catalog/components/CreateCategoryDialog';
+import { TikTokAssetsPreview } from '../features/catalog/components/TikTokAssetsPreview';
 import {
   useCategories,
-  useCreateCategory,
   useSyncTikTokCategories,
   useTikTokCategoryAssets,
 } from '../features/catalog/hooks/useCatalog';
@@ -15,36 +17,12 @@ import { StatusBadge } from '../features/shared/StatusBadge';
 
 export function CategoriesPage() {
   const { t } = useI18n();
-  const { data: categories, isLoading } = useCategories();
+  const { data: categories = [], isLoading } = useCategories();
   const { data: tiktokAssets } = useTikTokCategoryAssets();
   const syncMutation = useSyncTikTokCategories();
-  const createMutation = useCreateCategory();
 
   const [showJsonPreview, setShowJsonPreview] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [formState, setFormState] = useState({
-    localName: '',
-    externalCategoryId: '',
-    parentId: '',
-    isLeaf: true,
-  });
-
-  const handleCreate = async (e: FormEvent) => {
-    e.preventDefault();
-    await createMutation.mutateAsync({
-      localName: formState.localName,
-      externalCategoryId: formState.externalCategoryId || undefined,
-      parentId: formState.parentId || undefined,
-      isLeaf: formState.isLeaf,
-    });
-    setShowCreateModal(false);
-    setFormState({
-      localName: '',
-      externalCategoryId: '',
-      parentId: '',
-      isLeaf: true,
-    });
-  };
 
   const columns: Column<CategoryItem>[] = [
     {
@@ -128,10 +106,9 @@ export function CategoriesPage() {
         description={t('categories.desc')}
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
+            <Button
+              variant="outline"
               onClick={() => setShowJsonPreview(!showJsonPreview)}
-              className="action-btn-secondary"
             >
               <Code2 className="h-4 w-4" />
               <span>
@@ -139,14 +116,13 @@ export function CategoriesPage() {
                   ? t('categories.hideJson')
                   : t('categories.viewJson')}
               </span>
-            </button>
+            </Button>
 
             <PermissionGate permission="products.sync">
-              <button
-                type="button"
+              <Button
+                variant="outline"
                 disabled={syncMutation.isPending}
                 onClick={() => syncMutation.mutate()}
-                className="action-btn-secondary"
               >
                 <RefreshCw
                   className={`h-4 w-4 ${syncMutation.isPending ? 'animate-spin' : ''}`}
@@ -156,139 +132,35 @@ export function CategoriesPage() {
                     ? t('categories.syncing')
                     : t('categories.syncBtn')}
                 </span>
-              </button>
+              </Button>
             </PermissionGate>
 
             <PermissionGate permission="products.manage">
-              <button
-                type="button"
-                onClick={() => setShowCreateModal(true)}
-                className="action-btn-primary"
-              >
+              <Button onClick={() => setShowCreateModal(true)}>
                 <Plus className="h-4 w-4" />
                 <span>{t('categories.addBtn')}</span>
-              </button>
+              </Button>
             </PermissionGate>
           </div>
         }
       />
 
       {showJsonPreview && tiktokAssets ? (
-        <div className="stat-card space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="font-display text-xs font-bold uppercase text-foreground dark:text-primary">
-              GET /api/categories/assets (TikTok Shop 202405 Response Envelope)
-            </span>
-            <span className="font-mono text-xs text-muted-foreground">
-              request_id: {tiktokAssets.request_id}
-            </span>
-          </div>
-          <pre className="max-h-72 overflow-auto rounded-lg bg-tiktok p-4 font-mono text-xs text-mint">
-            {JSON.stringify(tiktokAssets, null, 2)}
-          </pre>
-        </div>
+        <TikTokAssetsPreview assets={tiktokAssets} />
       ) : null}
 
       <ResponsiveTable
         columns={columns}
-        data={categories || []}
+        data={categories}
         keyExtractor={(c) => c.id}
         isLoading={isLoading}
       />
 
-      {showCreateModal ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="stat-card w-full max-w-md space-y-4 p-6">
-            <div className="flex items-center gap-2">
-              <FolderTree className="h-5 w-5 text-foreground dark:text-primary" />
-              <h2 className="font-display text-lg font-bold">
-                {t('categories.addBtn')}
-              </h2>
-            </div>
-            <form onSubmit={handleCreate} className="space-y-3">
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-muted-foreground">
-                  local_name (Anime Category)
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="VD: Mô hình Nendoroid / Gunpla"
-                  value={formState.localName}
-                  onChange={(e) =>
-                    setFormState({ ...formState, localName: e.target.value })
-                  }
-                  className="w-full rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-muted-foreground">
-                  externalCategoryId (TikTok / Shopee ID)
-                </label>
-                <input
-                  type="text"
-                  placeholder="VD: 605088"
-                  value={formState.externalCategoryId}
-                  onChange={(e) =>
-                    setFormState({
-                      ...formState,
-                      externalCategoryId: e.target.value,
-                    })
-                  }
-                  className="w-full rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-muted-foreground">
-                  Parent Category
-                </label>
-                <select
-                  value={formState.parentId}
-                  onChange={(e) =>
-                    setFormState({ ...formState, parentId: e.target.value })
-                  }
-                  className="w-full rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm"
-                >
-                  <option value="">-- Root Category (parent_id = 0) --</option>
-                  {categories
-                    ?.filter((c) => !c.isLeaf)
-                    .map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.localName} ({c.externalCategoryId})
-                      </option>
-                    ))}
-                </select>
-              </div>
-              <label className="flex items-center gap-2 pt-1 text-xs font-medium">
-                <input
-                  type="checkbox"
-                  checked={formState.isLeaf}
-                  onChange={(e) =>
-                    setFormState({ ...formState, isLeaf: e.target.checked })
-                  }
-                />
-                <span>is_leaf = true (Allow attaching Anime products)</span>
-              </label>
-              <div className="flex justify-end gap-2 pt-3">
-                <button
-                  type="button"
-                  onClick={() => setShowCreateModal(false)}
-                  className="action-btn-secondary"
-                >
-                  {t('app.cancel')}
-                </button>
-                <button
-                  type="submit"
-                  disabled={createMutation.isPending}
-                  className="action-btn-primary"
-                >
-                  {t('app.save')}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      ) : null}
+      <CreateCategoryDialog
+        open={showCreateModal}
+        onOpenChange={setShowCreateModal}
+        categories={categories}
+      />
     </div>
   );
 }

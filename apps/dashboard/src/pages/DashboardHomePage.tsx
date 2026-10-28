@@ -1,9 +1,16 @@
-import { CheckCircle2, KeyRound, Lock, ShieldCheck, Users } from 'lucide-react';
+import {
+  CheckCircle2,
+  KeyRound,
+  Lock,
+  ShieldCheck,
+  Users,
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuthContext } from '../features/auth/context/AuthContext';
 import { useI18n } from '../features/i18n/I18nContext';
 import { useRoles } from '../features/roles/hooks/useRoles';
 import { PageHeader } from '../features/shared/PageHeader';
+import { StatCard } from '../features/shared/StatCard';
 import { StatusBadge } from '../features/shared/StatusBadge';
 import { useUserStats } from '../features/users/hooks/useUsers';
 
@@ -28,61 +35,27 @@ export function DashboardHomePage() {
       />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="stat-card flex items-center justify-between">
-          <div>
-            <p className="font-display text-xs font-bold uppercase text-muted-foreground">
-              {t('home.totalUsers')}
-            </p>
-            <p className="mt-1 font-display text-2xl font-bold">
-              {userStats?.total ?? '—'}
-            </p>
-          </div>
-          <div className="stat-card-icon">
-            <Users className="h-5 w-5" />
-          </div>
-        </div>
-
-        <div className="stat-card flex items-center justify-between">
-          <div>
-            <p className="font-display text-xs font-bold uppercase text-muted-foreground">
-              {t('home.activeUsers')}
-            </p>
-            <p className="mt-1 font-display text-2xl font-bold text-foreground dark:text-primary">
-              {userStats?.active ?? '—'}
-            </p>
-          </div>
-          <div className="stat-card-icon">
-            <CheckCircle2 className="h-5 w-5" />
-          </div>
-        </div>
-
-        <div className="stat-card flex items-center justify-between">
-          <div>
-            <p className="font-display text-xs font-bold uppercase text-muted-foreground">
-              {t('home.adminStaff')}
-            </p>
-            <p className="mt-1 font-display text-2xl font-bold">
-              {userStats?.adminUsers ?? '—'}
-            </p>
-          </div>
-          <div className="stat-card-icon">
-            <ShieldCheck className="h-5 w-5" />
-          </div>
-        </div>
-
-        <div className="stat-card flex items-center justify-between">
-          <div>
-            <p className="font-display text-xs font-bold uppercase text-muted-foreground">
-              {t('home.totalRoles')}
-            </p>
-            <p className="mt-1 font-display text-2xl font-bold">
-              {roles?.length ?? '—'}
-            </p>
-          </div>
-          <div className="stat-card-icon">
-            <Lock className="h-5 w-5" />
-          </div>
-        </div>
+        <StatCard
+          label={t('home.totalUsers')}
+          value={userStats?.total ?? '—'}
+          icon={Users}
+        />
+        <StatCard
+          label={t('home.activeUsers')}
+          value={userStats?.active ?? '—'}
+          icon={CheckCircle2}
+          highlight
+        />
+        <StatCard
+          label={t('home.adminStaff')}
+          value={userStats?.adminUsers ?? '—'}
+          icon={ShieldCheck}
+        />
+        <StatCard
+          label={t('home.totalRoles')}
+          value={roles?.length ?? '—'}
+          icon={Lock}
+        />
       </div>
 
       <div className="stat-card space-y-4">

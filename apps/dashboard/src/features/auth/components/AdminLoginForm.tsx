@@ -1,9 +1,40 @@
 import { AlertCircle, KeyRound, Lock, Mail, Sparkles } from 'lucide-react';
 import { FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Button } from '../../../components/ui/button';
+import { FormField } from '../../../components/ui/form-field';
+import { Input } from '../../../components/ui/input';
+import { getErrorMessage } from '../../../lib/utils';
 import { LanguageToggle, useI18n } from '../../i18n/I18nContext';
 import { ThemeToggle } from '../../theme/ThemeContext';
 import { useAdminLogin } from '../hooks/useAuth';
+
+const DEMO_ACCOUNTS = [
+  {
+    labelKey: 'login.demoAdmin' as const,
+    email: 'admin@bonzstore.com',
+    pass: 'Admin@123',
+    destructive: false,
+  },
+  {
+    labelKey: 'login.demoManager' as const,
+    email: 'manager@bonzstore.com',
+    pass: 'Manager@123',
+    destructive: false,
+  },
+  {
+    labelKey: 'login.demoStaff' as const,
+    email: 'staff@bonzstore.com',
+    pass: 'Staff@123',
+    destructive: false,
+  },
+  {
+    labelKey: 'login.demoCustomer' as const,
+    email: 'customer@bonzstore.com',
+    pass: 'Customer@123',
+    destructive: true,
+  },
+];
 
 export function AdminLoginForm() {
   const navigate = useNavigate();
@@ -20,8 +51,8 @@ export function AdminLoginForm() {
     try {
       await loginMutation.mutateAsync({ email, password });
       navigate('/', { replace: true });
-    } catch (err: any) {
-      setErrorMessage(err?.message || 'Đăng nhập thất bại');
+    } catch (err: unknown) {
+      setErrorMessage(getErrorMessage(err, 'Đăng nhập thất bại'));
     }
   };
 
@@ -59,48 +90,50 @@ export function AdminLoginForm() {
       ) : null}
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="mb-1.5 block font-display text-xs font-bold uppercase tracking-wider text-muted-foreground">
-            {t('login.email')}
-          </label>
+        <FormField label={t('login.email')} htmlFor="login-email" required>
           <div className="relative">
             <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <input
+            <Input
+              id="login-email"
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="admin@bonzstore.com"
-              className="w-full rounded-lg border border-border bg-muted/40 py-2.5 pl-10 pr-3 text-sm text-foreground outline-none transition focus:border-primary"
+              className="pl-10"
             />
           </div>
-        </div>
+        </FormField>
 
-        <div>
-          <label className="mb-1.5 block font-display text-xs font-bold uppercase tracking-wider text-muted-foreground">
-            {t('login.password')}
-          </label>
+        <FormField
+          label={t('login.password')}
+          htmlFor="login-password"
+          required
+        >
           <div className="relative">
             <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <input
+            <Input
+              id="login-password"
               type="password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full rounded-lg border border-border bg-muted/40 py-2.5 pl-10 pr-3 text-sm text-foreground outline-none transition focus:border-primary"
+              className="pl-10"
             />
           </div>
-        </div>
+        </FormField>
 
-        <button
+        <Button
           type="submit"
           disabled={loginMutation.isPending}
-          className="action-btn-primary w-full py-2.5 font-display"
+          className="w-full"
         >
           <KeyRound className="h-4 w-4" />
-          {loginMutation.isPending ? t('login.submitting') : t('login.submit')}
-        </button>
+          <span>
+            {loginMutation.isPending ? t('login.submitting') : t('login.submit')}
+          </span>
+        </Button>
       </form>
 
       <div className="mt-6 border-t border-border pt-4">
@@ -108,36 +141,22 @@ export function AdminLoginForm() {
           {t('login.demoTitle')}
         </p>
         <div className="grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            onClick={() => fillDemoAccount('admin@bonzstore.com', 'Admin@123')}
-            className="action-btn-secondary py-1.5 text-xs"
-          >
-            {t('login.demoAdmin')}
-          </button>
-          <button
-            type="button"
-            onClick={() => fillDemoAccount('manager@bonzstore.com', 'Manager@123')}
-            className="action-btn-secondary py-1.5 text-xs"
-          >
-            {t('login.demoManager')}
-          </button>
-          <button
-            type="button"
-            onClick={() => fillDemoAccount('staff@bonzstore.com', 'Staff@123')}
-            className="action-btn-secondary py-1.5 text-xs"
-          >
-            {t('login.demoStaff')}
-          </button>
-          <button
-            type="button"
-            onClick={() =>
-              fillDemoAccount('customer@bonzstore.com', 'Customer@123')
-            }
-            className="action-btn-secondary py-1.5 text-xs text-rose-500 dark:text-rose-400"
-          >
-            {t('login.demoCustomer')}
-          </button>
+          {DEMO_ACCOUNTS.map((acc) => (
+            <Button
+              key={acc.email}
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => fillDemoAccount(acc.email, acc.pass)}
+              className={
+                acc.destructive
+                  ? 'text-xs text-rose-500 dark:text-rose-400'
+                  : 'text-xs'
+              }
+            >
+              {t(acc.labelKey)}
+            </Button>
+          ))}
         </div>
       </div>
     </div>

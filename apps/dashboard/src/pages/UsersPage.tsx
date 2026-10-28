@@ -1,116 +1,255 @@
-import { Lock, ShieldCheck, Unlock, UserPlus } from 'lucide-react';
-import { FormEvent, useState } from 'react';
-import { UserItem, UserStatus } from '../api/types/user.types';
+import { isEmpty, trim } from 'lodash';
+import {
+  Loader2,
+  Lock,
+  Search,
+  ShieldAlert,
+  ShieldCheck,
+  Unlock,
+  UserPlus,
+} from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import {
+  SortOrder,
+  UserItem,
+  UserSortField,
+  UserStatus,
+} from '../api/types/user.types';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Pagination } from '../components/ui/pagination';
+import { Select } from '../components/ui/select';
+import { Tabs, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { PermissionGate } from '../features/auth/components/PermissionGate';
+import { useAuthContext } from '../features/auth/context/AuthContext';
 import { TranslationKey, useI18n } from '../features/i18n/I18nContext';
 import { useRoles } from '../features/roles/hooks/useRoles';
 import { PageHeader } from '../features/shared/PageHeader';
 import { Column, ResponsiveTable } from '../features/shared/ResponsiveTable';
 import { StatusBadge } from '../features/shared/StatusBadge';
-import {
-  useCreateUser,
-  useUpdateUser,
-  useUsers,
-} from '../features/users/hooks/useUsers';
+import { CreateUserDialog } from '../features/users/components/CreateUserDialog';
+import { useUpdateUser, useUsers } from '../features/users/hooks/useUsers';
+import { useDebouncedValue } from '../hooks/useDebouncedValue';
+import { buildCleanSearchParams, canActorManageRole } from '../lib/utils';
+
+const MAX_USERS_PER_PAGE = 20;
 
 const ROLE_TABS: Array<{ labelKey: TranslationKey; roleCode: string }> = [
-  { labelKey: 'users.tabAll', roleCode: '' },
+  { labelKey: 'users.tabAll', roleCode: 'ALL' },
   { labelKey: 'users.tabAdmin', roleCode: 'SUPER_ADMIN' },
   { labelKey: 'users.tabManager', roleCode: 'STORE_MANAGER' },
   { labelKey: 'users.tabStaff', roleCode: 'STAFF' },
   { labelKey: 'users.tabCustomer', roleCode: 'CUSTOMER' },
 ];
 
+const USER_STATUS_OPTIONS = [
+  { value: 'ACTIVE', label: 'ACTIVE (Hoạt động)' },
+  { value: 'LOCKED', label: 'LOCKED (Đã khóa)' },
+  { value: 'INACTIVE', label: 'INACTIVE (Đã ẩn)' },
+];
+
 export function UsersPage() {
   const { t } = useI18n();
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<UserStatus | ''>('');
-  const [roleFilter, setRoleFilter] = useState<string>('');
+  const { user: currentUser } = useAuthContext();
+  const actorRoleCode = currentUser?.role?.code;
+  const isSuperAdmin = actorRoleCode === 'SUPER_ADMIN';
+
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Đọc state khởi tạo từ URL query params (http://localhost:5173/users?...)
+  const initialSearch = searchParams.get('search') || '';
+  const pageParam = Math.max(Number(searchParams.get('page')) || 1, 1);
+  const roleFilter = searchParams.get('roleCode') || 'ALL';
+  const statusFilter = (searchParams.get('status') as UserStatus | '') || '';
+  const sortBy = (searchParams.get('sortBy') as UserSortField) || 'role';
+  const sortOrder = (searchParams.get('sortOrder') as SortOrder) || 'asc';
+
+  const [searchInput, setSearchInput] = useState(initialSearch);
+  const debouncedSearch = useDebouncedValue(searchInput, 400);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  const { data: usersResponse, isLoading } = useUsers({
-    search: search || undefined,
-    status: statusFilter || undefined,
-    roleCode: roleFilter || undefined,
-  });
-  const { data: roles } = useRoles();
-  const createUserMutation = useCreateUser();
-  const updateUserMutation = useUpdateUser();
+  // Đồng bộ từ khóa sau khi debounce lên URL query params & đưa về trang 1
+  useEffect(() => {
+    const currentUrlSearch = searchParams.get('search') || '';
+    const cleanedDebounced = trim(debouncedSearch);
+    if (cleanedDebounced !== currentUrlSearch) {
+      const nextParams = buildCleanSearchParams(
+        {
+          search: cleanedDebounced,
+          roleCode: roleFilter,
+          status: statusFilter,
+          sortBy,
+          sortOrder,
+          page: 1,
+          limit: MAX_USERS_PER_PAGE,
+        },
+        {
+          roleCode: 'ALL',
+          sortBy: 'role',
+          sortOrder: 'asc',
+        },
+      );
+      setSearchParams(nextParams, { replace: true });
+    }
+  }, [
+    debouncedSearch,
+    roleFilter,
+    searchParams,
+    setSearchParams,
+    sortBy,
+    sortOrder,
+    statusFilter,
+  ]);
 
-  const [formState, setFormState] = useState({
-    email: '',
-    password: '',
-    fullName: '',
-    phone: '',
-    roleIdOrCode: 'STAFF',
-  });
-
-  const handleCreateUser = async (e: FormEvent) => {
-    e.preventDefault();
-    await createUserMutation.mutateAsync(formState);
-    setShowCreateModal(false);
-    setFormState({
-      email: '',
-      password: '',
-      fullName: '',
-      phone: '',
-      roleIdOrCode: 'STAFF',
-    });
+  const updateUrlParams = (
+    overrides: Partial<{
+      page: number;
+      roleCode: string;
+      status: UserStatus | '';
+      sortBy: UserSortField;
+      sortOrder: SortOrder;
+    }>,
+  ) => {
+    const nextParams = buildCleanSearchParams(
+      {
+        search: trim(debouncedSearch),
+        roleCode: overrides.roleCode ?? roleFilter,
+        status: overrides.status ?? statusFilter,
+        sortBy: overrides.sortBy ?? sortBy,
+        sortOrder: overrides.sortOrder ?? sortOrder,
+        page: overrides.page ?? pageParam,
+        limit: MAX_USERS_PER_PAGE,
+      },
+      {
+        roleCode: 'ALL',
+        sortBy: 'role',
+        sortOrder: 'asc',
+      },
+    );
+    setSearchParams(nextParams);
   };
 
-  const handleToggleLock = (user: UserItem) => {
+  const {
+    data: usersResponse,
+    isLoading,
+    isFetching,
+  } = useUsers({
+    page: pageParam,
+    limit: MAX_USERS_PER_PAGE,
+    search: !isEmpty(trim(debouncedSearch)) ? trim(debouncedSearch) : undefined,
+    status: !isEmpty(statusFilter) ? statusFilter : undefined,
+    roleCode: roleFilter !== 'ALL' ? roleFilter : undefined,
+    sortBy,
+    sortOrder,
+  });
+
+  const { data: roles = [] } = useRoles();
+  const updateUserMutation = useUpdateUser();
+
+  const handleSortChange = (clickedKey: string) => {
+    const field = clickedKey as UserSortField;
+    const nextOrder: SortOrder =
+      sortBy === field && sortOrder === 'asc' ? 'desc' : 'asc';
+    updateUrlParams({ sortBy: field, sortOrder: nextOrder, page: 1 });
+  };
+
+  const handleToggleLock = (targetUser: UserItem) => {
+    if (!canActorManageRole(actorRoleCode, targetUser.role?.code)) return;
     const nextStatus: UserStatus =
-      user.status === 'ACTIVE' ? 'LOCKED' : 'ACTIVE';
+      targetUser.status === 'ACTIVE' ? 'LOCKED' : 'ACTIVE';
     updateUserMutation.mutate({
-      id: user.id,
+      id: targetUser.id,
       data: { status: nextStatus },
     });
   };
 
-  const handleChangeRole = (user: UserItem, newRoleCode: string) => {
+  const handleChangeRole = (targetUser: UserItem, newRoleCode: string) => {
+    if (!canActorManageRole(actorRoleCode, targetUser.role?.code)) return;
+    if (!canActorManageRole(actorRoleCode, newRoleCode)) return;
     updateUserMutation.mutate({
-      id: user.id,
+      id: targetUser.id,
       data: { roleIdOrCode: newRoleCode },
     });
   };
+
+  // Lọc danh sách Role được phép gán dựa theo cấp bậc của người đang đăng nhập
+  const assignableRoleOptions = roles
+    .filter((r) => canActorManageRole(actorRoleCode, r.code))
+    .map((r) => ({
+      value: r.code,
+      label: `${r.name} (${r.code})`,
+    }));
+
+  const isSearching =
+    isFetching || trim(searchInput) !== trim(debouncedSearch);
 
   const columns: Column<UserItem>[] = [
     {
       key: 'user',
       header: t('users.colAccount'),
+      sortKey: 'fullName',
       isPrimary: true,
       render: (item) => (
         <div>
-          <p className="font-semibold text-foreground">{item.fullName}</p>
-          <p className="text-xs text-muted-foreground">{item.email}</p>
+          <div className="flex items-center gap-1.5">
+            <p className="font-semibold text-foreground">{item.fullName}</p>
+            {item.isEmailMasked ? (
+              <span
+                className="inline-flex items-center gap-1 rounded border border-amber-500/40 bg-amber-500/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-amber-600 dark:text-amber-300"
+                title="Email của tài khoản cấp cao hơn (SUPER_ADMIN) đã được mã hóa/hash bảo vệ"
+              >
+                <ShieldAlert className="h-3 w-3" />
+                Hashed
+              </span>
+            ) : null}
+          </div>
+          <p className="font-mono text-xs text-muted-foreground">
+            {item.email}
+          </p>
         </div>
       ),
     },
     {
       key: 'role',
       header: t('users.colRole'),
-      render: (item) => (
-        <PermissionGate
-          permission="users.update"
-          fallback={
-            <span className="font-medium text-foreground dark:text-primary">
-              {item.role?.name} ({item.role?.code})
-            </span>
-          }
-        >
-          <select
-            value={item.role?.code || ''}
-            onChange={(e) => handleChangeRole(item, e.target.value)}
-            className="rounded-lg border border-border bg-muted/50 px-2.5 py-1.5 text-xs font-medium text-foreground outline-none focus:border-primary"
+      sortKey: 'role',
+      render: (item) => {
+        const canManageRow =
+          item.canManage !== false &&
+          canActorManageRole(actorRoleCode, item.role?.code);
+
+        if (!canManageRow) {
+          return (
+            <div className="flex items-center gap-1.5">
+              <span className="font-display text-xs font-bold text-foreground dark:text-primary">
+                {item.role?.name} ({item.role?.code})
+              </span>
+              <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                Protected
+              </span>
+            </div>
+          );
+        }
+
+        return (
+          <PermissionGate
+            permission="users.update"
+            fallback={
+              <span className="font-medium text-foreground dark:text-primary">
+                {item.role?.name} ({item.role?.code})
+              </span>
+            }
           >
-            {roles?.map((r) => (
-              <option key={r.id} value={r.code}>
-                {r.name} ({r.code})
-              </option>
-            ))}
-          </select>
-        </PermissionGate>
-      ),
+            <Select
+              value={item.role?.code || ''}
+              onChange={(e) => handleChangeRole(item, e.target.value)}
+              options={assignableRoleOptions}
+              className="h-8 w-auto min-w-[165px] text-xs font-medium"
+            />
+          </PermissionGate>
+        );
+      },
     },
     {
       key: 'portalAccess',
@@ -130,6 +269,7 @@ export function UsersPage() {
     {
       key: 'status',
       header: t('app.status'),
+      sortKey: 'status',
       render: (item) => <StatusBadge status={item.status} />,
     },
     {
@@ -144,79 +284,110 @@ export function UsersPage() {
     {
       key: 'actions',
       header: t('app.actions'),
-      render: (item) => (
-        <PermissionGate permission="users.update">
-          <button
-            type="button"
-            onClick={() => handleToggleLock(item)}
-            className="table-action-btn"
-          >
-            {item.status === 'ACTIVE' ? (
-              <Lock className="h-4 w-4 text-rose-500 dark:text-rose-400" />
-            ) : (
-              <Unlock className="h-4 w-4 text-emerald-500 dark:text-emerald-400" />
-            )}
-          </button>
-        </PermissionGate>
-      ),
+      render: (item) => {
+        const canManageRow =
+          item.canManage !== false &&
+          canActorManageRole(actorRoleCode, item.role?.code);
+
+        if (!canManageRow) {
+          return (
+            <span
+              className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground"
+              title="Chỉ SUPER_ADMIN mới được phép thao tác trên tài khoản này"
+            >
+              <Lock className="h-3.5 w-3.5" />
+              Chỉ SUPER_ADMIN
+            </span>
+          );
+        }
+
+        return (
+          <PermissionGate permission="users.update">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => handleToggleLock(item)}
+              title={
+                item.status === 'ACTIVE'
+                  ? 'Khóa tài khoản'
+                  : 'Mở khóa tài khoản'
+              }
+            >
+              {item.status === 'ACTIVE' ? (
+                <Lock className="h-4 w-4 text-rose-500 dark:text-rose-400" />
+              ) : (
+                <Unlock className="h-4 w-4 text-emerald-500 dark:text-emerald-400" />
+              )}
+            </Button>
+          </PermissionGate>
+        );
+      },
     },
   ];
+
+  const meta = usersResponse?.meta;
 
   return (
     <div className="space-y-6">
       <PageHeader
         subtitle={t('users.subtitle')}
         title={t('users.title')}
-        description={t('users.desc')}
+        description={
+          isSuperAdmin
+            ? `${t('users.desc')} — Bạn đang có toàn quyền SUPER_ADMIN.`
+            : `${t('users.desc')} — Chế độ ${actorRoleCode}: Các tài khoản cấp cao hơn (SUPER_ADMIN) được mã hóa email và khóa chỉnh sửa.`
+        }
         actions={
           <PermissionGate permission="users.create">
-            <button
-              type="button"
-              onClick={() => setShowCreateModal(true)}
-              className="action-btn-primary"
-            >
+            <Button onClick={() => setShowCreateModal(true)}>
               <UserPlus className="h-4 w-4" />
               <span>{t('users.addBtn')}</span>
-            </button>
+            </Button>
           </PermissionGate>
         }
       />
 
-      <div className="flex flex-wrap gap-2">
-        {ROLE_TABS.map((tab) => (
-          <button
-            key={tab.roleCode}
-            type="button"
-            onClick={() => setRoleFilter(tab.roleCode)}
-            className={
-              roleFilter === tab.roleCode
-                ? 'action-btn-primary py-1.5 text-xs'
-                : 'action-btn-secondary py-1.5 text-xs'
-            }
-          >
-            {t(tab.labelKey)}
-          </button>
-        ))}
-      </div>
+      <Tabs
+        value={roleFilter}
+        onValueChange={(val) => updateUrlParams({ roleCode: val, page: 1 })}
+      >
+        <TabsList className="flex h-auto flex-wrap justify-start gap-1">
+          {ROLE_TABS.map((tab) => (
+            <TabsTrigger key={tab.roleCode} value={tab.roleCode}>
+              {t(tab.labelKey)}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
 
       <div className="filter-panel flex flex-col gap-3 sm:flex-row sm:items-center">
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder={t('users.searchPlaceholder')}
-          className="flex-1 rounded-lg border border-border bg-muted/40 px-3.5 py-2 text-sm text-foreground outline-none focus:border-primary"
-        />
-        <select
+        <div className="relative flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            type="text"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder={t('users.searchPlaceholder')}
+            className="pl-9 pr-9"
+          />
+          {isSearching ? (
+            <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-foreground dark:text-primary" />
+          ) : null}
+        </div>
+
+        <Select
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value as UserStatus | '')}
-          className="rounded-lg border border-border bg-muted/40 px-3.5 py-2 text-sm text-foreground outline-none focus:border-primary"
-        >
-          <option value="">{t('users.allStatus')}</option>
-          <option value="ACTIVE">ACTIVE</option>
-          <option value="LOCKED">LOCKED</option>
-          <option value="INACTIVE">INACTIVE</option>
-        </select>
+          onChange={(e) =>
+            updateUrlParams({
+              status: e.target.value as UserStatus | '',
+              page: 1,
+            })
+          }
+          placeholder={t('users.allStatus')}
+          options={USER_STATUS_OPTIONS}
+          className="sm:w-52"
+        />
       </div>
 
       <ResponsiveTable
@@ -224,96 +395,25 @@ export function UsersPage() {
         data={usersResponse?.data || []}
         keyExtractor={(u) => u.id}
         isLoading={isLoading}
+        isFetching={isSearching}
+        sortBy={sortBy}
+        sortOrder={sortOrder}
+        onSortChange={handleSortChange}
       />
 
-      {showCreateModal ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="stat-card w-full max-w-md space-y-4 p-6">
-            <h2 className="font-display text-lg font-bold">
-              {t('users.modalTitle')}
-            </h2>
-            <form onSubmit={handleCreateUser} className="space-y-3">
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-muted-foreground">
-                  {t('users.fullName')}
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formState.fullName}
-                  onChange={(e) =>
-                    setFormState({ ...formState, fullName: e.target.value })
-                  }
-                  className="w-full rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-muted-foreground">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  required
-                  value={formState.email}
-                  onChange={(e) =>
-                    setFormState({ ...formState, email: e.target.value })
-                  }
-                  className="w-full rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-muted-foreground">
-                  {t('users.initPassword')}
-                </label>
-                <input
-                  type="password"
-                  required
-                  minLength={6}
-                  value={formState.password}
-                  onChange={(e) =>
-                    setFormState({ ...formState, password: e.target.value })
-                  }
-                  className="w-full rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-muted-foreground">
-                  {t('users.colRole')}
-                </label>
-                <select
-                  value={formState.roleIdOrCode}
-                  onChange={(e) =>
-                    setFormState({ ...formState, roleIdOrCode: e.target.value })
-                  }
-                  className="w-full rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm"
-                >
-                  {roles?.map((r) => (
-                    <option key={r.id} value={r.code}>
-                      {r.name} ({r.code})
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex justify-end gap-2 pt-3">
-                <button
-                  type="button"
-                  onClick={() => setShowCreateModal(false)}
-                  className="action-btn-secondary"
-                >
-                  {t('app.cancel')}
-                </button>
-                <button
-                  type="submit"
-                  disabled={createUserMutation.isPending}
-                  className="action-btn-primary"
-                >
-                  {t('app.save')}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      ) : null}
+      <Pagination
+        page={meta?.page || pageParam}
+        totalPages={meta?.totalPages || 1}
+        total={meta?.total || 0}
+        limit={meta?.limit || MAX_USERS_PER_PAGE}
+        onPageChange={(nextPage) => updateUrlParams({ page: nextPage })}
+      />
+
+      <CreateUserDialog
+        open={showCreateModal}
+        onOpenChange={setShowCreateModal}
+        roles={roles}
+      />
     </div>
   );
 }
