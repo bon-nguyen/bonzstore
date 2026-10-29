@@ -18,8 +18,12 @@ export interface CategoryNodeItem {
   externalCategoryId: string | null;
   parentId: string | null;
   parentName: string | null;
+  parentNameVi: string | null;
+  parentNameEn: string | null;
   externalParentId: string | null;
   localName: string;
+  localNameVi: string;
+  localNameEn: string;
   slug: string;
   level: number;
   isLeaf: boolean;
@@ -33,21 +37,123 @@ export interface CategoryNodeItem {
   updatedAt: Date;
 }
 
+const CATEGORY_BILINGUAL_MAP: Record<
+  string,
+  { vi: string; en: string }
+> = {
+  '605001': {
+    vi: 'Mô hình & Đồ chơi Anime (Figures & Collectibles)',
+    en: 'Anime Figures & Collectibles',
+  },
+  '605012': {
+    vi: 'Mô hình Tỷ lệ (Scale Figure & Statue) Chính hãng',
+    en: 'Authentic Scale Figures & Statues',
+  },
+  '605015': {
+    vi: 'Mô hình Chibi & Nendoroid',
+    en: 'Chibi Figures & Nendoroids',
+  },
+  '605018': {
+    vi: 'Mô hình Lắp ráp (Gunpla & Model Kit)',
+    en: 'Gunpla & Plastic Model Kits',
+  },
+  '606001': {
+    vi: 'Thời trang & Phụ kiện Hóa trang (Cosplay Anime)',
+    en: 'Anime Cosplay Costumes & Accessories',
+  },
+  '606025': {
+    vi: 'Trang phục Cosplay & Áo Haori Kimetsu',
+    en: 'Cosplay Outfits & Kimetsu Haori Coats',
+  },
+  '606028': {
+    vi: 'Tóc giả (Wig) & Đạo cụ Vũ khí Cosplay',
+    en: 'Cosplay Wigs & Prop Weapons',
+  },
+  '607001': {
+    vi: 'Truyện tranh (Manga), Tiểu thuyết (Light Novel) & Sách ảnh (Artbook)',
+    en: 'Manga Comics, Light Novels & Artbooks',
+  },
+  '607019': {
+    vi: 'Tiểu thuyết Light Novel & Bộ truyện (Boxset Manga) Đặc biệt',
+    en: 'Special Edition Light Novels & Manga Boxsets',
+  },
+  '607022': {
+    vi: 'Sách ảnh Minh họa (Artbook & Illustration Book) Chính hãng',
+    en: 'Official Artbooks & Illustration Books',
+  },
+  '608001': {
+    vi: 'Vật phẩm Sưu tầm & Phụ kiện Anime (Merchandise)',
+    en: 'Anime Collectibles & Merchandise (Goods)',
+  },
+  '608011': {
+    vi: 'Móc khóa Acrylic, Mô hình Đứng (Standee) & Huy hiệu (Badge)',
+    en: 'Acrylic Keychains, Standees & Badges',
+  },
+  '608015': {
+    vi: 'Thẻ bài Sưu tầm TCG (One Piece / Pokémon)',
+    en: 'Trading Card Games TCG (One Piece / Pokémon)',
+  },
+  '609001': {
+    vi: 'Trang trí Phòng Otaku & Đèn LED Anime',
+    en: 'Otaku Room Decor & Anime LED Lights',
+  },
+  '609012': {
+    vi: 'Đèn ngủ LED 3D Acrylic & Tranh treo tường Canvas Anime',
+    en: '3D Acrylic LED Night Lights & Anime Canvas Art',
+  },
+  '609016': {
+    vi: 'Gối ôm Anime (Dakimakura) & Thảm trải bàn Gaming',
+    en: 'Dakimakura Body Pillows & Gaming Deskpads',
+  },
+  '610001': {
+    vi: 'Thú bông & Gối bông Anime (Plushie & Nesoberi)',
+    en: 'Anime Plushies & Nesoberi Cushions',
+  },
+  '610011': {
+    vi: 'Thú bông Plushie & Móc khóa Bông Chibi',
+    en: 'Chibi Plushies & Stuffed Keychains',
+  },
+  '610015': {
+    vi: 'Gối bông Nesoberi & Hộp mù (Blindbox) Nhồi bông',
+    en: 'Nesoberi Plush Cushions & Plush Blindboxes',
+  },
+};
+
 @Injectable()
 export class CategoriesService implements OnModuleInit {
   constructor(private readonly prisma: PrismaService) {}
 
   async onModuleInit() {
     try {
-      const count = await this.prisma.client.category.count();
-      if (count < 12) {
-        await this.syncTikTokCategoryAssets();
-      } else {
-        await this.repairCategoryHierarchyLinks();
-      }
+      await this.syncTikTokCategoryAssets();
     } catch {
       // Ignore if database is not migrated yet
     }
+  }
+
+  private resolveBilingualNames(
+    externalCategoryId: string | null,
+    dbLocalName: string,
+  ): { vi: string; en: string } {
+    const mapped = externalCategoryId
+      ? CATEGORY_BILINGUAL_MAP[externalCategoryId]
+      : undefined;
+    if (mapped) {
+      // Nếu người dùng đã chỉnh sửa tên khác với tên mặc định thì ưu tiên tên mới cho VI
+      const isDefaultName =
+        dbLocalName === mapped.vi ||
+        dbLocalName === mapped.en ||
+        dbLocalName === 'Manga, Light Novel & Artbook' ||
+        dbLocalName === 'Light Novel & Boxset Manga Đặc biệt';
+      return {
+        vi: isDefaultName ? mapped.vi : dbLocalName,
+        en: isDefaultName ? mapped.en : dbLocalName,
+      };
+    }
+    return {
+      vi: dbLocalName,
+      en: dbLocalName,
+    };
   }
 
   private assertCanManageCategories(currentUser?: AuthenticatedUser): void {
@@ -96,7 +202,10 @@ export class CategoriesService implements OnModuleInit {
   /**
    * Xây dựng cây danh mục chuẩn Cha -> Con liền kề (không bao giờ tách rời con khỏi cha)
    */
-  private async buildTreeAndFlatten(query?: CategoryQueryDto): Promise<{
+  private async buildTreeAndFlatten(
+    query?: CategoryQueryDto,
+    lang: 'vi' | 'en' = 'vi',
+  ): Promise<{
     flattened: CategoryNodeItem[];
     families: CategoryNodeItem[][];
   }> {
@@ -142,13 +251,32 @@ export class CategoriesService implements OnModuleInit {
         ? resolvedParent.externalCategoryId || resolvedParent.id
         : c.externalParentId || '0';
 
+      const ownNames = this.resolveBilingualNames(
+        c.externalCategoryId,
+        c.localName,
+      );
+      const parentNames = resolvedParent
+        ? this.resolveBilingualNames(
+            resolvedParent.externalCategoryId,
+            resolvedParent.localName,
+          )
+        : null;
+
       nodeMap.set(c.id, {
         id: c.id,
         externalCategoryId: c.externalCategoryId,
         parentId: resolvedParent ? resolvedParent.id : null,
-        parentName: resolvedParent ? resolvedParent.localName : null,
+        parentName: parentNames
+          ? lang === 'en'
+            ? parentNames.en
+            : parentNames.vi
+          : null,
+        parentNameVi: parentNames ? parentNames.vi : null,
+        parentNameEn: parentNames ? parentNames.en : null,
         externalParentId: extParentId,
-        localName: c.localName,
+        localName: lang === 'en' ? ownNames.en : ownNames.vi,
+        localNameVi: ownNames.vi,
+        localNameEn: ownNames.en,
         slug: c.slug,
         level: resolvedParent ? 2 : 1,
         isLeaf: c.isLeaf,
@@ -173,6 +301,8 @@ export class CategoriesService implements OnModuleInit {
         const parentNode = nodeMap.get(node.parentId)!;
         node.level = parentNode.level + 1;
         node.parentName = parentNode.localName;
+        node.parentNameVi = parentNode.localNameVi;
+        node.parentNameEn = parentNode.localNameEn;
         node.externalParentId =
           parentNode.externalCategoryId || parentNode.id;
         parentNode.childrenNodes.push(node);
@@ -240,10 +370,14 @@ export class CategoriesService implements OnModuleInit {
         const extParent = (node.externalParentId || '').toLowerCase();
         const cipher =
           `ttp_vn_cat_asset_${extId || node.id.slice(0, 6)}_202405`.toLowerCase();
-        const nameMatch = node.localName.toLowerCase().includes(cleanedSearch);
-        const parentNameMatch = (node.parentName || '')
-          .toLowerCase()
-          .includes(cleanedSearch);
+        const nameMatch =
+          node.localName.toLowerCase().includes(cleanedSearch) ||
+          node.localNameVi.toLowerCase().includes(cleanedSearch) ||
+          node.localNameEn.toLowerCase().includes(cleanedSearch);
+        const parentNameMatch =
+          (node.parentName || '').toLowerCase().includes(cleanedSearch) ||
+          (node.parentNameVi || '').toLowerCase().includes(cleanedSearch) ||
+          (node.parentNameEn || '').toLowerCase().includes(cleanedSearch);
         const slugMatch = node.slug.toLowerCase().includes(cleanedSearch);
 
         return (
@@ -331,19 +465,19 @@ export class CategoriesService implements OnModuleInit {
     return { flattened, families };
   }
 
-  async findAll(query?: CategoryQueryDto) {
-    const { flattened } = await this.buildTreeAndFlatten(query);
+  async findAll(query?: CategoryQueryDto, lang: 'vi' | 'en' = 'vi') {
+    const { flattened } = await this.buildTreeAndFlatten(query, lang);
     return flattened;
   }
 
-  async findPaginated(query: CategoryQueryDto) {
+  async findPaginated(query: CategoryQueryDto, lang: 'vi' | 'en' = 'vi') {
     const page = Math.max(Number(query.page) || 1, 1);
     const limit = Math.min(Math.max(Number(query.limit) || 10, 1), 100);
     const sortBy = query.sortBy || 'localName';
     const sortOrder: 'asc' | 'desc' =
       query.sortOrder === 'desc' ? 'desc' : 'asc';
 
-    const { flattened, families } = await this.buildTreeAndFlatten(query);
+    const { flattened, families } = await this.buildTreeAndFlatten(query, lang);
 
     // Phân trang theo cụm Cha-Con (Family-aware pagination) để danh mục con luôn nằm ngay dưới danh mục cha, không bị cắt qua trang khác
     const pages: CategoryNodeItem[][] = [];
@@ -388,8 +522,8 @@ export class CategoriesService implements OnModuleInit {
    * Trả về cấu trúc chuẩn TikTok Shop Partner API (get-authorized-category-assets-202405)
    * Ref: GET /authorization/202405/category_assets
    */
-  async getAuthorizedCategoryAssets() {
-    const { flattened } = await this.buildTreeAndFlatten();
+  async getAuthorizedCategoryAssets(lang: 'vi' | 'en' = 'vi') {
+    const { flattened } = await this.buildTreeAndFlatten(undefined, lang);
     const activeCategories = flattened.filter((c) => c.status === 'ACTIVE');
 
     return {
@@ -750,7 +884,8 @@ export class CategoriesService implements OnModuleInit {
       {
         extId: '607001',
         extParentId: '0',
-        localName: 'Manga, Light Novel & Artbook',
+        localName:
+          'Truyện tranh (Manga), Tiểu thuyết (Light Novel) & Sách ảnh (Artbook)',
         level: 1,
         isLeaf: false,
         permissionStatuses: ['AVAILABLE', 'INVITE_ONLY'],
@@ -759,7 +894,8 @@ export class CategoriesService implements OnModuleInit {
       {
         extId: '607019',
         extParentId: '607001',
-        localName: 'Light Novel & Boxset Manga Đặc biệt',
+        localName:
+          'Tiểu thuyết Light Novel & Bộ truyện (Boxset Manga) Đặc biệt',
         level: 2,
         isLeaf: true,
         permissionStatuses: ['AVAILABLE'],
@@ -768,7 +904,8 @@ export class CategoriesService implements OnModuleInit {
       {
         extId: '607022',
         extParentId: '607001',
-        localName: 'Artbook & Illustration Book Chính hãng',
+        localName:
+          'Sách ảnh Minh họa (Artbook & Illustration Book) Chính hãng',
         level: 2,
         isLeaf: true,
         permissionStatuses: ['AVAILABLE', 'INVITE_ONLY'],

@@ -16,24 +16,27 @@ import { getErrorMessage } from '../../../lib/utils';
 import { useI18n } from '../../i18n/I18nContext';
 
 export function useCategories() {
+  const { locale } = useI18n();
   return useQuery({
-    queryKey: ['categories'],
+    queryKey: ['categories', locale],
     queryFn: () => categoriesApi.getAll(),
     staleTime: 60 * 1000,
   });
 }
 
 export function usePaginatedCategories(params?: CategoryQueryParams) {
+  const { locale } = useI18n();
   return useQuery({
-    queryKey: ['categories', 'paginated', params],
+    queryKey: ['categories', 'paginated', locale, params],
     queryFn: () => categoriesApi.getPaginated(params),
     staleTime: 30 * 1000,
   });
 }
 
 export function useTikTokCategoryAssets() {
+  const { locale } = useI18n();
   return useQuery({
-    queryKey: ['categories', 'tiktok-assets'],
+    queryKey: ['categories', 'tiktok-assets', locale],
     queryFn: () => categoriesApi.getTikTokAssets(),
     staleTime: 60 * 1000,
   });

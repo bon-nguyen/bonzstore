@@ -49,7 +49,7 @@ import { buildCleanSearchParams } from '../lib/utils';
 const CATEGORIES_PER_PAGE = 10;
 
 export function CategoriesPage() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const navigate = useNavigate();
   const { hasAnyRole, hasPermission } = useAuthContext();
 
@@ -177,6 +177,14 @@ export function CategoriesPage() {
       isPrimary: true,
       render: (item) => {
         const isChild = item.level > 1;
+        const displayName =
+          locale === 'en'
+            ? item.localNameEn || item.localName
+            : item.localNameVi || item.localName;
+        const displayParentName =
+          locale === 'en'
+            ? item.parentNameEn || item.parentName
+            : item.parentNameVi || item.parentName;
         return (
           <div
             className={
@@ -197,7 +205,7 @@ export function CategoriesPage() {
                 }
               >
                 {isChild ? '↳ ' : ''}
-                {item.localName}
+                {displayName}
               </span>
               {!isChild && item.childrenCount > 0 ? (
                 <span className="rounded bg-primary/15 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-foreground dark:text-primary">
@@ -211,11 +219,11 @@ export function CategoriesPage() {
               cipher: TTP_VN_CAT_ASSET_
               {item.externalCategoryId || item.id.slice(0, 6)}_202405
             </p>
-            {isChild && item.parentName ? (
+            {isChild && displayParentName ? (
               <p className="text-[10px] text-muted-foreground">
                 {t('categories.childOfPrefix')}{' '}
                 <span className="font-medium text-foreground">
-                  {item.parentName}
+                  {displayParentName}
                 </span>
               </p>
             ) : null}

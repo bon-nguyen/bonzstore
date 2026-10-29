@@ -3,8 +3,12 @@ export interface CategoryItem {
   externalCategoryId: string | null;
   parentId: string | null;
   parentName: string | null;
+  parentNameVi?: string | null;
+  parentNameEn?: string | null;
   externalParentId: string | null;
   localName: string;
+  localNameVi?: string;
+  localNameEn?: string;
   slug: string;
   level: number;
   isLeaf: boolean;

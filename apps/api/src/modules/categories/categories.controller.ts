@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Headers,
   HttpCode,
   HttpStatus,
   Param,
@@ -25,6 +26,14 @@ import { CategoriesService } from './categories.service';
 import { CategoryQueryDto } from './dto/category-query.dto';
 import { CreateCategoryDto, UpdateCategoryDto } from './dto/create-category.dto';
 
+function resolveHeaderLang(
+  xLang?: string,
+  acceptLang?: string,
+): 'vi' | 'en' {
+  const raw = (xLang || acceptLang || 'vi').toLowerCase();
+  return raw.startsWith('en') ? 'en' : 'vi';
+}
+
 @ApiTags('categories')
 @ApiBearerAuth()
 @Controller('categories')
@@ -35,30 +44,49 @@ export class CategoriesController {
   @RequirePermissions(PERMISSIONS.PRODUCTS_READ)
   @ApiOperation({
     summary:
-      'Lấy danh sách Category Assets chuẩn TikTok Shop Partner API (202405)',
+      'Lấy danh sách Category Assets chuẩn TikTok Shop Partner API (202405) theo ngôn ngữ (x-lang: vi | en)',
   })
-  async getAuthorizedCategoryAssets() {
-    return this.categoriesService.getAuthorizedCategoryAssets();
+  async getAuthorizedCategoryAssets(
+    @Headers('x-lang') xLang?: string,
+    @Headers('accept-language') acceptLang?: string,
+  ) {
+    return this.categoriesService.getAuthorizedCategoryAssets(
+      resolveHeaderLang(xLang, acceptLang),
+    );
   }
 
   @Get('paginated')
   @RequirePermissions(PERMISSIONS.PRODUCTS_READ)
   @ApiOperation({
     summary:
-      'Danh sách danh mục có phân trang, tìm kiếm, sắp xếp theo cấu trúc Cha - Con liền kề',
+      'Danh sách danh mục có phân trang, tìm kiếm song ngữ (VI/EN), sắp xếp theo cấu trúc Cha - Con liền kề',
   })
-  async findPaginated(@Query() query: CategoryQueryDto) {
-    return this.categoriesService.findPaginated(query);
+  async findPaginated(
+    @Query() query: CategoryQueryDto,
+    @Headers('x-lang') xLang?: string,
+    @Headers('accept-language') acceptLang?: string,
+  ) {
+    return this.categoriesService.findPaginated(
+      query,
+      resolveHeaderLang(xLang, acceptLang),
+    );
   }
 
   @Get()
   @RequirePermissions(PERMISSIONS.PRODUCTS_READ)
   @ApiOperation({
     summary:
-      'Danh sách toàn bộ danh mục ngành hàng kèm số sản phẩm (cấu trúc Cha - Con)',
+      'Danh sách toàn bộ danh mục ngành hàng kèm số sản phẩm (cấu trúc Cha - Con, hỗ trợ song ngữ VI/EN)',
   })
-  async findAll(@Query() query: CategoryQueryDto) {
-    return this.categoriesService.findAll(query);
+  async findAll(
+    @Query() query: CategoryQueryDto,
+    @Headers('x-lang') xLang?: string,
+    @Headers('accept-language') acceptLang?: string,
+  ) {
+    return this.categoriesService.findAll(
+      query,
+      resolveHeaderLang(xLang, acceptLang),
+    );
   }
 
   @Post()
