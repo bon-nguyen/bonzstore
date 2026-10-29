@@ -42,11 +42,11 @@ export function PageSectionContainer({
         <div className="min-w-0">
           <h2 className="text-base font-bold flex flex-wrap items-center gap-2 text-foreground">
             {Icon ? (
-              <Icon className="h-4 w-4 text-foreground dark:text-primary shrink-0" />
+              <Icon className="h-4 w-4 text-teal-700 dark:text-primary shrink-0" />
             ) : null}
             <span>{title}</span>
             {subBadge ? (
-              <span className="rounded border border-border bg-background/80 px-1.5 py-0.5 text-[10px] font-normal text-muted-foreground">
+              <span className="rounded-md border border-teal-700/25 bg-teal-700 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-white shadow-sm dark:border-primary/30 dark:bg-primary/20 dark:text-primary">
                 {subBadge}
               </span>
             ) : null}

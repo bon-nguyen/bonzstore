@@ -172,9 +172,9 @@ export function RichTextEditor({
                 `<h3>📋 Bảng thông số mô hình</h3><ul><li><strong>Thương hiệu:</strong> Chính hãng</li><li><strong>Chất liệu:</strong> Nhựa PVC &amp; ABS cao cấp</li><li><strong>Kích thước:</strong> Cao 22cm</li><li><strong>Tình trạng:</strong> Fullbox mới 100%</li></ul>`
               )
             }
-            className="inline-flex items-center gap-1 px-2 h-7 rounded-md text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-background border border-transparent hover:border-border transition-colors"
+            className="inline-flex items-center gap-1 px-2.5 h-7 rounded-md text-[11px] font-semibold text-teal-800 dark:text-teal-300 bg-teal-500/15 hover:bg-teal-500/25 border border-teal-600/30 transition-colors"
           >
-            <TableIcon className="h-3 w-3 text-primary" />
+            <TableIcon className="h-3 w-3 text-teal-700 dark:text-teal-300" />
             + Thông số
           </button>
 
@@ -185,9 +185,9 @@ export function RichTextEditor({
                 `<blockquote><p>🛡️ <strong>Cam kết BonzStore:</strong> Đóng gói chống sốc 3 lớp (Bọc xốp nổ + Carton cứng) bảo vệ hộp mô hình nguyên vẹn 100%. Hỗ trợ đổi trả miễn phí trong 7 ngày nếu có lỗi nhà sản xuất.</p></blockquote>`
               )
             }
-            className="inline-flex items-center gap-1 px-2 h-7 rounded-md text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-background border border-transparent hover:border-border transition-colors"
+            className="inline-flex items-center gap-1 px-2.5 h-7 rounded-md text-[11px] font-semibold text-emerald-800 dark:text-emerald-300 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-600/30 transition-colors"
           >
-            <ShieldCheck className="h-3 w-3 text-emerald-600" />
+            <ShieldCheck className="h-3 w-3 text-emerald-700 dark:text-emerald-300" />
             + Cam kết Shop
           </button>
         </div>
@@ -197,10 +197,10 @@ export function RichTextEditor({
             <button
               type="button"
               onClick={onGenerateAiDescription}
-              className="inline-flex items-center gap-1.5 px-2.5 h-7 rounded-md text-xs font-semibold bg-gradient-to-r from-primary/15 via-violet-500/15 to-fuchsia-500/15 text-primary hover:from-primary/25 hover:to-fuchsia-500/25 border border-primary/30 transition-all"
+              className="inline-flex items-center gap-1.5 px-3 h-7 rounded-md text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm transition-all"
             >
               <Sparkles className="h-3.5 w-3.5" />
-              AI Viết mô tả chuẩn TikTok
+              AI Viết mô tả chuẩn SEO
             </button>
           )}
 
@@ -267,7 +267,7 @@ export function RichTextEditor({
       <div className="flex items-center justify-between px-3.5 py-2 bg-muted/20 border-t border-border text-[11px] text-muted-foreground">
         <div className="flex items-center gap-2">
           <span>
-            Định dạng hỗ trợ đồng bộ TikTok Shop: <code>&lt;h2&gt;</code>, <code>&lt;p&gt;</code>,{' '}
+            Định dạng hỗ trợ hiển thị Website: <code>&lt;h2&gt;</code>, <code>&lt;p&gt;</code>,{' '}
             <code>&lt;ul&gt;</code>, <code>&lt;strong&gt;</code>
           </span>
           {value.length > 0 && (

@@ -293,6 +293,11 @@ const TRANSLATIONS = {
     'products.originalPriceLabel': 'Giá bán lẻ (VND)',
     'products.salePriceLabel': 'Giá khuyến mãi (VND)',
     'products.tagsLabel': 'Thẻ sản phẩm (cách nhau dấu phẩy)',
+    'products.unsavedTitle': 'Thay đổi của bạn chưa được lưu',
+    'products.unsavedDesc':
+      'Bạn đang có các thay đổi chưa được lưu trên biểu mẫu tạo sản phẩm. Nếu rời khỏi trang lúc này, toàn bộ dữ liệu vừa nhập sẽ bị mất.',
+    'products.unsavedStayBtn': 'Tiếp tục chỉnh sửa',
+    'products.unsavedLeaveBtn': 'Rời trang & Hủy thay đổi',
 
     // Tags Page
     'tags.subtitle': 'Phân loại & Gắn nhãn sản phẩm đồng bộ TikTok Shop',
@@ -738,6 +743,11 @@ const TRANSLATIONS = {
     'products.originalPriceLabel': 'Retail Price (VND)',
     'products.salePriceLabel': 'Promotional Price (VND)',
     'products.tagsLabel': 'Product Tags (comma-separated)',
+    'products.unsavedTitle': 'Changes you made may not be saved',
+    'products.unsavedDesc':
+      'You have unsaved changes on the product creation form. If you leave this page now, all entered data will be lost.',
+    'products.unsavedStayBtn': 'Continue Editing',
+    'products.unsavedLeaveBtn': 'Leave & Discard Changes',
 
     // Tags Page
     'tags.subtitle': 'Categorize & Label Products for TikTok Shop Sync',

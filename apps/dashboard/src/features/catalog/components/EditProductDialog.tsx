@@ -111,7 +111,7 @@ export function EditProductDialog({
     const candidates = generateAiProductTitles(aiContext);
     if (candidates[0]) {
       setTitle(candidates[0].title);
-      toast.success('Đã tối ưu tên sản phẩm chuẩn công thức AI TikTok Shop');
+      toast.success('Đã tối ưu tên sản phẩm chuẩn công thức SEO Website');
     }
   };
 
@@ -178,7 +178,7 @@ export function EditProductDialog({
               <button
                 type="button"
                 onClick={handleApplyAiStandardTitle}
-                className="inline-flex items-center gap-1 rounded-md border border-primary/30 bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary hover:bg-primary/20"
+                className="inline-flex items-center gap-1 rounded-md border border-indigo-700 bg-indigo-600 px-2.5 py-1 text-[11px] font-bold text-white shadow-sm hover:bg-indigo-700"
               >
                 <Wand2 className="h-3 w-3" />
                 AI Chuẩn hóa Tên ({seoEval.score}/100)
@@ -191,7 +191,7 @@ export function EditProductDialog({
               onChange={(e) => setTitle(e.target.value)}
             />
             <p className="text-[10px] text-muted-foreground flex items-center gap-1">
-              <Sparkles className="h-3 w-3 text-primary shrink-0" />
+              <Sparkles className="h-3 w-3 text-teal-700 dark:text-primary shrink-0" />
               <span>Công thức: {TIKTOK_TITLE_FORMULA}</span>
             </p>
           </div>

@@ -267,7 +267,7 @@ export function evaluateProductTitleSeo(
   let levelLabel = 'Cần tối ưu thêm';
   if (score >= 85) {
     level = 'excellent';
-    levelLabel = 'Chuẩn SEO TikTok Shop';
+    levelLabel = 'Chuẩn SEO Website';
   } else if (score >= 65) {
     level = 'good';
     levelLabel = 'Khá tốt';
@@ -426,10 +426,10 @@ export function generateAiProductDescriptionHtml(ctx: AiProductContext): string 
   <li>Màu sơn phủ tĩnh điện chống phai màu dưới ánh đèn LED tủ trưng bày.</li>
 </ul>
 
-<h3>🛡️ Cam kết & Chính sách Bảo hành tại BonzStore</h3>
+<h3>🛡️ Cam kết & Chính sách Bảo hành tại Website BonzStore</h3>
 <blockquote>
   <p>✅ <strong>Đóng gói tiêu chuẩn 3 lớp:</strong> Bọc xốp nổ chống sốc + hộp carton cứng cáp bảo vệ hộp mô hình không móp méo khi vận chuyển.<br/>
-  ✅ <strong>Hỗ trợ đổi trả miễn phí:</strong> Đổi trả trong 7 ngày theo chính sách TikTok Shop nếu phát sinh lỗi từ nhà sản xuất (vui lòng quay video mở hộp).<br/>
+  ✅ <strong>Hỗ trợ đổi trả miễn phí:</strong> Đổi trả trong 7 ngày theo chính sách bảo hành Website nếu phát sinh lỗi từ nhà sản xuất (vui lòng quay video mở hộp).<br/>
   ✅ <strong>Tư vấn tận tâm 24/7:</strong> Nhắn tin ngay cho shop nếu bạn cần chụp ảnh thực tế tại kho!</p>
 </blockquote>`;
 }

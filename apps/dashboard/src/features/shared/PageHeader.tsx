@@ -26,7 +26,7 @@ export function PageHeader({
         <div className="flex flex-wrap items-center gap-2.5">
           <h1 className="page-title">{title}</h1>
           {badge ? (
-            <span className="rounded-md border border-border bg-muted/50 px-2 py-0.5 font-mono text-[11px] font-medium text-muted-foreground">
+            <span className="rounded-md border border-slate-700/20 bg-slate-800 px-2.5 py-0.5 font-mono text-[11px] font-semibold text-white shadow-sm dark:border-primary/30 dark:bg-primary/20 dark:text-primary">
               {badge}
             </span>
           ) : null}

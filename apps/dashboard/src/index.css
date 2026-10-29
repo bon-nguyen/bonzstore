@@ -94,15 +94,15 @@
   }
 
   .status-active {
-    @apply border border-primary/50 bg-primary/25 text-foreground dark:text-primary;
+    @apply border border-teal-600/40 bg-teal-600 text-white shadow-sm dark:border-primary/50 dark:bg-primary/25 dark:text-primary;
   }
 
   .status-maintenance {
-    @apply border border-amber-500/30 bg-amber-500/15 text-amber-600 dark:text-amber-300;
+    @apply border border-amber-500/40 bg-amber-600 text-white shadow-sm dark:border-amber-500/30 dark:bg-amber-500/15 dark:text-amber-300;
   }
 
   .status-inactive {
-    @apply border border-rose-500/30 bg-rose-500/15 text-rose-600 dark:text-rose-400;
+    @apply border border-rose-500/40 bg-rose-600 text-white shadow-sm dark:border-rose-500/30 dark:bg-rose-500/15 dark:text-rose-400;
   }
 
   .priority-high {
@@ -131,7 +131,7 @@
   }
 
   .page-subtitle {
-    @apply inline-flex items-center rounded-md border border-primary/30 bg-primary/15 px-2 py-0.5 font-display text-[11px] font-bold uppercase tracking-wider text-foreground dark:text-primary;
+    @apply inline-flex items-center rounded-md border border-teal-700/30 bg-teal-700 px-2.5 py-0.5 font-display text-[11px] font-bold uppercase tracking-wider text-white shadow-sm dark:border-primary/40 dark:bg-primary dark:text-primary-foreground;
   }
 
   .section-container {

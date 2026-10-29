@@ -411,19 +411,19 @@ export function ProductsPage() {
         }
       />
 
-      {/* TikTok Shop Seller Center Card Container */}
+      {/* Product Catalog Card Container */}
       <div className="section-container">
         <div className="section-container-header">
           <div>
             <h2 className="text-base font-bold flex items-center gap-2">
-              <Package className="h-4 w-4 text-foreground dark:text-primary" />
+              <Package className="h-4 w-4 text-teal-700 dark:text-primary" />
               <span>Danh sách Sản phẩm & Biến thể SKU</span>
-              <span className="rounded border border-border bg-background/80 px-1.5 py-0.5 text-[10px] font-normal text-muted-foreground">
-                TikTok Shop Product Catalog
+              <span className="rounded-md border border-teal-700/25 bg-teal-700 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-white shadow-sm dark:border-primary/30 dark:bg-primary/20 dark:text-primary">
+                BonzStore Product Catalog
               </span>
             </h2>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Theo dõi tồn kho, giá bán, hiệu suất đơn hàng và đồng bộ đa sàn theo thời gian thực
+              Theo dõi tồn kho, giá bán, hiệu suất đơn hàng và đồng bộ sản phẩm trên Website
             </p>
           </div>
           <span className="status-badge status-active font-mono text-xs">

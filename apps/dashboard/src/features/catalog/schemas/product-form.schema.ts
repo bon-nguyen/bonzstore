@@ -34,6 +34,10 @@ export const skuRowSchema = z.object({
       return Number.isInteger(num) && num >= 0;
     }, 'Tồn kho phải là số nguyên ≥ 0'),
   sellerSku: z.string().min(1, 'Vui lòng nhập Mã SKU'),
+  weight: z.string().optional().default('500'),
+  length: z.string().optional().default('25'),
+  width: z.string().optional().default('18'),
+  height: z.string().optional().default('15'),
 });
 
 export const productFormSchema = z.object({
@@ -64,6 +68,7 @@ export const productFormSchema = z.object({
   skus: z
     .array(skuRowSchema)
     .min(1, 'Sản phẩm phải có ít nhất 1 dòng biến thể SKU'),
+  enableSkuDimensions: z.boolean().default(false),
   packageWeight: z
     .string()
     .min(1, 'Vui lòng nhập trọng lượng gói hàng')
@@ -106,18 +111,22 @@ export const DEFAULT_PRODUCT_FORM_VALUES: ProductFormValues = {
   characterName: 'Gojo Satoru Shibuya Ver.',
   attributes: { ...DEFAULT_PRODUCT_ATTRIBUTES },
   descriptionHtml: `<h2>Mô tả sản phẩm</h2>
-<p><strong>Cam kết tại BonzStore:</strong></p>
+<p><strong>Cam kết tại BonzStore Website:</strong></p>
 <ul>
-  <li>Sản phẩm mô hình Anime được kiểm tra kỹ ngoại quan trước khi đóng gói.</li>
+  <li>Sản phẩm mô hình Anime chính hãng được kiểm tra kỹ ngoại quan trước khi đóng gói.</li>
   <li>Đóng gói chống sốc 3 lớp (Bọc xốp nổ + Hộp carton cứng cáp).</li>
-  <li>Hỗ trợ đổi trả nếu có lỗi từ nhà sản xuất (Vui lòng quay video unbox).</li>
+  <li>Hỗ trợ đổi trả nếu có lỗi từ nhà sản xuất (Vui lòng quay video mở hộp).</li>
 </ul>`,
   variationGroups: [
     {
       id: 'var-1',
       name: 'Nhân vật / Phiên bản',
       options: [
-        { id: 'opt-1', value: 'Gojo Satoru (Bản Tiêu Chuẩn)', imageUrl: '' },
+        {
+          id: 'opt-1',
+          value: 'Gojo Satoru (Bản Tiêu Chuẩn)',
+          imageUrl: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=400&q=80',
+        },
         { id: 'opt-2', value: '', imageUrl: '' },
       ],
     },
@@ -129,8 +138,13 @@ export const DEFAULT_PRODUCT_FORM_VALUES: ProductFormValues = {
       price: '450000',
       quantity: '25',
       sellerSku: 'FIG-JJK-GOJO-01',
+      weight: '500',
+      length: '25',
+      width: '18',
+      height: '15',
     },
   ],
+  enableSkuDimensions: false,
   packageWeight: '500',
   packageLength: '25',
   packageWidth: '18',
@@ -159,6 +173,10 @@ export function buildSynchronizedSkus(
         price: prevSkus[0]?.price || '450000',
         quantity: prevSkus[0]?.quantity || '20',
         sellerSku: prevSkus[0]?.sellerSku || 'SKU-DEFAULT-01',
+        weight: prevSkus[0]?.weight || '500',
+        length: prevSkus[0]?.length || '25',
+        width: prevSkus[0]?.width || '18',
+        height: prevSkus[0]?.height || '15',
       },
     ];
   }
@@ -192,7 +210,10 @@ export function buildSynchronizedSkus(
               .slice(0, 4)
           )
           .join('-')}-${String(idx + 1).padStart(2, '0')}`,
+      weight: existing?.weight ?? prevSkus[0]?.weight ?? '500',
+      length: existing?.length ?? prevSkus[0]?.length ?? '25',
+      width: existing?.width ?? prevSkus[0]?.width ?? '18',
+      height: existing?.height ?? prevSkus[0]?.height ?? '15',
     };
   });
 }
-
