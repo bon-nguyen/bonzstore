@@ -299,12 +299,31 @@ const TRANSLATIONS = {
     'tags.desc':
       'Tạo thẻ, đổi tên thẻ hàng loạt và lọc nhanh sản phẩm theo từng nhóm chiến dịch',
     'tags.addBtn': 'Tạo Thẻ mới',
+    'tags.searchPlaceholder': 'Tìm kiếm theo tên thẻ sản phẩm...',
     'tags.inputPlaceholder': 'Nhập tên thẻ mới (VD: Best Seller, Pre-order)...',
     'tags.colName': 'Tên Thẻ (Tag)',
     'tags.colCount': 'Số sản phẩm đang gắn',
+    'tags.productCountUnit': '{count} sản phẩm',
     'tags.viewProducts': 'Xem sản phẩm có thẻ này',
+    'tags.filterLinkBtn': 'Lọc trên trang Sản phẩm',
     'tags.renameBtn': 'Đổi tên',
     'tags.deleteBtn': 'Xóa thẻ',
+    'tags.createModalTitle': 'Tạo Thẻ sản phẩm mới',
+    'tags.editModalTitle': 'Đổi tên Thẻ sản phẩm',
+    'tags.deleteModalTitle': 'Xác nhận xóa Thẻ sản phẩm',
+    'tags.tagNameLabel': 'Tên thẻ sản phẩm (Tag Name)',
+    'tags.newTagNameLabel': 'Tên thẻ mới (New Tag Name)',
+    'tags.editNotice':
+      'Khi đổi tên thẻ, toàn bộ {count} sản phẩm đang gắn thẻ "{name}" sẽ tự động được cập nhật sang tên thẻ mới.',
+    'tags.deleteConfirmText':
+      'Bạn có chắc chắn muốn xóa thẻ "{name}" khỏi hệ thống?',
+    'tags.deleteNotice':
+      'Khi xóa thẻ này, thẻ "{name}" sẽ tự động được gỡ bỏ khỏi {count} sản phẩm đang gắn (sản phẩm không bị xóa).',
+    'tags.editTooltip': 'Đổi tên thẻ sản phẩm',
+    'tags.deleteTooltip': 'Xóa thẻ sản phẩm',
+    'tags.onlyAdminManager': 'Chỉ Admin & Manager',
+    'tags.onlyAdminManagerDesc':
+      'Chỉ tài khoản Admin (SUPER_ADMIN) và Quản lý (STORE_MANAGER) mới có quyền thêm, sửa, xóa thẻ sản phẩm',
 
     // Forbidden
     'forbidden.title': '403 — Không đủ quyền truy cập trang',
@@ -636,12 +655,31 @@ const TRANSLATIONS = {
     'tags.desc':
       'Create tags, bulk rename tags, and quickly filter products by campaign group',
     'tags.addBtn': 'Create Tag',
+    'tags.searchPlaceholder': 'Search by product tag name...',
     'tags.inputPlaceholder': 'Enter new tag name (e.g. Best Seller, Pre-order)...',
     'tags.colName': 'Tag Name',
     'tags.colCount': 'Attached Products',
+    'tags.productCountUnit': '{count} products',
     'tags.viewProducts': 'View products with this tag',
+    'tags.filterLinkBtn': 'Filter on Products page',
     'tags.renameBtn': 'Rename',
     'tags.deleteBtn': 'Delete Tag',
+    'tags.createModalTitle': 'Create New Product Tag',
+    'tags.editModalTitle': 'Rename Product Tag',
+    'tags.deleteModalTitle': 'Confirm Delete Product Tag',
+    'tags.tagNameLabel': 'Product Tag Name',
+    'tags.newTagNameLabel': 'New Tag Name',
+    'tags.editNotice':
+      'Renaming this tag will automatically update all {count} products currently attached to "{name}".',
+    'tags.deleteConfirmText':
+      'Are you sure you want to delete the tag "{name}" from the system?',
+    'tags.deleteNotice':
+      'Deleting this tag will automatically detach "{name}" from {count} attached products (the products themselves will not be deleted).',
+    'tags.editTooltip': 'Rename product tag',
+    'tags.deleteTooltip': 'Delete product tag',
+    'tags.onlyAdminManager': 'Admin & Manager only',
+    'tags.onlyAdminManagerDesc':
+      'Only Admin (SUPER_ADMIN) and Store Manager (STORE_MANAGER) accounts are allowed to create, rename, or delete product tags',
 
     // Forbidden
     'forbidden.title': '403 — Access Denied',
@@ -793,7 +831,15 @@ const BACKEND_ERROR_MAP_EN: Array<{ match: RegExp; replace: string }> = [
   {
     match: /Chỉ quyền Admin \(SUPER_ADMIN\) và Quản lý \(STORE_MANAGER\) mới được phép/i,
     replace:
-      'Only Admin (SUPER_ADMIN) and Store Manager (STORE_MANAGER) are allowed to create, edit, or delete categories',
+      'Only Admin (SUPER_ADMIN) and Store Manager (STORE_MANAGER) are allowed to perform this action',
+  },
+  {
+    match: /Tên thẻ không được để trống/i,
+    replace: 'Tag name cannot be empty',
+  },
+  {
+    match: /Tên thẻ cũ và mới không được để trống/i,
+    replace: 'Current and new tag names cannot be empty',
   },
   {
     match: /Không tìm thấy danh mục/i,

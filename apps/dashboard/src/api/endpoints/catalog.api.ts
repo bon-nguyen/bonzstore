@@ -11,6 +11,7 @@ import {
   ProductStats,
   ProductStatus,
   ProductTagSummary,
+  TagQueryParams,
   TikTokCategoryAssetsResponse,
   UpdateCategoryDto,
   UpdateProductDto,
@@ -44,6 +45,11 @@ export const productsApi = {
   getStats: (): Promise<ProductStats> => apiClient.get('/products/stats'),
 
   getTags: (): Promise<ProductTagSummary[]> => apiClient.get('/products/tags'),
+
+  getPaginatedTags: (
+    params?: TagQueryParams,
+  ): Promise<PaginatedResponse<ProductTagSummary>> =>
+    apiClient.get('/products/tags/paginated', { params }),
 
   createOrAttachTag: (payload: {
     name: string;

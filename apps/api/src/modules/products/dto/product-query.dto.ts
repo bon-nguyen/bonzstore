@@ -1,5 +1,23 @@
-import { IsIn, IsOptional, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
+
+export class ProductTagQueryDto extends PaginationQueryDto {
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  override limit?: number = 10;
+
+  @IsOptional()
+  @IsIn(['name', 'count'])
+  override sortBy?: 'name' | 'count' = 'name';
+
+  @IsOptional()
+  @IsIn(['asc', 'desc'])
+  override sortOrder?: 'asc' | 'desc' = 'asc';
+}
 
 export type TikTokProductTabStatus =
   | 'ALL'

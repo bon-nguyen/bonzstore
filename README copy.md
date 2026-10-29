@@ -1,34 +1,16 @@
 Tiếp tục bổ xung trang 
-http://localhost:5173/categories
+http://localhost:5173/tags
 
-Danh mục có phân trang
-category.local_name
-category.id / parent_id cần có transalte 
-
-Manga, Light Novel & Artbook
-id: 607001
-parent_id: 0
-
-↳ Light Novel & Boxset Manga Đặc biệt
-cipher: TTP_VN_CAT_ASSET_607019_202405
-
-id: 607019
-parent_id: 607001
-is_leaf: true (SPU)
-
-Thì Manga, Light Novel & Artbook 
-↳ Light Novel & Boxset Manga Đặc biệt nằm ở dưới thành phần cha luôn không tách ra
+Thẻ bổ xung phân trang
+tìm kiếm thẻ có debounce
+table có sort theo Tên Thẻ (Tag) và 	Số sản phẩm đang gắn
 
 
-label ở tale
-name, sản phẩm, trạng thái có thao tác sort 
-
-Quyên admin và manger mới có quyền sửa xóa 
--> Thêm tính năm chỉnh sửa 
-Bỏ tính năng đồng bộ tiktok shop
+Tao tác tạo cần check thêm quyền admin và manager mới có quyền xóa sửa
+Đồng bộ nút thao tác vói những trang khác
 
 
-Thêm tính năng tìm kiếm danh mục, có debound khi search 
-Tính năng sửa
-xóa 
- 
+Pagination của các trang chưa đồng bộ
+Cần refactor lại 
+Tiêu chuẩn là 
+http://localhost:5173/products

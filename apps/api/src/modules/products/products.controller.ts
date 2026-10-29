@@ -8,8 +8,16 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { PERMISSIONS } from '../../common/constants/rbac.constants';
+import {
+  ADMIN_MANAGER_ROLES,
+  PERMISSIONS,
+} from '../../common/constants/rbac.constants';
+import {
+  AuthenticatedUser,
+  CurrentUser,
+} from '../../common/decorators/current-user.decorator';
 import { RequirePermissions } from '../../common/decorators/permissions.decorator';
+import { Roles } from '../../common/decorators/roles.decorator';
 import {
   BulkProductActionDto,
   CreateProductDto,
@@ -20,6 +28,7 @@ import {
 } from './dto/create-product.dto';
 import {
   ProductQueryDto,
+  ProductTagQueryDto,
   TikTokProductTabStatus,
 } from './dto/product-query.dto';
 import { ProductsService } from './products.service';
@@ -40,6 +49,16 @@ export class ProductsController {
     return this.productsService.getStats();
   }
 
+  @Get('tags/paginated')
+  @RequirePermissions(PERMISSIONS.PRODUCTS_READ)
+  @ApiOperation({
+    summary:
+      'Danh sách Thẻ sản phẩm (Product Tags) có phân trang, tìm kiếm và sắp xếp theo Tên thẻ / Số sản phẩm',
+  })
+  async getPaginatedTags(@Query() query: ProductTagQueryDto) {
+    return this.productsService.getPaginatedTags(query);
+  }
+
   @Get('tags')
   @RequirePermissions(PERMISSIONS.PRODUCTS_READ)
   @ApiOperation({
@@ -51,30 +70,49 @@ export class ProductsController {
   }
 
   @Post('tags')
+  @Roles(...ADMIN_MANAGER_ROLES)
   @RequirePermissions(PERMISSIONS.PRODUCTS_MANAGE)
   @ApiOperation({
-    summary: 'Tạo thẻ mới hoặc gắn thẻ vào danh sách sản phẩm',
+    summary:
+      'Tạo thẻ mới hoặc gắn thẻ vào danh sách sản phẩm (Chỉ SUPER_ADMIN & STORE_MANAGER)',
   })
-  async createTag(@Body() dto: ManageProductTagDto) {
-    return this.productsService.createOrAttachTag(dto);
+  async createTag(
+    @Body() dto: ManageProductTagDto,
+    @CurrentUser() currentUser: AuthenticatedUser,
+  ) {
+    return this.productsService.createOrAttachTag(dto, currentUser);
   }
 
   @Patch('tags/rename')
+  @Roles(...ADMIN_MANAGER_ROLES)
   @RequirePermissions(PERMISSIONS.PRODUCTS_MANAGE)
   @ApiOperation({
-    summary: 'Đổi tên thẻ sản phẩm đồng loạt',
+    summary:
+      'Đổi tên thẻ sản phẩm đồng loạt (Chỉ SUPER_ADMIN & STORE_MANAGER)',
   })
-  async renameTag(@Body() dto: ManageProductTagDto) {
-    return this.productsService.renameTag(dto.name, dto.newName || '');
+  async renameTag(
+    @Body() dto: ManageProductTagDto,
+    @CurrentUser() currentUser: AuthenticatedUser,
+  ) {
+    return this.productsService.renameTag(
+      dto.name,
+      dto.newName || '',
+      currentUser,
+    );
   }
 
   @Post('tags/delete')
+  @Roles(...ADMIN_MANAGER_ROLES)
   @RequirePermissions(PERMISSIONS.PRODUCTS_MANAGE)
   @ApiOperation({
-    summary: 'Gỡ và xóa thẻ khỏi toàn bộ sản phẩm',
+    summary:
+      'Gỡ và xóa thẻ khỏi toàn bộ sản phẩm (Chỉ SUPER_ADMIN & STORE_MANAGER)',
   })
-  async deleteTag(@Body() body: { name: string }) {
-    return this.productsService.deleteTag(body.name);
+  async deleteTag(
+    @Body() body: { name: string },
+    @CurrentUser() currentUser: AuthenticatedUser,
+  ) {
+    return this.productsService.deleteTag(body.name, currentUser);
   }
 
   @Get()

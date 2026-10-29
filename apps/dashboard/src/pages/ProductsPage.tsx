@@ -5,8 +5,6 @@ import {
   ArrowUp,
   ArrowUpDown,
   ChevronDown,
-  ChevronLeft,
-  ChevronRight,
   ChevronUp,
   CloudDownload,
   Copy,
@@ -34,6 +32,7 @@ import {
 } from '../api/types/catalog.types';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
+import { Pagination } from '../components/ui/pagination';
 import { Select } from '../components/ui/select';
 import {
   Tooltip,
@@ -1295,77 +1294,17 @@ export function ProductsPage() {
         </div>
 
         {/* 4. Pagination Footer (test.md lines 186-209: Tổng số hàng: N | < 1 > | 20/Trang) */}
-        {meta ? (
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border bg-muted/10 px-4 py-3 text-xs">
-            <span className="font-medium text-muted-foreground">
-              {t('products.totalRows', { total: meta.total })}
-            </span>
-
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  disabled={!meta.hasPreviousPage}
-                  onClick={() => updateUrlParams({ page: meta.page - 1 })}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border bg-background text-foreground transition hover:bg-muted disabled:opacity-40"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </button>
-
-                {Array.from({ length: meta.totalPages }).map((_, idx) => {
-                  const p = idx + 1;
-                  const active = p === meta.page;
-                  return (
-                    <button
-                      key={p}
-                      type="button"
-                      onClick={() => updateUrlParams({ page: p })}
-                      className={cn(
-                        'inline-flex h-8 min-w-[32px] items-center justify-center rounded-md border px-2 font-mono text-xs font-bold transition',
-                        active
-                          ? 'border-foreground bg-primary text-primary-foreground'
-                          : 'border-border bg-background text-foreground hover:bg-muted',
-                      )}
-                    >
-                      {p}
-                    </button>
-                  );
-                })}
-
-                <button
-                  type="button"
-                  disabled={!meta.hasNextPage}
-                  onClick={() => updateUrlParams({ page: meta.page + 1 })}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border bg-background text-foreground transition hover:bg-muted disabled:opacity-40"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </button>
-              </div>
-
-              <Select
-                value={String(urlLimit)}
-                onChange={(e) =>
-                  updateUrlParams({ limit: Number(e.target.value), page: 1 })
-                }
-                options={[
-                  {
-                    value: '10',
-                    label: t('products.perPage', { limit: 10 }),
-                  },
-                  {
-                    value: '20',
-                    label: t('products.perPage', { limit: 20 }),
-                  },
-                  {
-                    value: '50',
-                    label: t('products.perPage', { limit: 50 }),
-                  },
-                ]}
-                className="h-8 w-28 text-xs"
-              />
-            </div>
-          </div>
-        ) : null}
+        <Pagination
+          page={meta?.page || urlPage}
+          totalPages={meta?.totalPages || 1}
+          total={meta?.total || 0}
+          limit={meta?.limit || urlLimit}
+          onPageChange={(nextPage) => updateUrlParams({ page: nextPage })}
+          onLimitChange={(nextLimit) =>
+            updateUrlParams({ limit: nextLimit, page: 1 })
+          }
+          className="rounded-none border-x-0 border-b-0 bg-muted/10 shadow-none"
+        />
       </div>
 
       {/* Modals */}

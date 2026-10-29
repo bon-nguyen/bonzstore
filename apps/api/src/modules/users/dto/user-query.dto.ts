@@ -7,7 +7,7 @@ export class UserQueryDto extends PaginationQueryDto {
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  @Max(20)
+  @Max(100)
   override limit?: number = 20;
 
   @IsOptional()

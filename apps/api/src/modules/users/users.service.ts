@@ -21,7 +21,8 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { UserQueryDto } from './dto/user-query.dto';
 
 const ALLOWED_VIEWER_ROLES: string[] = [...ADMIN_MANAGER_ROLES];
-const MAX_PAGE_LIMIT = 20;
+const DEFAULT_PAGE_LIMIT = 20;
+const MAX_PAGE_LIMIT = 100;
 
 @Injectable()
 export class UsersService implements OnModuleInit {
@@ -126,7 +127,7 @@ export class UsersService implements OnModuleInit {
 
     const page = Math.max(Number(query.page) || 1, 1);
     const limit = Math.min(
-      Math.max(Number(query.limit) || MAX_PAGE_LIMIT, 1),
+      Math.max(Number(query.limit) || DEFAULT_PAGE_LIMIT, 1),
       MAX_PAGE_LIMIT,
     );
     const skip = (page - 1) * limit;

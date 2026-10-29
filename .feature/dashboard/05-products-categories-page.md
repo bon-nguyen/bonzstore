@@ -80,8 +80,13 @@ Thiết kế đồng bộ 100% với **TikTok Shop Seller Center** để dễ d�
 
 ## 3. Trang 3: Thẻ Sản Phẩm (`/tags` — [`TagsPage.tsx`](file:///c:/Users/Admin/Desktop/bonzstore/apps/dashboard/src/pages/TagsPage.tsx))
 
-- Quản lý danh sách toàn bộ Thẻ sản phẩm (`Hunter x Hunter`, `Chibi Q-Ver`, `Best Seller`, `One Piece`, `Jujutsu Kaisen`, ...).
-- Hỗ trợ tạo thẻ mới, đổi tên thẻ đồng loạt trên toàn bộ sản phẩm, xóa thẻ và bấm lọc nhanh danh sách sản phẩm theo từng thẻ.
+- **Quản lý danh sách Thẻ sản phẩm**: Quản lý toàn bộ thẻ chiến dịch & series Anime (`Hunter x Hunter`, `Chibi Q-Ver`, `Best Seller`, `One Piece`, `Jujutsu Kaisen`, `Kimetsu no Yaiba`, `Limited Edition`, ...).
+- **Tìm kiếm có Debounce (`400ms`)**: Tìm kiếm theo tên thẻ đồng bộ trực tiếp với URL (`?search=...`) kèm spinner trạng thái và nút xóa nhanh (`X`).
+- **Sắp xếp (`Sort`)**: Hỗ trợ sắp xếp tăng/giảm (`asc` / `desc`) trên 2 cột: **Tên Thẻ (`name`)** và **Số sản phẩm đang gắn (`count`)**.
+- **Phân trang (`Pagination`)**: Phân trang danh sách thẻ (`limit = 10` thẻ/trang) thông qua endpoint `GET /api/products/tags/paginated`.
+- **Phân quyền & Đồng bộ Nút Thao tác (`ADMIN_MANAGER_ROLES`)**:
+  - Chỉ **Admin (`SUPER_ADMIN`)** và **Quản lý (`STORE_MANAGER`)** mới có quyền **Tạo mới** (`CreateTagDialog`), **Đổi tên** (`EditTagDialog`) và **Xóa** (`DeleteTagDialog`) thẻ sản phẩm (bảo vệ đồng thời ở cả Frontend và Backend `@Roles(...ADMIN_MANAGER_ROLES)`).
+  - Nút **Tạo Thẻ mới** đặt tại góc phải `PageHeader`, và cột **Thao tác** sử dụng cặp nút icon `Pencil` / `Trash2` mở Modal ([`TagDialogs.tsx`](file:///c:/Users/Admin/Desktop/bonzstore/apps/dashboard/src/features/catalog/components/TagDialogs.tsx)) hoặc hiển thị nhãn khóa `Chỉ Admin & Manager` đối với tài khoản `STAFF` — đồng bộ 100% với trang Danh mục (`/categories`) và Người dùng (`/users`).
 
 ---
 

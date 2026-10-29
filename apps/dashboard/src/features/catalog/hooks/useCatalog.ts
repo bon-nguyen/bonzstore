@@ -8,6 +8,7 @@ import {
   CreateProductDto,
   ProductQueryParams,
   ProductStatus,
+  TagQueryParams,
   UpdateCategoryDto,
   UpdateProductDto,
   UpdateProductSkusDto,
@@ -113,6 +114,14 @@ export function useProductTags() {
   return useQuery({
     queryKey: ['products', 'tags'],
     queryFn: () => productsApi.getTags(),
+    staleTime: 30 * 1000,
+  });
+}
+
+export function usePaginatedProductTags(params?: TagQueryParams) {
+  return useQuery({
+    queryKey: ['products', 'tags', 'paginated', params],
+    queryFn: () => productsApi.getPaginatedTags(params),
     staleTime: 30 * 1000,
   });
 }

@@ -76,6 +76,10 @@ export function UsersPage() {
   // Đọc state khởi tạo từ URL query params (http://localhost:5173/users?...)
   const initialSearch = searchParams.get('search') || '';
   const pageParam = Math.max(Number(searchParams.get('page')) || 1, 1);
+  const limitParam = Math.min(
+    50,
+    Math.max(10, Number(searchParams.get('limit')) || MAX_USERS_PER_PAGE),
+  );
   const roleFilter = searchParams.get('roleCode') || 'ALL';
   const statusFilter = (searchParams.get('status') as UserStatus | '') || '';
   const sortBy = (searchParams.get('sortBy') as UserSortField) || 'role';
@@ -105,18 +109,20 @@ export function UsersPage() {
           sortBy,
           sortOrder,
           page: 1,
-          limit: MAX_USERS_PER_PAGE,
+          limit: limitParam,
         },
         {
           roleCode: 'ALL',
           sortBy: 'role',
           sortOrder: 'asc',
+          limit: MAX_USERS_PER_PAGE,
         },
       );
       setSearchParams(nextParams, { replace: true });
     }
   }, [
     debouncedSearch,
+    limitParam,
     roleFilter,
     searchParams,
     setSearchParams,
@@ -128,6 +134,7 @@ export function UsersPage() {
   const updateUrlParams = (
     overrides: Partial<{
       page: number;
+      limit: number;
       roleCode: string;
       status: UserStatus | '';
       sortBy: UserSortField;
@@ -142,12 +149,13 @@ export function UsersPage() {
         sortBy: overrides.sortBy ?? sortBy,
         sortOrder: overrides.sortOrder ?? sortOrder,
         page: overrides.page ?? pageParam,
-        limit: MAX_USERS_PER_PAGE,
+        limit: overrides.limit ?? limitParam,
       },
       {
         roleCode: 'ALL',
         sortBy: 'role',
         sortOrder: 'asc',
+        limit: MAX_USERS_PER_PAGE,
       },
     );
     setSearchParams(nextParams);
@@ -160,7 +168,7 @@ export function UsersPage() {
     isFetching,
   } = useUsers({
     page: pageParam,
-    limit: MAX_USERS_PER_PAGE,
+    limit: limitParam,
     search: !isEmpty(trim(debouncedSearch)) ? trim(debouncedSearch) : undefined,
     status: !isEmpty(statusFilter) ? statusFilter : undefined,
     roleCode: roleFilter !== 'ALL' ? roleFilter : undefined,
@@ -667,8 +675,11 @@ export function UsersPage() {
         page={meta?.page || pageParam}
         totalPages={meta?.totalPages || 1}
         total={meta?.total || 0}
-        limit={meta?.limit || MAX_USERS_PER_PAGE}
+        limit={meta?.limit || limitParam}
         onPageChange={(nextPage) => updateUrlParams({ page: nextPage })}
+        onLimitChange={(nextLimit) =>
+          updateUrlParams({ limit: nextLimit, page: 1 })
+        }
       />
 
       {/* Modal 1: Tạo tài khoản mới */}

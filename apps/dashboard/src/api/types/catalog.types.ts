@@ -109,6 +109,16 @@ export interface ProductTagSummary {
   count: number;
 }
 
+export type TagSortField = 'name' | 'count';
+
+export interface TagQueryParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  sortBy?: TagSortField;
+  sortOrder?: 'asc' | 'desc';
+}
+
 export interface ProductItem {
   id: string;
   title: string;

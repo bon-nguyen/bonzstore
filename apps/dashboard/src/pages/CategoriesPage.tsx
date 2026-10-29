@@ -62,6 +62,10 @@ export function CategoriesPage() {
 
   const initialSearch = searchParams.get('search') || '';
   const pageParam = Math.max(Number(searchParams.get('page')) || 1, 1);
+  const limitParam = Math.min(
+    50,
+    Math.max(10, Number(searchParams.get('limit')) || CATEGORIES_PER_PAGE),
+  );
   const statusFilter =
     (searchParams.get('status') as 'ACTIVE' | 'INACTIVE' | '') || '';
   const sortBy =
@@ -92,7 +96,7 @@ export function CategoriesPage() {
           sortBy,
           sortOrder,
           page: 1,
-          limit: CATEGORIES_PER_PAGE,
+          limit: limitParam,
         },
         {
           sortBy: 'localName',
@@ -104,6 +108,7 @@ export function CategoriesPage() {
     }
   }, [
     debouncedSearch,
+    limitParam,
     searchParams,
     setSearchParams,
     sortBy,
@@ -114,6 +119,7 @@ export function CategoriesPage() {
   const updateUrlParams = (
     overrides: Partial<{
       page: number;
+      limit: number;
       status: 'ACTIVE' | 'INACTIVE' | '';
       sortBy: CategorySortField;
       sortOrder: SortOrder;
@@ -126,7 +132,7 @@ export function CategoriesPage() {
         sortBy: overrides.sortBy ?? sortBy,
         sortOrder: overrides.sortOrder ?? sortOrder,
         page: overrides.page ?? pageParam,
-        limit: CATEGORIES_PER_PAGE,
+        limit: overrides.limit ?? limitParam,
       },
       {
         sortBy: 'localName',
@@ -144,7 +150,7 @@ export function CategoriesPage() {
     isFetching,
   } = usePaginatedCategories({
     page: pageParam,
-    limit: CATEGORIES_PER_PAGE,
+    limit: limitParam,
     search: !isEmpty(trim(debouncedSearch)) ? trim(debouncedSearch) : undefined,
     status: !isEmpty(statusFilter) ? statusFilter : undefined,
     sortBy,
@@ -448,8 +454,11 @@ export function CategoriesPage() {
         page={meta?.page || pageParam}
         totalPages={meta?.totalPages || 1}
         total={meta?.total || 0}
-        limit={meta?.limit || CATEGORIES_PER_PAGE}
+        limit={meta?.limit || limitParam}
         onPageChange={(nextPage) => updateUrlParams({ page: nextPage })}
+        onLimitChange={(nextLimit) =>
+          updateUrlParams({ limit: nextLimit, page: 1 })
+        }
       />
 
       <CreateCategoryDialog

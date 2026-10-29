@@ -1,9 +1,13 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
   OnModuleInit,
 } from '@nestjs/common';
+import { isEmpty, trim } from 'lodash';
+import { ADMIN_MANAGER_ROLES } from '../../common/constants/rbac.constants';
+import { AuthenticatedUser } from '../../common/decorators/current-user.decorator';
 import { PrismaService } from '../../database/prisma.service';
 import {
   BulkProductActionDto,
@@ -15,6 +19,7 @@ import {
 } from './dto/create-product.dto';
 import {
   ProductQueryDto,
+  ProductTagQueryDto,
   TikTokProductTabStatus,
 } from './dto/product-query.dto';
 
@@ -52,12 +57,30 @@ export class ProductsService implements OnModuleInit {
     'Best Seller',
     'One Piece',
     'Jujutsu Kaisen',
+    'Kimetsu no Yaiba',
+    'Naruto Shippuden',
+    'Attack on Titan',
+    'Dragon Ball Z',
+    'Chainsaw Man',
+    'Spy x Family',
+    'Frieren',
+    'Blue Lock',
     'Pre-order',
     'Limited Edition',
     'Flash Sale',
   ]);
 
   constructor(private readonly prisma: PrismaService) {}
+
+  private assertCanManageTags(currentUser?: AuthenticatedUser): void {
+    if (!currentUser) return;
+    const roleCode = currentUser.role?.code || '';
+    if (!ADMIN_MANAGER_ROLES.includes(roleCode as any)) {
+      throw new ForbiddenException(
+        'Chỉ quyền Admin (SUPER_ADMIN) và Quản lý (STORE_MANAGER) mới được phép tạo, chỉnh sửa hoặc xóa thẻ sản phẩm',
+      );
+    }
+  }
 
   async onModuleInit() {
     await this.ensureFlagshipTikTokProductsSeeded();
@@ -559,7 +582,58 @@ export class ProductsService implements OnModuleInit {
     return stats.tags;
   }
 
-  async createOrAttachTag(dto: ManageProductTagDto) {
+  async getPaginatedTags(query: ProductTagQueryDto) {
+    const page = Math.max(Number(query.page) || 1, 1);
+    const limit = Math.min(Math.max(Number(query.limit) || 10, 1), 100);
+    const sortBy: 'name' | 'count' = query.sortBy === 'count' ? 'count' : 'name';
+    const sortOrder: 'asc' | 'desc' =
+      query.sortOrder === 'desc' ? 'desc' : 'asc';
+    const dir = sortOrder === 'desc' ? -1 : 1;
+
+    let allTags = await this.getTags();
+
+    const cleanedSearch = trim(query.search || '').toLowerCase();
+    if (!isEmpty(cleanedSearch)) {
+      allTags = allTags.filter((item) =>
+        item.name.toLowerCase().includes(cleanedSearch),
+      );
+    }
+
+    allTags.sort((a, b) => {
+      if (sortBy === 'count') {
+        const diff = (a.count - b.count) * dir;
+        if (diff !== 0) return diff;
+      }
+      return a.name.localeCompare(b.name, 'vi') * dir;
+    });
+
+    const total = allTags.length;
+    const totalPages = Math.max(Math.ceil(total / limit), 1);
+    const safePage = Math.min(page, totalPages);
+    const skip = (safePage - 1) * limit;
+    const data = allTags.slice(skip, skip + limit);
+
+    return {
+      data,
+      meta: {
+        page: safePage,
+        limit,
+        total,
+        totalPages,
+        hasNextPage: safePage < totalPages,
+        hasPreviousPage: safePage > 1,
+        sortBy,
+        sortOrder,
+      },
+    };
+  }
+
+  async createOrAttachTag(
+    dto: ManageProductTagDto,
+    currentUser?: AuthenticatedUser,
+  ) {
+    this.assertCanManageTags(currentUser);
+
     const tagName = dto.name.trim();
     if (!tagName) {
       throw new BadRequestException('Tên thẻ không được để trống');
@@ -587,7 +661,13 @@ export class ProductsService implements OnModuleInit {
     return this.getTags();
   }
 
-  async renameTag(oldName: string, newName: string) {
+  async renameTag(
+    oldName: string,
+    newName: string,
+    currentUser?: AuthenticatedUser,
+  ) {
+    this.assertCanManageTags(currentUser);
+
     const trimmedOld = oldName.trim();
     const trimmedNew = newName.trim();
     if (!trimmedOld || !trimmedNew) {
@@ -614,7 +694,9 @@ export class ProductsService implements OnModuleInit {
     return this.getTags();
   }
 
-  async deleteTag(name: string) {
+  async deleteTag(name: string, currentUser?: AuthenticatedUser) {
+    this.assertCanManageTags(currentUser);
+
     const trimmed = name.trim();
     this.customTags.delete(trimmed);
 
