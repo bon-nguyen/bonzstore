@@ -1,11 +1,18 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { PrismaService } from '../../database/prisma.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 
 @Injectable()
-export class CategoriesService {
+export class CategoriesService implements OnModuleInit {
   constructor(private readonly prisma: PrismaService) {}
+
+  async onModuleInit() {
+    const count = await this.prisma.client.category.count();
+    if (count === 0) {
+      await this.syncTikTokCategoryAssets();
+    }
+  }
 
   async findAll() {
     const list = await this.prisma.client.category.findMany({
@@ -38,6 +45,7 @@ export class CategoriesService {
 
   /**
    * Trả về cấu trúc chuẩn TikTok Shop Partner API (get-authorized-category-assets-202405)
+   * Ref: GET /authorization/202405/category_assets
    */
   async getAuthorizedCategoryAssets() {
     const categories = await this.prisma.client.category.findMany({
@@ -50,17 +58,22 @@ export class CategoriesService {
       message: 'Success',
       request_id: `${Date.now()}-${randomUUID().slice(0, 8)}`,
       data: {
-        category_assets: categories.map((c) => ({
-          id: c.id,
-          category: {
-            id: c.externalCategoryId || c.id,
-            parent_id: c.externalParentId || '0',
-            local_name: c.localName,
-            is_leaf: c.isLeaf,
-          },
-          version: c.categoryVersion,
-          permission_statuses: c.permissionStatuses,
-        })),
+        category_assets: categories.map((c) => {
+          const extId = c.externalCategoryId || c.id;
+          return {
+            id: c.id,
+            cipher: `TTP_VN_CAT_ASSET_${extId}_202405`,
+            target_market: 'VN',
+            category: {
+              id: extId,
+              parent_id: c.externalParentId || '0',
+              local_name: c.localName,
+              is_leaf: c.isLeaf,
+            },
+            version: c.categoryVersion || 'v2',
+            permission_statuses: c.permissionStatuses,
+          };
+        }),
       },
     };
   }

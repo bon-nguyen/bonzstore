@@ -1,4 +1,5 @@
 import {
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   FolderTree,
@@ -10,10 +11,11 @@ import {
   PanelLeftOpen,
   ShieldAlert,
   Sparkles,
+  Tags,
   Users,
 } from 'lucide-react';
-import { useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
 import { useAuthContext } from '../../features/auth/context/AuthContext';
 import { TranslationKey, useI18n } from '../../features/i18n/I18nContext';
 import { cn } from '../../lib/utils';
@@ -24,6 +26,7 @@ export interface AdminNavItem {
   icon: LucideIcon;
   permission: string;
   allowedRoles?: string[];
+  children?: AdminNavItem[];
 }
 
 export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
@@ -35,15 +38,29 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   },
   {
     to: '/products',
-    labelKey: 'nav.products',
+    labelKey: 'nav.productsGroup',
     icon: Package,
     permission: 'products.read',
-  },
-  {
-    to: '/categories',
-    labelKey: 'nav.categories',
-    icon: FolderTree,
-    permission: 'products.read',
+    children: [
+      {
+        to: '/products',
+        labelKey: 'nav.products',
+        icon: Package,
+        permission: 'products.read',
+      },
+      {
+        to: '/categories',
+        labelKey: 'nav.categories',
+        icon: FolderTree,
+        permission: 'products.read',
+      },
+      {
+        to: '/tags',
+        labelKey: 'nav.tags',
+        icon: Tags,
+        permission: 'products.read',
+      },
+    ],
   },
   {
     to: '/users',
@@ -65,10 +82,26 @@ const SIDEBAR_STORAGE_KEY = 'bonzstore_sidebar_collapsed';
 export function AppSidebar() {
   const { hasPermission, hasAnyRole, user } = useAuthContext();
   const { t } = useI18n();
+  const location = useLocation();
 
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     return localStorage.getItem(SIDEBAR_STORAGE_KEY) === 'true';
   });
+
+  const isCatalogRoute =
+    location.pathname.startsWith('/products') ||
+    location.pathname.startsWith('/categories') ||
+    location.pathname.startsWith('/tags');
+
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
+    '/products': true,
+  });
+
+  useEffect(() => {
+    if (isCatalogRoute) {
+      setOpenGroups((prev) => ({ ...prev, '/products': true }));
+    }
+  }, [isCatalogRoute]);
 
   const toggleSidebar = () => {
     setCollapsed((prev) => {
@@ -76,6 +109,16 @@ export function AppSidebar() {
       localStorage.setItem(SIDEBAR_STORAGE_KEY, String(next));
       return next;
     });
+  };
+
+  const toggleGroup = (groupKey: string) => {
+    if (collapsed) {
+      setCollapsed(false);
+      localStorage.setItem(SIDEBAR_STORAGE_KEY, 'false');
+      setOpenGroups((prev) => ({ ...prev, [groupKey]: true }));
+      return;
+    }
+    setOpenGroups((prev) => ({ ...prev, [groupKey]: !prev[groupKey] }));
   };
 
   const visibleItems = ADMIN_NAV_ITEMS.filter(
@@ -153,6 +196,113 @@ export function AppSidebar() {
         {visibleItems.map((item) => {
           const Icon = item.icon;
           const label = t(item.labelKey);
+
+          // Dropdown Group Item (e.g. Sản phẩm -> Tất cả sản phẩm / Danh mục / Thẻ)
+          if (item.children && item.children.length > 0) {
+            const visibleChildren = item.children.filter(
+              (child) =>
+                (!child.permission || hasPermission(child.permission)) &&
+                (!child.allowedRoles || hasAnyRole(child.allowedRoles)),
+            );
+            const isGroupActive = visibleChildren.some((child) =>
+              location.pathname.startsWith(child.to),
+            );
+            const isOpen = !!openGroups[item.to];
+
+            return (
+              <div key={item.to} className="group/dropdown relative space-y-1">
+                <button
+                  type="button"
+                  onClick={() => toggleGroup(item.to)}
+                  title={collapsed ? label : undefined}
+                  className={cn(
+                    'flex w-full items-center rounded-lg py-2.5 text-sm font-semibold transition-colors',
+                    collapsed
+                      ? 'justify-center px-2'
+                      : 'justify-between px-3.5',
+                    isGroupActive
+                      ? 'bg-primary/20 text-foreground dark:text-primary'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                  )}
+                >
+                  <div className="flex items-center gap-3 overflow-hidden">
+                    <Icon className="h-4 w-4 shrink-0" />
+                    {!collapsed ? (
+                      <span className="truncate">{label}</span>
+                    ) : null}
+                  </div>
+
+                  {!collapsed ? (
+                    <ChevronDown
+                      className={cn(
+                        'h-4 w-4 shrink-0 transition-transform duration-200',
+                        isOpen ? 'rotate-0' : '-rotate-90',
+                      )}
+                    />
+                  ) : null}
+                </button>
+
+                {/* Expanded Sidebar Dropdown Sub-menu */}
+                {!collapsed && isOpen ? (
+                  <div className="ml-5 space-y-1 border-l border-border pl-2.5">
+                    {visibleChildren.map((child) => {
+                      const ChildIcon = child.icon;
+                      return (
+                        <NavLink
+                          key={child.to}
+                          to={child.to}
+                          className={({ isActive }) =>
+                            cn(
+                              'flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-semibold transition-colors',
+                              isActive
+                                ? 'bg-primary text-primary-foreground shadow-sm'
+                                : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                            )
+                          }
+                        >
+                          <ChildIcon className="h-3.5 w-3.5 shrink-0" />
+                          <span className="truncate">{t(child.labelKey)}</span>
+                        </NavLink>
+                      );
+                    })}
+                  </div>
+                ) : null}
+
+                {/* Collapsed Sidebar Hover Flyout Dropdown */}
+                {collapsed ? (
+                  <div className="invisible absolute left-full top-0 z-30 ml-2 w-48 rounded-xl border border-border bg-card p-1.5 opacity-0 shadow-lg transition-all group-hover/dropdown:visible group-hover/dropdown:opacity-100">
+                    <div className="border-b border-border px-2.5 py-1.5 font-display text-xs font-bold text-foreground">
+                      {label}
+                    </div>
+                    <div className="mt-1 space-y-1">
+                      {visibleChildren.map((child) => {
+                        const ChildIcon = child.icon;
+                        return (
+                          <NavLink
+                            key={child.to}
+                            to={child.to}
+                            className={({ isActive }) =>
+                              cn(
+                                'flex items-center gap-2 rounded-lg px-2.5 py-2 text-xs font-semibold transition-colors',
+                                isActive
+                                  ? 'bg-primary text-primary-foreground'
+                                  : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                              )
+                            }
+                          >
+                            <ChildIcon className="h-3.5 w-3.5 shrink-0" />
+                            <span>{t(child.labelKey)}</span>
+                          </NavLink>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            );
+          }
+
+          // Standard Single Nav Item
           return (
             <NavLink
               key={item.to}
@@ -162,9 +312,7 @@ export function AppSidebar() {
               className={({ isActive }) =>
                 cn(
                   'flex items-center rounded-lg py-2.5 text-sm font-semibold transition-colors',
-                  collapsed
-                    ? 'justify-center px-2'
-                    : 'gap-3 px-3.5',
+                  collapsed ? 'justify-center px-2' : 'gap-3 px-3.5',
                   isActive
                     ? 'bg-primary text-primary-foreground shadow-sm'
                     : 'text-muted-foreground hover:bg-muted hover:text-foreground',

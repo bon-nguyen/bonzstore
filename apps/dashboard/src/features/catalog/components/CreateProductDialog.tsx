@@ -1,5 +1,8 @@
 import { FormEvent, useState } from 'react';
-import { CategoryItem } from '../../../api/types/catalog.types';
+import {
+  CategoryItem,
+  ProductStatus,
+} from '../../../api/types/catalog.types';
 import { Button } from '../../../components/ui/button';
 import {
   Dialog,
@@ -24,10 +27,12 @@ const INITIAL_PRODUCT_STATE = {
   title: '',
   categoryId: '',
   brandName: 'Good Smile Company',
-  sellerSku: 'ANIME-FIG-01',
-  originalPrice: 1250000,
-  salePrice: 950000,
+  sellerSku: 'HXH002-NEW-01',
+  originalPrice: 299000,
+  salePrice: 224250,
   stockQuantity: 30,
+  status: 'ACTIVE' as ProductStatus,
+  tagsInput: 'Best Seller, Chibi Q-Ver',
 };
 
 export function CreateProductDialog({
@@ -44,9 +49,21 @@ export function CreateProductDialog({
     const targetCategoryId = formState.categoryId || leafCategories[0]?.id;
     if (!targetCategoryId) return;
 
+    const tags = formState.tagsInput
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+
     await createMutation.mutateAsync({
-      ...formState,
+      title: formState.title,
       categoryId: targetCategoryId,
+      brandName: formState.brandName,
+      sellerSku: formState.sellerSku,
+      originalPrice: formState.originalPrice,
+      salePrice: formState.salePrice,
+      stockQuantity: formState.stockQuantity,
+      status: formState.status,
+      tags,
     });
     onOpenChange(false);
     setFormState(INITIAL_PRODUCT_STATE);
@@ -54,7 +71,7 @@ export function CreateProductDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-xl">
         <DialogHeader>
           <DialogTitle>{t('products.addBtn')}</DialogTitle>
         </DialogHeader>
@@ -63,7 +80,7 @@ export function CreateProductDialog({
             <Input
               type="text"
               required
-              placeholder="VD: Mô hình Figure Luffy Gear 5 Nika 28cm"
+              placeholder="VD: [Bonzstore] Mô Hình Hunter x Hunter Bộ 8 Nhân Vật Chibi HXH002"
               value={formState.title}
               onChange={(e) =>
                 setFormState({ ...formState, title: e.target.value })
@@ -71,18 +88,37 @@ export function CreateProductDialog({
             />
           </FormField>
 
-          <FormField label={t('products.leafCategoryLabel')} required>
-            <Select
-              value={formState.categoryId || leafCategories[0]?.id || ''}
-              onChange={(e) =>
-                setFormState({ ...formState, categoryId: e.target.value })
-              }
-              options={leafCategories.map((c) => ({
-                value: c.id,
-                label: `${c.localName} (#${c.externalCategoryId})`,
-              }))}
-            />
-          </FormField>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <FormField label={t('products.leafCategoryLabel')} required>
+              <Select
+                value={formState.categoryId || leafCategories[0]?.id || ''}
+                onChange={(e) =>
+                  setFormState({ ...formState, categoryId: e.target.value })
+                }
+                options={leafCategories.map((c) => ({
+                  value: c.id,
+                  label: `${c.localName} (#${c.externalCategoryId})`,
+                }))}
+              />
+            </FormField>
+
+            <FormField label={t('products.colStatus')} required>
+              <Select
+                value={formState.status}
+                onChange={(e) =>
+                  setFormState({
+                    ...formState,
+                    status: e.target.value as ProductStatus,
+                  })
+                }
+                options={[
+                  { value: 'ACTIVE', label: t('products.tabActive') },
+                  { value: 'PENDING', label: t('products.tabPending') },
+                  { value: 'DRAFT', label: t('products.tabDraft') },
+                ]}
+              />
+            </FormField>
+          </div>
 
           <div className="grid grid-cols-2 gap-3">
             <FormField label={t('products.sellerSkuLabel')} required>
@@ -140,6 +176,16 @@ export function CreateProductDialog({
               />
             </FormField>
           </div>
+
+          <FormField label={t('products.tagsLabel')}>
+            <Input
+              type="text"
+              value={formState.tagsInput}
+              onChange={(e) =>
+                setFormState({ ...formState, tagsInput: e.target.value })
+              }
+            />
+          </FormField>
 
           <DialogFooter className="pt-3">
             <Button

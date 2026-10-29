@@ -8,11 +8,13 @@ import { AuthProvider } from './features/auth/context/AuthContext';
 import { I18nProvider } from './features/i18n/I18nContext';
 import { ThemeProvider } from './features/theme/ThemeContext';
 import { CategoriesPage } from './pages/CategoriesPage';
+import CreateProductPage from './pages/CreateProductPage';
 import { DashboardHomePage } from './pages/DashboardHomePage';
 import { ForbiddenPage } from './pages/ForbiddenPage';
 import { LoginPage } from './pages/LoginPage';
 import { ProductsPage } from './pages/ProductsPage';
 import { RolesPage } from './pages/RolesPage';
+import { TagsPage } from './pages/TagsPage';
 import { UsersPage } from './pages/UsersPage';
 
 const queryClient = new QueryClient({
@@ -53,10 +55,26 @@ export function App() {
                       }
                     />
                     <Route
+                      path="products/create"
+                      element={
+                        <ProtectedRoute requiredPermission="products.manage">
+                          <CreateProductPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
                       path="categories"
                       element={
                         <ProtectedRoute requiredPermission="products.read">
                           <CategoriesPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="tags"
+                      element={
+                        <ProtectedRoute requiredPermission="products.read">
+                          <TagsPage />
                         </ProtectedRoute>
                       }
                     />

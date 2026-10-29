@@ -1,36 +1,31 @@
-# Đặc Tả API Danh Mục & Sản Phẩm Chuẩn TikTok Shop (`202405`) — Giai Đoạn Tiếp Theo
+# Đặc Tả API Danh Mục, Sản Phẩm & Thẻ Chuẩn TikTok Shop (`202405`) — Đã Triển Khai
 
-> **Tài liệu tham khảo**: [TikTok Shop Partner API — Get Authorized Category Assets (202405)](https://partner.tiktokshop.com/docv2/page/get-authorized-category-assets-202405)
-> **Mục tiêu**: Thiết kế các API quản lý Danh mục (`Categories`) và Sản phẩm (`Products`) trên `apps/api` có cấu trúc JSON tương thích với TikTok Shop / Shopee Open API, phục vụ **Admin Dashboard** và công cụ **Đồng bộ / Copy sản phẩm từ Sàn về Web**.
+> **Tài liệu tham khảo**:
+> - [TikTok Shop Partner API — Get Authorized Category Assets (202405)](https://partner.tiktokshop.com/docv2/page/get-authorized-category-assets-202405)
+> - Mẫu giao diện TikTok Shop Seller Center: [`.feature/test.md`](file:///c:/Users/Admin/Desktop/bonzstore/.feature/test.md)
 
 ---
 
-## 1. API Danh Mục Ngành Hàng (`/api/categories`)
+## 1. API Danh Mục Ngành Hàng (`/api/categories` — [`CategoriesController`](file:///c:/Users/Admin/Desktop/bonzstore/apps/api/src/modules/categories/categories.controller.ts))
 
-### 1.1 `GET /api/categories/assets` — Lấy Cây Danh Mục (Tương tự `GET /authorization/202405/category_assets`)
+### 1.1 `GET /api/categories/assets` — Chuẩn `GET /authorization/202405/category_assets`
 - **Permission yêu cầu**: `products.read`
 - **Response chuẩn TikTok Shop `202405`**:
   ```json
   {
     "code": 0,
     "message": "Success",
+    "request_id": "1734097731620-a1b2c3d4",
     "data": {
       "category_assets": [
         {
+          "id": "uuid",
+          "cipher": "TTP_VN_CAT_ASSET_605015_202405",
+          "target_market": "VN",
           "category": {
-            "id": "600001",
-            "parent_id": "0",
-            "local_name": "Thời trang Nam",
-            "is_leaf": false
-          },
-          "version": "v2",
-          "permission_statuses": ["AVAILABLE"]
-        },
-        {
-          "category": {
-            "id": "600012",
-            "parent_id": "600001",
-            "local_name": "Áo thun Nam",
+            "id": "605015",
+            "parent_id": "605001",
+            "local_name": "Nendoroid & Mô hình Chibi",
             "is_leaf": true
           },
           "version": "v2",
@@ -41,19 +36,25 @@
   }
   ```
 
-### 1.2 `POST /api/categories/sync-tiktok` — Đồng Bộ Cây Danh Mục Từ Sàn Về DB Nội Bộ
-- **Permission yêu cầu**: `products.sync`
-- **Chức năng**: Gọi API TikTok Shop `get-authorized-category-assets-202405`, lưu/cập nhật toàn bộ cây danh mục vào bảng `categories` trong PostgreSQL.
+### 1.2 `GET /api/categories` & `POST /api/categories` & `POST /api/categories/sync-tiktok`
+- Tự động khởi tạo (`OnModuleInit`) cây danh mục Anime chuẩn TikTok Shop `202405` nếu DB trống.
+- Bắt buộc sản phẩm (`SPU`) chỉ được gắn vào danh mục lá (`isLeaf = true`).
 
 ---
 
-## 2. API Sản Phẩm & Đồng Bộ Sàn (`/api/products`)
+## 2. API Sản Phẩm & Thẻ Sản Phẩm (`/api/products` — [`ProductsController`](file:///c:/Users/Admin/Desktop/bonzstore/apps/api/src/modules/products/products.controller.ts))
 
 | Method & Endpoint | Permission Yêu Cầu | Mô tả |
 | :--- | :--- | :--- |
-| `GET /api/products` | `products.read` | Lấy danh sách sản phẩm (SPU + tổng tồn kho SKU) hiển thị trên Dashboard |
-| `GET /api/products/:id` | `products.read` | Chi tiết sản phẩm kèm toàn bộ biến thể `skus`, `salesAttributes`, `mainImages` |
-| `POST /api/products` | `products.manage` | Tạo sản phẩm mới trực tiếp từ Dashboard |
-| `PATCH /api/products/:id` | `products.manage` | Cập nhật thông tin sản phẩm, giá bán, tồn kho các biến thể SKU |
-| `POST /api/products/import-from-platform` | `products.sync` | Copy / Đồng bộ sản phẩm từ TikTok Shop hoặc Shopee về bảng `products` & `product_skus` |
-
+| `GET /api/products/stats` | `products.read` | Thống kê số lượng theo 7 tab (`total`, `active`, `pending`, `failed`, `inactive`, `draft`, `deleted`), `outOfStock` (Hết hàng) và danh sách `tags` |
+| `GET /api/products` | `products.read` | Danh sách sản phẩm phân trang, lọc theo `status` (7 tab), `search` (Tên SP, ID hoặc SKU), `categoryId`, `outOfStock`, `tag`, `sourcePlatform` & sắp xếp (`sortBy`, `sortOrder`) |
+| `POST /api/products` | `products.manage` | Tạo sản phẩm mới gắn vào Danh mục lá (`isLeaf = true`) |
+| `PATCH /api/products/:id` | `products.manage` | Cập nhật thông tin sản phẩm, danh mục lá, thương hiệu, thẻ & trạng thái |
+| `PATCH /api/products/:id/status` | `products.manage` | Chuyển trạng thái sản phẩm theo 7 tab (`ACTIVE`, `PENDING`, `FAILED`, `INACTIVE`, `DRAFT`, `DELETED`) |
+| `PATCH /api/products/:id/skus` | `products.manage` | Sửa nhanh **Hàng có sẵn (Tồn kho)** và **Giá bán lẻ / Giá khuyến mãi** của từng SKU ngay trên bảng |
+| `POST /api/products/bulk-action` | `products.manage` | Thao tác hàng loạt trên nhiều sản phẩm đã chọn (`ACTIVATE`, `DEACTIVATE`, `DRAFT`, `DELETE`, `ADD_TAG`) |
+| `GET /api/products/tags` | `products.read` | Lấy danh sách toàn bộ Thẻ sản phẩm kèm số lượng sản phẩm đang gắn |
+| `POST /api/products/tags` | `products.manage` | Tạo thẻ mới hoặc gắn thẻ vào danh sách sản phẩm |
+| `PATCH /api/products/tags/rename` | `products.manage` | Đổi tên thẻ đồng loạt trên toàn bộ sản phẩm |
+| `POST /api/products/tags/delete` | `products.manage` | Gỡ và xóa thẻ khỏi toàn bộ sản phẩm |
+| `POST /api/products/import-from-platform` | `products.sync` | Đồng bộ / Copy sản phẩm từ TikTok Shop hoặc Shopee về hệ thống |

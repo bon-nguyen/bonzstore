@@ -1,58 +1,105 @@
-# Trang Quản Lý Danh Mục & Sản Phẩm (Chuẩn TikTok Shop `202405`) — Đặc Tả Giai Đoạn Tiếp Theo
+# Phân Hệ Sản Phẩm Chuẩn TikTok Shop Seller Center (`202405`) — Đã Triển Khai
 
-> **Routes dự kiến trên Dashboard**:
-> - `/categories`: Quản lý Cây Danh mục ngành hàng (Category Assets)
-> - `/products`: Quản lý Sản phẩm (SPU & SKU) và Đồng bộ từ Sàn (TikTok Shop / Shopee)
-> **Tài liệu tham khảo gốc**: [TikTok Shop Partner API — Get Authorized Category Assets (202405)](https://partner.tiktokshop.com/docv2/page/get-authorized-category-assets-202405)
-
----
-
-## 1. Mục Đích Nghiệp Vụ
-
-Xây dựng hệ thống quản lý Danh mục & Sản phẩm trên **Admin Dashboard** có cấu trúc dữ liệu tương thích hoàn toàn với **TikTok Shop / Shopee**, phục vụ 2 nhu cầu:
-1. **Quản lý nội bộ**: Admin và Nhân viên thêm/sửa sản phẩm, biến thể (SKU), giá bán, tồn kho để hiển thị lên trang bán hàng Next.js (`apps/web`).
-2. **Đồng bộ & Copy sản phẩm từ Sàn về Web**: Lấy cây danh mục đã cấp phép (`Authorized Category Assets`) và kéo/copy toàn bộ thông tin sản phẩm (tiêu đề, mô tả HTML, bộ ảnh, phân loại Màu/Size, giá, tồn kho) từ gian hàng TikTok Shop hoặc Shopee về BonzStore chỉ bằng 1 cú nhấp chuột.
+> **Cấu trúc 3 trang con trong Phân hệ Sản phẩm (`CatalogSubNav` & `AppSidebar`)**:
+> 1. **1. Tất cả sản phẩm (`/products`)**: Quản lý Sản phẩm theo đúng giao diện & luồng thao tác **TikTok Shop Seller Center** (`.feature/test.md`).
+> 2. **2. Danh mục (`/categories`)**: Quản lý Cây Danh mục ngành hàng chuẩn `get-authorized-category-assets-202405`.
+> 3. **3. Thẻ (`/tags`)**: Quản lý Thẻ sản phẩm (`Product Tags`), đổi tên hàng loạt và lọc sản phẩm theo chiến dịch.
+>
+> **Tài liệu tham khảo gốc**:
+> - [TikTok Shop Partner API — Get Authorized Category Assets (202405)](https://partner.tiktokshop.com/docv2/page/get-authorized-category-assets-202405)
+> - Mẫu giao diện TikTok Shop Seller Center: [`.feature/test.md`](file:///c:/Users/Admin/Desktop/bonzstore/.feature/test.md)
 
 ---
 
-## 2. Phân Quyền Truy Cập Trang & Thao Tác (RBAC cho Sản Phẩm)
+## 1. Trang 1: Tất Cả Sản Phẩm (`/products` — [`ProductsPage.tsx`](file:///c:/Users/Admin/Desktop/bonzstore/apps/dashboard/src/pages/ProductsPage.tsx))
 
-| Mã Quyền (Permission Code) | Loại | Ý nghĩa trên Dashboard |
-| :--- | :---: | :--- |
-| `products.read` | **Page + Action** | Hiển thị menu **Sản phẩm & Danh mục** trên Sidebar; vào xem danh sách sản phẩm, tồn kho, cây danh mục |
-| `products.manage` | **Action** | Hiển thị nút **+ Tạo sản phẩm**, **Sửa giá/tồn kho**, **Ẩn/Hiện sản phẩm**, **Quản lý danh mục** |
-| `products.sync` | **Action** | Hiển thị nút **Đồng bộ từ TikTok Shop / Shopee** và **Copy sản phẩm từ Sàn về Web** |
+Thiết kế đồng bộ 100% với **TikTok Shop Seller Center** để dễ dàng quản lý và đồng bộ dữ liệu:
+
+### 1.1 Hệ Thống 7 Tabs Trạng Thái Sản Phẩm (Kèm Bộ Đếm Thời Gian Thực)
+1. **Tất cả (`ALL`)**: Tổng số sản phẩm đang quản lý (không bao gồm sản phẩm đã xóa).
+2. **Trên kệ (`ACTIVE`)**: Sản phẩm đang mở bán công khai (VD: `Trên kệ 132`).
+3. **Đang xem xét (`PENDING`)**: Sản phẩm đang chờ duyệt chất lượng / đồng bộ sàn (`Đang xem xét 0`).
+4. **Cần chú ý (`FAILED` / `FREEZE`)**: Sản phẩm bị khóa hoặc cần bổ sung thông tin theo chính sách TikTok Shop (`Cần chú ý 0`).
+5. **Đã vô hiệu hóa (`INACTIVE`)**: Sản phẩm đã tạm ẩn / ngừng bán.
+6. **Bản nháp (`DRAFT`)**: Sản phẩm đang soạn thảo chưa đăng kệ.
+7. **Đã xóa (`DELETED`)**: Sản phẩm đã chuyển vào thùng rác.
+
+### 1.2 Thanh Tìm Kiếm & Bộ Lọc Đồng Bộ URL (`useSearchParams`)
+- **Ô tìm kiếm (`lodash/debounce` 400ms)**:
+  - Placeholder: `"Tên sản phẩm, ID hoặc SKU"` (tìm đồng thời theo `title`, `id`, `externalProductId`, `sellerSku`, `externalSkuId` và `brandName`).
+  - Nút xóa nhanh từ khóa (`X`).
+- **Bộ lọc `Hạng mục` (`categoryId`)**: Lọc theo bất kỳ danh mục cha hoặc danh mục lá (`202405`).
+- **Nút bật/tắt nhanh `Hết hàng <count>` (`outOfStock=true`)**: Lọc ngay các sản phẩm có tổng tồn kho bằng `0` hoặc có biến thể SKU bị hết hàng.
+- **Bộ lọc `Thẻ (Tags)` (`tag`)**: Lọc sản phẩm theo nhãn chiến dịch (`Hunter x Hunter`, `Chibi Q-Ver`, `Best Seller`, ...).
+- **Menu `Sắp xếp theo` (`sortBy:sortOrder`)**:
+  - Cập nhật mới nhất (`updatedAt:desc`)
+  - Giá bán lẻ: Thấp → Cao / Cao → Thấp (`price:asc`, `price:desc`)
+  - Hàng có sẵn: Thấp → Cao / Cao → Thấp (`stock:asc`, `stock:desc`)
+  - Hiệu suất bán chạy nhất (`soldCount:desc`)
+
+### 1.3 Cấu Trúc Bảng Sản Phẩm Chuẩn TikTok Shop (`.feature/test.md`)
+- **Checkbox chọn hàng loạt**: Hỗ trợ thao tác hàng loạt (`Đưa lên kệ`, `Vô hiệu hóa`, `Chuyển Bản nháp`, `Gắn thẻ nhanh`, `Xóa sản phẩm`).
+- **Cột 1 — `Sản phẩm`**:
+  - Ảnh vuông `48x48` có hiệu ứng hover hiển thị icon con mắt (`Eye`) xem trước/chỉnh sửa.
+  - Tiêu đề sản phẩm tối đa 2 dòng (`line-clamp-2`) kèm icon `Eye` khi di chuột.
+  - Mã định danh `ID: 1734097731620276111` kèm nút **Copy ID** (`Copy` icon).
+  - Hàng hiển thị Badge Danh mục & các Thẻ (`Tags`).
+- **Cột 2 — `Hiệu suất` (Có sắp xếp & Tooltip)**:
+  - `{soldCount} món bán ra` (VD: `3 món bán ra`)
+  - `Lượt xem: {viewCount}` (VD: `Lượt xem: 4.852`)
+  - `Doanh số: {revenue}₫` (VD: `Doanh số: 115.650₫`)
+- **Cột 3 — `Trạng thái` (Có sắp xếp)**:
+  - Chấm tròn màu sắc (`#2D9F4B` xanh lá cho `Trên kệ`, vàng cho `Đang xem xét`, đỏ cho `Cần chú ý`, xám cho `Đã vô hiệu hóa`) + Tên trạng thái.
+  - Dòng phụ hiển thị thời gian cập nhật (VD: `19:30 thứ Tư`).
+- **Cột 4 — `Hàng có sẵn` (Có sắp xếp + Sửa nhanh bằng icon Cây bút)**:
+  - Hiển thị tổng tồn kho (VD: `31`) + nút icon **Cây bút (`Pencil`)** mở ngay modal [`QuickEditStockDialog.tsx`](file:///c:/Users/Admin/Desktop/bonzstore/apps/dashboard/src/features/catalog/components/QuickEditStockDialog.tsx) để sửa số lượng tồn kho cho từng SKU hoặc áp dụng hàng loạt.
+- **Cột 5 — `Giá bán lẻ` (Có sắp xếp + Sửa nhanh bằng icon Cây bút)**:
+  - Hiển thị khoảng giá bán lẻ gốc giữa các SKU (VD: `69.000₫ - 299.000₫`) + nút icon **Cây bút (`Pencil`)** mở modal [`QuickEditPriceDialog.tsx`](file:///c:/Users/Admin/Desktop/bonzstore/apps/dashboard/src/features/catalog/components/QuickEditPriceDialog.tsx).
+  - Dòng phụ hiển thị khoảng giá khuyến mãi: `Khuyến mãi: 51.750₫ - 224.250₫`.
+- **Cột 6 — `Hành động`**:
+  - Nút vuông **Sửa (`Pencil`)** mở [`EditProductDialog.tsx`](file:///c:/Users/Admin/Desktop/bonzstore/apps/dashboard/src/features/catalog/components/EditProductDialog.tsx).
+  - Nút vuông **Thêm (`...`)** mở menu chuyển nhanh trạng thái hoặc sửa nhanh SKU.
+- **Dòng phụ Mở Rộng SKU (`{skuCount} SKU | Mở rộng ⌄`)**:
+  - Nằm ngay bên dưới mỗi sản phẩm (giống hệt `tr.core-table-expand-content` trong `.feature/test.md`).
+  - Khi bấm `Mở rộng`, bảng chi tiết toàn bộ `12 SKU` (phân loại nhân vật, `sellerSku`, `externalSkuId`, `Hàng có sẵn`, `Giá bán lẻ`, `Khuyến mãi`) hiển thị trực tiếp ngay bên dưới sản phẩm.
 
 ---
 
-## 3. Tính Năng Chi Tiết Trên Trang Danh Mục (`/categories`)
+## 2. Trang 2: Danh Mục (`/categories` — [`CategoriesPage.tsx`](file:///c:/Users/Admin/Desktop/bonzstore/apps/dashboard/src/pages/CategoriesPage.tsx))
 
-Thiết kế theo chuẩn `get-authorized-category-assets-202405`:
-1. **Hiển thị Cây Danh Mục Đa Cấp (`Tree View` / `Cascader`)**:
-   - Cấp 1 (`parent_id = "0"`) → Cấp 2 → Cấp 3 (Danh mục lá `is_leaf = true`).
-   - Hiển thị rõ badge **`Leaf Category`** (chỉ danh mục lá mới được gắn sản phẩm).
-2. **Trạng thái cấp phép ngành hàng (`permission_statuses`)**:
-   - `AVAILABLE`: Đủ điều kiện đăng bán.
-   - `INVITE_ONLY`: Ngành hàng hạn chế / cần xét duyệt.
-   - `NON_MAIN_CATEGORY`: Ngành hàng ngoài danh mục chính.
-3. **Nút Đồng Bộ Cây Danh Mục Từ Sàn**:
-   - Gọi API đồng bộ danh sách Category từ TikTok Shop (`version = v2`) về bảng `categories` nội bộ.
+- Hiển thị cây danh mục đa cấp chuẩn `get-authorized-category-assets-202405` kèm `cipher`, `category.id`, `parent_id`, `local_name`, `is_leaf`, `permission_statuses`.
+- Cho phép xem trực tiếp JSON Envelope chuẩn TikTok Shop `202405` và bấm vào số lượng sản phẩm của từng danh mục để lọc ngay bên trang `/products?categoryId=...`.
 
 ---
 
-## 4. Tính Năng Chi Tiết Trên Trang Sản Phẩm (`/products`)
+## 3. Trang 3: Thẻ Sản Phẩm (`/tags` — [`TagsPage.tsx`](file:///c:/Users/Admin/Desktop/bonzstore/apps/dashboard/src/pages/TagsPage.tsx))
 
-1. **Bộ lọc đa chiều (`.filter-panel`)**:
-   - Lọc theo trạng thái: `ACTIVE` (Đang bán), `DRAFT` (Nháp), `INACTIVE` (Đã ẩn), `FREEZE` (Khóa).
-   - Lọc theo nguồn sản phẩm (`sourcePlatform`): `Tất cả`, `Tạo tại Web (LOCAL)`, `TikTok Shop`, `Shopee`.
-   - Lọc theo danh mục (`categoryId`).
-2. **Bảng Danh Sách Sản Phẩm (`ResponsiveTable`)**:
-   - Ảnh đại diện + Tên sản phẩm + Mã SPU (`externalProductId` nếu đồng bộ từ sàn).
-   - Danh mục ngành hàng (`localName`).
-   - Danh sách biến thể SKU (Màu sắc / Kích cỡ) + Khoảng giá (`salePrice`) + Tổng tồn kho (`stockQuantity`).
-   - Nhãn nguồn gốc: Badge `TikTok Shop`, `Shopee`, hoặc `BonzStore`.
-   - Thời gian đồng bộ gần nhất (`lastSyncedAt`).
-3. **Tính năng Copy / Đồng Bộ Sản Phẩm Từ Sàn Về Web**:
-   - **Cách 1 (Đồng bộ qua API Shop đã liên kết)**: Chọn gian hàng TikTok Shop/Shopee → Bấm **Kéo danh sách sản phẩm về Web**.
-   - **Cách 2 (Copy nhanh sản phẩm)**: Chọn các sản phẩm từ sàn trong modal Preview → Chỉnh sửa lại giá bán trên Web (nếu muốn) → Bấm **Lưu & Đăng lên Web**.
+- Quản lý danh sách toàn bộ Thẻ sản phẩm (`Hunter x Hunter`, `Chibi Q-Ver`, `Best Seller`, `One Piece`, `Jujutsu Kaisen`, ...).
+- Hỗ trợ tạo thẻ mới, đổi tên thẻ đồng loạt trên toàn bộ sản phẩm, xóa thẻ và bấm lọc nhanh danh sách sản phẩm theo từng thẻ.
 
+---
+
+## 4. Trang Thêm Sản Phẩm Mới (`/products/create` — [`CreateProductPage.tsx`](file:///c:/Users/Admin/Desktop/bonzstore/apps/dashboard/src/pages/CreateProductPage.tsx))
+
+Thiết kế là **một trang riêng biệt (`/products/create`)** chuẩn theo cấu trúc biểu mẫu đăng sản phẩm TikTok Shop Seller Center trong [`.feature/test.md`](file:///c:/Users/Admin/Desktop/bonzstore/.feature/test.md):
+
+1. **Thông tin cơ bản (`#sec-basic`)**:
+   - `* Hình ảnh sản phẩm`: Quản lý tối đa 9 ảnh vuông tỷ lệ `1:1` (Ảnh đầu tiên là `Ảnh bìa`, hỗ trợ hover Xem trước `Eye` & Xóa `Trash2`).
+   - `* Tên sản phẩm`: Kèm bộ đếm ký tự trực tiếp `0/255`.
+   - `* Hạng mục`: Chỉ cho phép chọn Hạng mục lá (`isLeaf = true`) đã được uỷ quyền `202405 AVAILABLE`.
+   - `* Thương hiệu` & **Thuộc tính sản phẩm (`Thuộc tính`)**: Cho phép thêm/xoá linh hoạt các thuộc tính (`Series Anime`, `Chất liệu`, `Chiều cao`, `Xuất xứ`, `Đóng gói`, `Độ tuổi khuyến nghị`) và gắn `Thẻ phân loại (Tags)`.
+2. **Chi tiết sản phẩm (`#sec-details`)**:
+   - `* Mô tả`: Trình soạn thảo mô tả sản phẩm kèm nút chèn nhanh cam kết bảo hành.
+   - `Video`: Khung thông số chuẩn TikTok Shop (*"Tỷ lệ khung hình video phải từ 9:16 đến 16:9. Kích thước file tối đa: 100 MB. Định dạng: MP4, MOV, MKV, AVI"*).
+3. **Thông tin bán hàng (`#sec-sales` — `#sale_properties` & `#skus`)**:
+   - **Khối `Biến thể` (`#sale_properties`)**:
+     - Tạo tối đa 2 cấp biến thể (`* Tên biến thể`: `Nhân vật`, `Phiên bản`).
+     - Danh sách `* Tùy chọn` có bộ đếm `x/50` ký tự, ảnh đại diện biến thể, nút xóa từng tùy chọn và nút `+ Thêm lựa chọn`.
+     - Tích hợp nút **Nạp mẫu 11 biến thể Naruto (`test.md`)** (`Sakura`, `Naruto`, `Naruto Rasengan`, `Kakashi`, `Minato`, `Uchiha Sasuke`, `Uchiha Itachi`, `Uchiha Madara`, `Hashirama`, `1 Bé Ngẫu Nhiên`, `Bộ 9 bé`).
+   - **Khối `Danh sách biến thể` (`#skus`)**:
+     - **Thanh chỉnh sửa hàng loạt (`batch_edit`)**: Lọc theo `Tất cả` hoặc từng tùy chọn + nhập nhanh `Giá bán lẻ (₫)`, `Giá KM (₫)`, `Số lượng tồn kho`, `SKU người bán` + nút **`Áp dụng hàng loạt`** + nút **`Mở rộng toàn màn hình`**.
+     - **Bảng SKU**: Hiển thị cột biến thể kèm ảnh `48x48` (hover `Eye` xem ảnh & `Trash2` xóa ảnh), `* Giá bán lẻ (₫)`, `Giá bán / Khuyến mãi (₫)`, `* Hàng có sẵn`, `SKU người bán` (VD: `NRT009`) và nút xóa dòng.
+4. **Vận chuyển & Thanh thao tác cố định cuối trang**:
+   - Nhập trọng lượng sau đóng gói (`kg`) và kích thước (`Dài × Rộng × Cao cm`).
+   - Cột phải hiển thị **Khung Xem Trước TikTok Shop** trực tiếp theo thời gian thực.
+   - Thanh dưới cùng hỗ trợ 4 hành động: **`Hủy bỏ`**, **`Lưu bản nháp` (`DRAFT`)**, **`Gửi xét duyệt` (`PENDING`)**, và **`Đăng sản phẩm (Trên kệ)` (`ACTIVE`)**.

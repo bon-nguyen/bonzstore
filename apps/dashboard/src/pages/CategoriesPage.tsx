@@ -1,12 +1,15 @@
-import { Code2, Plus, RefreshCw } from 'lucide-react';
+import { Code2, ExternalLink, Plus, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { CategoryItem } from '../api/types/catalog.types';
 import { Button } from '../components/ui/button';
 import { PermissionGate } from '../features/auth/components/PermissionGate';
+import { CatalogSubNav } from '../features/catalog/components/CatalogSubNav';
 import { CreateCategoryDialog } from '../features/catalog/components/CreateCategoryDialog';
 import { TikTokAssetsPreview } from '../features/catalog/components/TikTokAssetsPreview';
 import {
   useCategories,
+  useProductStats,
   useSyncTikTokCategories,
   useTikTokCategoryAssets,
 } from '../features/catalog/hooks/useCatalog';
@@ -17,7 +20,9 @@ import { StatusBadge } from '../features/shared/StatusBadge';
 
 export function CategoriesPage() {
   const { t } = useI18n();
+  const navigate = useNavigate();
   const { data: categories = [], isLoading } = useCategories();
+  const { data: stats } = useProductStats();
   const { data: tiktokAssets } = useTikTokCategoryAssets();
   const syncMutation = useSyncTikTokCategories();
 
@@ -27,44 +32,52 @@ export function CategoriesPage() {
   const columns: Column<CategoryItem>[] = [
     {
       key: 'localName',
-      header: 'local_name (Anime Category)',
+      header: 'category.local_name (202405)',
       render: (item) => (
-        <div className="flex items-center gap-2">
-          <span
+        <div className="space-y-0.5">
+          <div className="flex items-center gap-2">
+            <span
+              style={{ paddingLeft: `${(item.level - 1) * 16}px` }}
+              className="font-semibold text-foreground"
+            >
+              {item.level > 1 ? '↳ ' : ''}
+              {item.localName}
+            </span>
+          </div>
+          <p
             style={{ paddingLeft: `${(item.level - 1) * 16}px` }}
-            className="font-semibold text-foreground"
+            className="font-mono text-[10px] text-muted-foreground"
           >
-            {item.level > 1 ? '↳ ' : ''}
-            {item.localName}
-          </span>
+            cipher: TTP_VN_CAT_ASSET_{item.externalCategoryId || item.id.slice(0, 6)}_202405
+          </p>
         </div>
       ),
     },
     {
       key: 'externalCategoryId',
-      header: 'TikTok ID / Parent ID',
+      header: 'category.id / parent_id',
       render: (item) => (
         <div className="font-mono text-xs">
           <span className="font-semibold text-foreground dark:text-primary">
-            ID: {item.externalCategoryId || '—'}
+            id: {item.externalCategoryId || '—'}
           </span>
           <p className="text-muted-foreground">
-            Parent: {item.externalParentId || '0'}
+            parent_id: {item.externalParentId || '0'}
           </p>
         </div>
       ),
     },
     {
       key: 'isLeaf',
-      header: 'is_leaf',
+      header: 'category.is_leaf',
       render: (item) =>
         item.isLeaf ? (
           <span className="status-badge status-active">
-            Leaf Category (SPU)
+            is_leaf: true (SPU)
           </span>
         ) : (
           <span className="status-badge status-maintenance">
-            Parent (L{item.level})
+            is_leaf: false (L{item.level})
           </span>
         ),
     },
@@ -86,9 +99,16 @@ export function CategoriesPage() {
     },
     {
       key: 'productCount',
-      header: 'Products',
+      header: 'Sản phẩm',
       render: (item) => (
-        <span className="text-xs font-medium">{item.productCount} SPU</span>
+        <button
+          type="button"
+          onClick={() => navigate(`/products?categoryId=${item.id}`)}
+          className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-semibold text-foreground transition hover:bg-muted dark:text-primary"
+        >
+          <span>{item.productCount} SP</span>
+          <ExternalLink className="h-3 w-3 opacity-70" />
+        </button>
       ),
     },
     {
@@ -99,7 +119,13 @@ export function CategoriesPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
+      <CatalogSubNav
+        productCount={stats?.total}
+        categoryCount={categories.length}
+        tagCount={stats?.tags?.length}
+      />
+
       <PageHeader
         subtitle={t('categories.subtitle')}
         title={t('categories.title')}

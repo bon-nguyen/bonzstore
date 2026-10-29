@@ -2,10 +2,13 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { categoriesApi, productsApi } from '../../../api/endpoints/catalog.api';
 import {
+  BulkProductActionDto,
   CreateCategoryDto,
   CreateProductDto,
   ProductQueryParams,
   ProductStatus,
+  UpdateProductDto,
+  UpdateProductSkusDto,
 } from '../../../api/types/catalog.types';
 import { getErrorMessage } from '../../../lib/utils';
 import { useI18n } from '../../i18n/I18nContext';
@@ -62,7 +65,7 @@ export function useProducts(params?: ProductQueryParams) {
   return useQuery({
     queryKey: ['products', params],
     queryFn: () => productsApi.getAll(params),
-    staleTime: 60 * 1000,
+    staleTime: 30 * 1000,
   });
 }
 
@@ -70,7 +73,65 @@ export function useProductStats() {
   return useQuery({
     queryKey: ['products', 'stats'],
     queryFn: () => productsApi.getStats(),
-    staleTime: 60 * 1000,
+    staleTime: 30 * 1000,
+  });
+}
+
+export function useProductTags() {
+  return useQuery({
+    queryKey: ['products', 'tags'],
+    queryFn: () => productsApi.getTags(),
+    staleTime: 30 * 1000,
+  });
+}
+
+export function useCreateOrAttachTag() {
+  const queryClient = useQueryClient();
+  const { t } = useI18n();
+
+  return useMutation({
+    mutationFn: (payload: { name: string; productIds?: string[] }) =>
+      productsApi.createOrAttachTag(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast.success(t('api.tagCreateSuccess'));
+    },
+    onError: (err: unknown) => {
+      toast.error(getErrorMessage(err, t('api.productUpdateError')));
+    },
+  });
+}
+
+export function useRenameProductTag() {
+  const queryClient = useQueryClient();
+  const { t } = useI18n();
+
+  return useMutation({
+    mutationFn: (payload: { name: string; newName: string }) =>
+      productsApi.renameTag(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast.success(t('api.tagRenameSuccess'));
+    },
+    onError: (err: unknown) => {
+      toast.error(getErrorMessage(err, t('api.productUpdateError')));
+    },
+  });
+}
+
+export function useDeleteProductTag() {
+  const queryClient = useQueryClient();
+  const { t } = useI18n();
+
+  return useMutation({
+    mutationFn: (name: string) => productsApi.deleteTag(name),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast.success(t('api.tagDeleteSuccess'));
+    },
+    onError: (err: unknown) => {
+      toast.error(getErrorMessage(err, t('api.productUpdateError')));
+    },
   });
 }
 
@@ -91,6 +152,24 @@ export function useCreateProduct() {
   });
 }
 
+export function useUpdateProduct() {
+  const queryClient = useQueryClient();
+  const { t } = useI18n();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateProductDto }) =>
+      productsApi.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      toast.success(t('api.productUpdateSuccess'));
+    },
+    onError: (err: unknown) => {
+      toast.error(getErrorMessage(err, t('api.productUpdateError')));
+    },
+  });
+}
+
 export function useUpdateProductStatus() {
   const queryClient = useQueryClient();
   const { t } = useI18n();
@@ -100,10 +179,53 @@ export function useUpdateProductStatus() {
       productsApi.updateStatus(id, status),
     onSuccess: (updated) => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
-      toast.success(t('api.productStatusSuccess', { status: updated.status }));
+      toast.success(
+        t('api.productStatusSuccess', {
+          status: t(`status.${updated.status}` as any),
+        }),
+      );
     },
     onError: (err: unknown) => {
       toast.error(getErrorMessage(err, t('api.productStatusError')));
+    },
+  });
+}
+
+export function useUpdateProductSkus() {
+  const queryClient = useQueryClient();
+  const { t } = useI18n();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      payload,
+    }: {
+      id: string;
+      payload: UpdateProductSkusDto;
+    }) => productsApi.updateSkus(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast.success(t('api.skuUpdateSuccess'));
+    },
+    onError: (err: unknown) => {
+      toast.error(getErrorMessage(err, t('api.skuUpdateError')));
+    },
+  });
+}
+
+export function useBulkProductAction() {
+  const queryClient = useQueryClient();
+  const { t } = useI18n();
+
+  return useMutation({
+    mutationFn: (payload: BulkProductActionDto) =>
+      productsApi.bulkAction(payload),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast.success(t('api.bulkActionSuccess', { count: res.updatedCount }));
+    },
+    onError: (err: unknown) => {
+      toast.error(getErrorMessage(err, t('api.bulkActionError')));
     },
   });
 }
