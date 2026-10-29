@@ -51,6 +51,7 @@ export function useCreateCategory() {
     mutationFn: (data: CreateCategoryDto) => categoriesApi.create(data),
     onSuccess: (created) => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
       toast.success(t('api.categoryCreateSuccess', { name: created.localName }));
     },
     onError: (err: unknown) => {
@@ -69,6 +70,7 @@ export function useUpdateCategory() {
     onSuccess: (updated) => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
       toast.success(t('api.categoryUpdateSuccess', { name: updated.localName }));
     },
     onError: (err: unknown) => {
@@ -86,6 +88,7 @@ export function useDeleteCategory() {
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
       toast.success(t('api.categoryDeleteSuccess', { name: res.localName }));
     },
     onError: (err: unknown) => {
@@ -135,6 +138,7 @@ export function useCreateOrAttachTag() {
       productsApi.createOrAttachTag(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
       toast.success(t('api.tagCreateSuccess'));
     },
     onError: (err: unknown) => {
@@ -152,6 +156,7 @@ export function useRenameProductTag() {
       productsApi.renameTag(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
       toast.success(t('api.tagRenameSuccess'));
     },
     onError: (err: unknown) => {
@@ -168,6 +173,7 @@ export function useDeleteProductTag() {
     mutationFn: (name: string) => productsApi.deleteTag(name),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
       toast.success(t('api.tagDeleteSuccess'));
     },
     onError: (err: unknown) => {
@@ -185,6 +191,7 @@ export function useCreateProduct() {
     onSuccess: (created) => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['categories'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
       toast.success(t('api.productCreateSuccess', { title: created.title }));
     },
     onError: (err: unknown) => {
@@ -203,6 +210,7 @@ export function useUpdateProduct() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['categories'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
       toast.success(t('api.productUpdateSuccess'));
     },
     onError: (err: unknown) => {
@@ -220,6 +228,7 @@ export function useUpdateProductStatus() {
       productsApi.updateStatus(id, status),
     onSuccess: (updated) => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
       toast.success(
         t('api.productStatusSuccess', {
           status: t(`status.${updated.status}` as any),

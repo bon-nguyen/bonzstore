@@ -2,6 +2,7 @@ import { LogOut, ShieldCheck, UserCircle2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthContext } from '../../features/auth/context/AuthContext';
 import { LanguageToggle, useI18n } from '../../features/i18n/I18nContext';
+import { NotificationBell } from '../../features/notifications/components/NotificationBell';
 import { ThemeToggle } from '../../features/theme/ThemeContext';
 
 export function AppHeader() {
@@ -27,6 +28,7 @@ export function AppHeader() {
       </div>
 
       <div className="flex items-center gap-2 sm:gap-3">
+        <NotificationBell />
         <LanguageToggle />
         <ThemeToggle />
 

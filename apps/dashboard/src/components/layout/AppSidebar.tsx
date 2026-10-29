@@ -1,4 +1,5 @@
 import {
+  Bell,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -78,6 +79,12 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
     labelKey: 'nav.roles',
     icon: KeyRound,
     permission: PERMISSIONS.ROLES_READ,
+  },
+  {
+    to: '/settings/notifications',
+    labelKey: 'nav.notifications',
+    icon: Bell,
+    permission: PERMISSIONS.DASHBOARD_VIEW,
   },
 ];
 

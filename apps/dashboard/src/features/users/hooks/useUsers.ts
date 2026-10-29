@@ -42,6 +42,7 @@ export function useCreateUser() {
     mutationFn: (data: CreateUserDto) => usersApi.create(data),
     onSuccess: (created) => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
       toast.success(t('api.userCreateSuccess', { email: created.email }));
     },
     onError: (err: unknown) => {
@@ -59,6 +60,7 @@ export function useUpdateUser() {
       usersApi.update(id, data),
     onSuccess: (updated) => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
       toast.success(t('api.userUpdateSuccess', { name: updated.fullName }));
     },
     onError: (err: unknown) => {
@@ -76,6 +78,7 @@ export function useResetUserPassword() {
       usersApi.resetPassword(id, newPassword),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
       toast.success(t('api.userResetPassSuccess'));
     },
     onError: (err: unknown) => {

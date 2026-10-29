@@ -4,12 +4,16 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 
 @Injectable()
 export class RolesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
   async findAll() {
     const roles = await this.prisma.client.role.findMany({
@@ -64,6 +68,17 @@ export class RolesService {
       },
     });
 
+    this.notificationsService.recordCrudEvent({
+      module: 'ROLES',
+      action: 'CREATE',
+      titleVi: 'Tạo vai trò mới',
+      titleEn: 'New Role Created',
+      messageVi: `Đã tạo vai trò mới "${created.name} (${created.code})".`,
+      messageEn: `Created new role "${created.name} (${created.code})".`,
+      targetName: `${created.name} (${created.code})`,
+      targetLink: '/roles',
+    });
+
     return this.transformRole(created);
   }
 
@@ -101,6 +116,17 @@ export class RolesService {
         _count: { select: { users: true } },
         permissions: { include: { permission: true } },
       },
+    });
+
+    this.notificationsService.recordCrudEvent({
+      module: 'ROLES',
+      action: 'UPDATE',
+      titleVi: 'Cập nhật ma trận phân quyền',
+      titleEn: 'Role Permissions Updated',
+      messageVi: `Đã cập nhật phân quyền cho vai trò "${updated.name} (${updated.code})".`,
+      messageEn: `Updated permissions for role "${updated.name} (${updated.code})".`,
+      targetName: `${updated.name} (${updated.code})`,
+      targetLink: '/roles',
     });
 
     return this.transformRole(updated);

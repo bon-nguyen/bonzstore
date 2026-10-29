@@ -29,6 +29,7 @@ export function useCreateRole() {
     mutationFn: (data: CreateRoleDto) => rolesApi.create(data),
     onSuccess: (created) => {
       queryClient.invalidateQueries({ queryKey: ['roles'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
       toast.success(
         t('api.roleCreateSuccess', { name: created.name, code: created.code }),
       );
@@ -48,6 +49,7 @@ export function useUpdateRole() {
       rolesApi.update(id, data),
     onSuccess: (updated) => {
       queryClient.invalidateQueries({ queryKey: ['roles'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
       toast.success(t('api.roleUpdateSuccess', { name: updated.name }));
     },
     onError: (err: unknown) => {

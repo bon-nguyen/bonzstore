@@ -55,7 +55,8 @@
 | `PATCH /api/products/:id/skus` | `products.manage` | Sửa nhanh **Hàng có sẵn (Tồn kho)** và **Giá bán lẻ / Giá khuyến mãi** của từng SKU ngay trên bảng |
 | `POST /api/products/bulk-action` | `products.manage` | Thao tác hàng loạt trên nhiều sản phẩm đã chọn (`ACTIVATE`, `DEACTIVATE`, `DRAFT`, `DELETE`, `ADD_TAG`) |
 | `GET /api/products/tags` | `products.read` | Lấy danh sách toàn bộ Thẻ sản phẩm kèm số lượng sản phẩm đang gắn |
-| `POST /api/products/tags` | `products.manage` | Tạo thẻ mới hoặc gắn thẻ vào danh sách sản phẩm |
-| `PATCH /api/products/tags/rename` | `products.manage` | Đổi tên thẻ đồng loạt trên toàn bộ sản phẩm |
-| `POST /api/products/tags/delete` | `products.manage` | Gỡ và xóa thẻ khỏi toàn bộ sản phẩm |
+| `GET /api/products/tags/paginated` | `products.read` | Danh sách Thẻ sản phẩm có phân trang (`page`, `limit`), tìm kiếm (`search`) và sắp xếp theo `name` hoặc `count` (`asc` / `desc`) |
+| `POST /api/products/tags` | `SUPER_ADMIN`, `STORE_MANAGER` + `products.manage` | Tạo thẻ mới hoặc gắn thẻ vào danh sách sản phẩm |
+| `PATCH /api/products/tags/rename` | `SUPER_ADMIN`, `STORE_MANAGER` + `products.manage` | Đổi tên thẻ đồng loạt trên toàn bộ sản phẩm |
+| `POST /api/products/tags/delete` | `SUPER_ADMIN`, `STORE_MANAGER` + `products.manage` | Gỡ và xóa thẻ khỏi toàn bộ sản phẩm |
 | `POST /api/products/import-from-platform` | `products.sync` | Đồng bộ / Copy sản phẩm từ TikTok Shop hoặc Shopee về hệ thống |

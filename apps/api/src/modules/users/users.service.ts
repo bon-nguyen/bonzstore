@@ -16,6 +16,7 @@ import {
 } from '../../common/constants/rbac.constants';
 import { AuthenticatedUser } from '../../common/decorators/current-user.decorator';
 import { PrismaService } from '../../database/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserQueryDto } from './dto/user-query.dto';
@@ -26,7 +27,10 @@ const MAX_PAGE_LIMIT = 100;
 
 @Injectable()
 export class UsersService implements OnModuleInit {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
   async onModuleInit() {
     await this.ensureManagerPermissionsAndSampleUsers();
@@ -315,6 +319,18 @@ export class UsersService implements OnModuleInit {
       },
     });
 
+    this.notificationsService.recordCrudEvent({
+      module: 'USERS',
+      action: 'CREATE',
+      titleVi: 'Tạo tài khoản nhân sự mới',
+      titleEn: 'New User Account Created',
+      messageVi: `Đã tạo tài khoản "${created.email}" (${role.code}).`,
+      messageEn: `Created user account "${created.email}" (${role.code}).`,
+      targetName: created.email,
+      targetLink: '/users',
+      currentUser,
+    });
+
     return this.transformEntity(created, currentUser);
   }
 
@@ -416,6 +432,18 @@ export class UsersService implements OnModuleInit {
       },
     });
 
+    this.notificationsService.recordCrudEvent({
+      module: 'USERS',
+      action: 'UPDATE',
+      titleVi: 'Cập nhật thông tin tài khoản',
+      titleEn: 'User Account Updated',
+      messageVi: `Đã cập nhật tài khoản "${updated.email}" (${updated.status}).`,
+      messageEn: `Updated user account "${updated.email}" (${updated.status}).`,
+      targetName: updated.email,
+      targetLink: '/users',
+      currentUser,
+    });
+
     return this.transformEntity(updated, currentUser);
   }
 
@@ -475,6 +503,18 @@ export class UsersService implements OnModuleInit {
         where: { userId: id },
       }),
     ]);
+
+    this.notificationsService.recordCrudEvent({
+      module: 'USERS',
+      action: 'UPDATE',
+      titleVi: 'Đặt lại mật khẩu tài khoản',
+      titleEn: 'User Password Reset',
+      messageVi: `Đã đặt lại mật khẩu và thu hồi phiên đăng nhập của "${user.email}".`,
+      messageEn: `Reset password and revoked sessions for "${user.email}".`,
+      targetName: user.email,
+      targetLink: '/users',
+      currentUser,
+    });
 
     return {
       user: this.transformEntity(updated, currentUser),

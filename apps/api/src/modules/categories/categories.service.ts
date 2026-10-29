@@ -10,6 +10,7 @@ import { isEmpty, isNil, trim } from 'lodash';
 import { ADMIN_MANAGER_ROLES } from '../../common/constants/rbac.constants';
 import { AuthenticatedUser } from '../../common/decorators/current-user.decorator';
 import { PrismaService } from '../../database/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CategoryQueryDto } from './dto/category-query.dto';
 import { CreateCategoryDto, UpdateCategoryDto } from './dto/create-category.dto';
 
@@ -121,7 +122,10 @@ const CATEGORY_BILINGUAL_MAP: Record<
 
 @Injectable()
 export class CategoriesService implements OnModuleInit {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
   async onModuleInit() {
     try {
@@ -594,7 +598,7 @@ export class CategoriesService implements OnModuleInit {
       }
     }
 
-    return this.prisma.client.category.create({
+    const created = await this.prisma.client.category.create({
       data: {
         localName,
         slug: `${slug}-${Date.now().toString().slice(-4)}`,
@@ -611,6 +615,20 @@ export class CategoriesService implements OnModuleInit {
         status: dto.status || 'ACTIVE',
       },
     });
+
+    this.notificationsService.recordCrudEvent({
+      module: 'CATEGORIES',
+      action: 'CREATE',
+      titleVi: 'Tạo danh mục ngành hàng mới',
+      titleEn: 'New Category Created',
+      messageVi: `Đã tạo danh mục "${created.localName}" (ID: ${created.externalCategoryId}).`,
+      messageEn: `Created category "${created.localName}" (ID: ${created.externalCategoryId}).`,
+      targetName: created.localName,
+      targetLink: '/categories',
+      currentUser,
+    });
+
+    return created;
   }
 
   async update(
@@ -722,6 +740,18 @@ export class CategoriesService implements OnModuleInit {
       });
     }
 
+    this.notificationsService.recordCrudEvent({
+      module: 'CATEGORIES',
+      action: 'UPDATE',
+      titleVi: 'Cập nhật danh mục ngành hàng',
+      titleEn: 'Category Updated',
+      messageVi: `Đã cập nhật danh mục "${updated.localName}" (ID: ${updated.externalCategoryId || updated.id}).`,
+      messageEn: `Updated category "${updated.localName}" (ID: ${updated.externalCategoryId || updated.id}).`,
+      targetName: updated.localName,
+      targetLink: '/categories',
+      currentUser,
+    });
+
     return updated;
   }
 
@@ -795,6 +825,18 @@ export class CategoriesService implements OnModuleInit {
 
     await this.prisma.client.category.delete({
       where: { id },
+    });
+
+    this.notificationsService.recordCrudEvent({
+      module: 'CATEGORIES',
+      action: 'DELETE',
+      titleVi: 'Xóa danh mục ngành hàng',
+      titleEn: 'Category Deleted',
+      messageVi: `Đã xóa danh mục "${existing.localName}" khỏi cây danh mục.`,
+      messageEn: `Deleted category "${existing.localName}" from category tree.`,
+      targetName: existing.localName,
+      targetLink: '/categories',
+      currentUser,
     });
 
     return {

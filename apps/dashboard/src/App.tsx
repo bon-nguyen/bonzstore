@@ -16,6 +16,7 @@ import CreateProductPage from './pages/CreateProductPage';
 import { DashboardHomePage } from './pages/DashboardHomePage';
 import { ForbiddenPage } from './pages/ForbiddenPage';
 import { LoginPage } from './pages/LoginPage';
+import { NotificationSettingsPage } from './pages/NotificationSettingsPage';
 import { ProductsPage } from './pages/ProductsPage';
 import { RolesPage } from './pages/RolesPage';
 import { TagsPage } from './pages/TagsPage';
@@ -110,6 +111,16 @@ export function App() {
                           requiredPermission={PERMISSIONS.ROLES_READ}
                         >
                           <RolesPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="settings/notifications"
+                      element={
+                        <ProtectedRoute
+                          requiredPermission={PERMISSIONS.DASHBOARD_VIEW}
+                        >
+                          <NotificationSettingsPage />
                         </ProtectedRoute>
                       }
                     />

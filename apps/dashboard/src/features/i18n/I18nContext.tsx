@@ -49,6 +49,7 @@ const TRANSLATIONS = {
     'nav.tags': 'Thẻ',
     'nav.users': 'Tài khoản & Nhân sự',
     'nav.roles': 'Phân quyền RBAC',
+    'nav.notifications': 'Cài đặt thông báo',
     'nav.allowedPages': 'Trang được phép',
     'nav.totalPerms': 'Tổng quyền',
     'nav.expandSidebar': 'Mở rộng Sidebar',
@@ -325,6 +326,94 @@ const TRANSLATIONS = {
     'tags.onlyAdminManagerDesc':
       'Chỉ tài khoản Admin (SUPER_ADMIN) và Quản lý (STORE_MANAGER) mới có quyền thêm, sửa, xóa thẻ sản phẩm',
 
+    // Notifications Bell & Settings Page
+    'notifications.bellTitle': 'Thông báo Quản trị viên (Admin)',
+    'notifications.unreadBadge': '{count} chưa đọc',
+    'notifications.markAllRead': 'Đọc tất cả',
+    'notifications.clearRead': 'Xóa đã đọc',
+    'notifications.openSettings': 'Cài đặt thông báo (Thêm / Xóa / Sửa)',
+    'notifications.tabAll': 'Tất cả',
+    'notifications.tabUnread': 'Chưa đọc',
+    'notifications.tabRead': 'Đã đọc',
+    'notifications.actionCreate': 'Thêm mới (CREATE)',
+    'notifications.actionUpdate': 'Chỉnh sửa (UPDATE)',
+    'notifications.actionDelete': 'Xóa (DELETE)',
+    'notifications.actionCreateShort': 'Thêm mới',
+    'notifications.actionUpdateShort': 'Chỉnh sửa',
+    'notifications.actionDeleteShort': 'Xóa',
+    'notifications.moduleProducts': 'Sản phẩm (Products)',
+    'notifications.moduleCategories': 'Danh mục (Categories)',
+    'notifications.moduleTags': 'Thẻ sản phẩm (Tags)',
+    'notifications.moduleUsers': 'Tài khoản & Nhân sự (Users)',
+    'notifications.moduleRoles': 'Phân quyền RBAC (Roles)',
+    'notifications.moduleProductsDesc':
+      'Thông báo khi đăng sản phẩm mới, chỉnh sửa tồn kho/giá SKU hoặc xóa sản phẩm khỏi kệ',
+    'notifications.moduleCategoriesDesc':
+      'Thông báo khi thêm mới, cập nhật hoặc xóa danh mục ngành hàng TikTok Shop 202405',
+    'notifications.moduleTagsDesc':
+      'Thông báo khi tạo thẻ mới, đổi tên thẻ hàng loạt hoặc xóa thẻ sản phẩm',
+    'notifications.moduleUsersDesc':
+      'Thông báo khi tạo tài khoản nhân sự, khóa/mở khóa hoặc đặt lại mật khẩu bảo mật',
+    'notifications.moduleRolesDesc':
+      'Thông báo khi tạo vai trò mới hoặc thay đổi ma trận quyền hạn RBAC',
+    'notifications.pageSubtitle':
+      'Trung tâm Thông báo & Cấu hình Sự kiện Hệ thống',
+    'notifications.pageTitle': 'Quản lý & Cài đặt Thông báo Admin',
+    'notifications.pageDesc':
+      'Quản lý thông báo nhận được từ các tác vụ Thêm mới (CREATE), Chỉnh sửa (UPDATE) và Xóa (DELETE) trên toàn hệ thống',
+    'notifications.testBtn': 'Gửi thông báo Test',
+    'notifications.resetBtn': 'Khôi phục mặc định',
+    'notifications.statTotal': 'Tổng thông báo hệ thống',
+    'notifications.statCreate': 'Thông báo Thêm mới (CREATE)',
+    'notifications.statUpdate': 'Thông báo Chỉnh sửa (UPDATE)',
+    'notifications.statDelete': 'Thông báo Xóa (DELETE)',
+    'notifications.globalConfigTitle': 'Cấu hình Nhận thông báo Tổng quát',
+    'notifications.masterSwitchLabel': 'Nhận thông báo hệ thống (Chuông Admin)',
+    'notifications.masterSwitchDesc':
+      'Khi tắt, hệ thống sẽ tạm ngừng ghi nhận mọi thông báo phát sinh mới trên chuông thông báo',
+    'notifications.toastSwitchLabel':
+      'Hiển thị Toast thông báo tức thời góc màn hình',
+    'notifications.toastSwitchDesc':
+      'Bật thông báo nổi ngay khi có thao tác Thêm / Xóa / Sửa thành công',
+    'notifications.adminOnlySwitchLabel':
+      'Chỉ nhận thông báo từ Admin & Quản lý (ADMIN_MANAGER_ROLES)',
+    'notifications.adminOnlySwitchDesc':
+      'Lọc và chỉ ghi nhận các sự kiện quan trọng do SUPER_ADMIN và STORE_MANAGER thực hiện',
+    'notifications.matrixTitle':
+      'Ma trận Quản lý Thông báo theo Tác vụ: Thêm — Sửa — Xóa',
+    'notifications.matrixDesc':
+      'Bật hoặc tắt nhận thông báo riêng biệt cho từng tác vụ Thêm mới (CREATE), Chỉnh sửa (UPDATE) và Xóa (DELETE) trên từng phân hệ',
+    'notifications.colModule': 'Phân hệ hệ thống (Module)',
+    'notifications.colCreateToggle': 'Tác vụ Thêm mới (CREATE)',
+    'notifications.colUpdateToggle': 'Tác vụ Chỉnh sửa (UPDATE)',
+    'notifications.colDeleteToggle': 'Tác vụ Xóa (DELETE)',
+    'notifications.colQuickAction': 'Thao tác nhanh',
+    'notifications.toggleAllCreate': 'Bật/Tắt tất cả Thêm',
+    'notifications.toggleAllUpdate': 'Bật/Tắt tất cả Sửa',
+    'notifications.toggleAllDelete': 'Bật/Tắt tất cả Xóa',
+    'notifications.enableAllRow': 'Bật cả 3',
+    'notifications.disableAllRow': 'Tắt cả 3',
+    'notifications.historyTitle': 'Lịch sử Thông báo Hệ thống',
+    'notifications.searchPlaceholder':
+      'Tìm kiếm thông báo theo tiêu đề, nội dung, đối tượng hoặc người thực hiện...',
+    'notifications.allModules': 'Tất cả phân hệ',
+    'notifications.allActions': 'Tất cả tác vụ (Thêm/Sửa/Xóa)',
+    'notifications.colNotification': 'Nội dung thông báo',
+    'notifications.colActionType': 'Tác vụ',
+    'notifications.colActor': 'Người thực hiện',
+    'notifications.colTime': 'Thời gian',
+    'notifications.markReadTooltip': 'Đánh dấu đã đọc / chưa đọc',
+    'notifications.deleteTooltip': 'Xóa thông báo',
+    'notifications.goToTarget': 'Đi tới trang',
+    'notifications.emptyBell': 'Hiện không có thông báo nào trong mục này',
+    'api.notificationSettingsSaved': 'Đã cập nhật cấu hình thông báo thành công',
+    'api.notificationSettingsReset':
+      'Đã khôi phục cài đặt thông báo về mặc định',
+    'api.notificationTestSent': 'Đã phát thông báo kiểm thử lên Chuông Admin',
+    'api.notificationReadAll': 'Đã đánh dấu đọc toàn bộ thông báo',
+    'api.notificationCleared': 'Đã dọn dẹp các thông báo đã đọc',
+    'api.notificationDeleted': 'Đã xóa thông báo',
+
     // Forbidden
     'forbidden.title': '403 — Không đủ quyền truy cập trang',
     'forbidden.desc':
@@ -408,6 +497,7 @@ const TRANSLATIONS = {
     'nav.tags': 'Tags',
     'nav.users': 'Users & Staff',
     'nav.roles': 'RBAC Permissions',
+    'nav.notifications': 'Notification Settings',
     'nav.allowedPages': 'Allowed pages',
     'nav.totalPerms': 'Total permissions',
     'nav.expandSidebar': 'Expand Sidebar',
@@ -681,6 +771,94 @@ const TRANSLATIONS = {
     'tags.onlyAdminManagerDesc':
       'Only Admin (SUPER_ADMIN) and Store Manager (STORE_MANAGER) accounts are allowed to create, rename, or delete product tags',
 
+    // Notifications Bell & Settings Page
+    'notifications.bellTitle': 'Admin Notifications',
+    'notifications.unreadBadge': '{count} unread',
+    'notifications.markAllRead': 'Mark all read',
+    'notifications.clearRead': 'Clear read',
+    'notifications.openSettings': 'Notification Settings (Create / Update / Delete)',
+    'notifications.tabAll': 'All',
+    'notifications.tabUnread': 'Unread',
+    'notifications.tabRead': 'Read',
+    'notifications.actionCreate': 'Create (CREATE)',
+    'notifications.actionUpdate': 'Update (UPDATE)',
+    'notifications.actionDelete': 'Delete (DELETE)',
+    'notifications.actionCreateShort': 'Create',
+    'notifications.actionUpdateShort': 'Update',
+    'notifications.actionDeleteShort': 'Delete',
+    'notifications.moduleProducts': 'Products',
+    'notifications.moduleCategories': 'Categories',
+    'notifications.moduleTags': 'Product Tags',
+    'notifications.moduleUsers': 'Users & Staff',
+    'notifications.moduleRoles': 'RBAC Roles',
+    'notifications.moduleProductsDesc':
+      'Notify when creating new products, updating SKU stock/prices, or deleting products',
+    'notifications.moduleCategoriesDesc':
+      'Notify when creating, updating, or deleting TikTok Shop 202405 categories',
+    'notifications.moduleTagsDesc':
+      'Notify when creating new tags, bulk renaming tags, or deleting product tags',
+    'notifications.moduleUsersDesc':
+      'Notify when creating staff accounts, locking/unlocking, or resetting security passwords',
+    'notifications.moduleRolesDesc':
+      'Notify when creating new roles or updating the RBAC permission matrix',
+    'notifications.pageSubtitle':
+      'Notification Center & System Event Preferences',
+    'notifications.pageTitle': 'Admin Notification Management & Settings',
+    'notifications.pageDesc':
+      'Manage notifications triggered by Create (CREATE), Update (UPDATE), and Delete (DELETE) tasks across all modules',
+    'notifications.testBtn': 'Send Test Notification',
+    'notifications.resetBtn': 'Restore Defaults',
+    'notifications.statTotal': 'Total System Notifications',
+    'notifications.statCreate': 'Create Notifications (CREATE)',
+    'notifications.statUpdate': 'Update Notifications (UPDATE)',
+    'notifications.statDelete': 'Delete Notifications (DELETE)',
+    'notifications.globalConfigTitle': 'General Notification Preferences',
+    'notifications.masterSwitchLabel': 'Enable System Notifications (Admin Bell)',
+    'notifications.masterSwitchDesc':
+      'When disabled, the system will pause recording new notifications in the Admin Bell',
+    'notifications.toastSwitchLabel': 'Show Real-time Toast Popups',
+    'notifications.toastSwitchDesc':
+      'Display floating toast notifications immediately when Create / Update / Delete tasks succeed',
+    'notifications.adminOnlySwitchLabel':
+      'Only Receive Admin & Manager Actions (ADMIN_MANAGER_ROLES)',
+    'notifications.adminOnlySwitchDesc':
+      'Filter and record only critical events performed by SUPER_ADMIN and STORE_MANAGER',
+    'notifications.matrixTitle':
+      'Task Notification Matrix: Create — Update — Delete',
+    'notifications.matrixDesc':
+      'Individually enable or disable notifications for Create (CREATE), Update (UPDATE), and Delete (DELETE) operations per module',
+    'notifications.colModule': 'System Module',
+    'notifications.colCreateToggle': 'Create Task (CREATE)',
+    'notifications.colUpdateToggle': 'Update Task (UPDATE)',
+    'notifications.colDeleteToggle': 'Delete Task (DELETE)',
+    'notifications.colQuickAction': 'Quick Action',
+    'notifications.toggleAllCreate': 'Toggle All Create',
+    'notifications.toggleAllUpdate': 'Toggle All Update',
+    'notifications.toggleAllDelete': 'Toggle All Delete',
+    'notifications.enableAllRow': 'Enable all 3',
+    'notifications.disableAllRow': 'Disable all 3',
+    'notifications.historyTitle': 'Admin Notification History',
+    'notifications.searchPlaceholder':
+      'Search notifications by title, message, target item, or actor...',
+    'notifications.allModules': 'All modules',
+    'notifications.allActions': 'All tasks (Create/Update/Delete)',
+    'notifications.colNotification': 'Notification Details',
+    'notifications.colActionType': 'Task Action',
+    'notifications.colActor': 'Performed By',
+    'notifications.colTime': 'Timestamp',
+    'notifications.markReadTooltip': 'Toggle read / unread',
+    'notifications.deleteTooltip': 'Delete notification',
+    'notifications.goToTarget': 'Open page',
+    'notifications.emptyBell': 'No notifications found in this view',
+    'api.notificationSettingsSaved':
+      'Notification settings updated successfully',
+    'api.notificationSettingsReset':
+      'Notification settings restored to defaults',
+    'api.notificationTestSent': 'Test notification sent to Admin Bell',
+    'api.notificationReadAll': 'Marked all notifications as read',
+    'api.notificationCleared': 'Cleared all read notifications',
+    'api.notificationDeleted': 'Notification deleted',
+
     // Forbidden
     'forbidden.title': '403 — Access Denied',
     'forbidden.desc':
@@ -856,6 +1034,20 @@ const BACKEND_ERROR_MAP_EN: Array<{ match: RegExp; replace: string }> = [
   {
     match: /Mã danh mục .* đã tồn tại|đã được sử dụng/i,
     replace: 'Category external ID already exists in the system',
+  },
+  {
+    match: /Thông báo tổng đang tắt/i,
+    replace:
+      'System notifications are currently disabled. Please enable "Enable System Notifications" first.',
+  },
+  {
+    match: /đang bị tắt trong Cài đặt thông báo/i,
+    replace:
+      'Notifications for this task action and module are currently disabled in Notification Settings.',
+  },
+  {
+    match: /Không tìm thấy thông báo/i,
+    replace: 'Notification not found',
   },
 ];
 

@@ -9,6 +9,7 @@ import { isEmpty, trim } from 'lodash';
 import { ADMIN_MANAGER_ROLES } from '../../common/constants/rbac.constants';
 import { AuthenticatedUser } from '../../common/decorators/current-user.decorator';
 import { PrismaService } from '../../database/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import {
   BulkProductActionDto,
   CreateProductDto,
@@ -70,7 +71,10 @@ export class ProductsService implements OnModuleInit {
     'Flash Sale',
   ]);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
   private assertCanManageTags(currentUser?: AuthenticatedUser): void {
     if (!currentUser) return;
@@ -658,6 +662,18 @@ export class ProductsService implements OnModuleInit {
       }
     }
 
+    this.notificationsService.recordCrudEvent({
+      module: 'TAGS',
+      action: 'CREATE',
+      titleVi: 'Tạo thẻ sản phẩm mới',
+      titleEn: 'Product Tag Created',
+      messageVi: `Đã tạo thẻ sản phẩm "${tagName}".`,
+      messageEn: `Created product tag "${tagName}".`,
+      targetName: tagName,
+      targetLink: '/tags',
+      currentUser,
+    });
+
     return this.getTags();
   }
 
@@ -691,6 +707,18 @@ export class ProductsService implements OnModuleInit {
       }
     }
 
+    this.notificationsService.recordCrudEvent({
+      module: 'TAGS',
+      action: 'UPDATE',
+      titleVi: 'Đổi tên thẻ sản phẩm',
+      titleEn: 'Product Tag Renamed',
+      messageVi: `Đã đổi tên thẻ "${trimmedOld}" thành "${trimmedNew}".`,
+      messageEn: `Renamed product tag "${trimmedOld}" to "${trimmedNew}".`,
+      targetName: trimmedNew,
+      targetLink: '/tags',
+      currentUser,
+    });
+
     return this.getTags();
   }
 
@@ -711,6 +739,18 @@ export class ProductsService implements OnModuleInit {
         });
       }
     }
+
+    this.notificationsService.recordCrudEvent({
+      module: 'TAGS',
+      action: 'DELETE',
+      titleVi: 'Xóa thẻ sản phẩm',
+      titleEn: 'Product Tag Deleted',
+      messageVi: `Đã xóa thẻ sản phẩm "${trimmed}".`,
+      messageEn: `Deleted product tag "${trimmed}".`,
+      targetName: trimmed,
+      targetLink: '/tags',
+      currentUser,
+    });
 
     return this.getTags();
   }
@@ -975,6 +1015,17 @@ export class ProductsService implements OnModuleInit {
       },
     });
 
+    this.notificationsService.recordCrudEvent({
+      module: 'PRODUCTS',
+      action: 'CREATE',
+      titleVi: 'Thêm sản phẩm mới',
+      titleEn: 'New Product Created',
+      messageVi: `Đã thêm sản phẩm mới "${created.title}".`,
+      messageEn: `Created new product "${created.title}".`,
+      targetName: created.title,
+      targetLink: '/products',
+    });
+
     return this.transformProduct(created);
   }
 
@@ -1026,6 +1077,19 @@ export class ProductsService implements OnModuleInit {
       include: { category: true, skus: true },
     });
 
+    this.notificationsService.recordCrudEvent({
+      module: 'PRODUCTS',
+      action: dto.status === 'DELETED' ? 'DELETE' : 'UPDATE',
+      titleVi:
+        dto.status === 'DELETED' ? 'Xóa sản phẩm' : 'Cập nhật sản phẩm',
+      titleEn:
+        dto.status === 'DELETED' ? 'Product Deleted' : 'Product Updated',
+      messageVi: `Đã cập nhật sản phẩm "${updated.title}".`,
+      messageEn: `Updated product "${updated.title}".`,
+      targetName: updated.title,
+      targetLink: '/products',
+    });
+
     return this.transformProduct(updated);
   }
 
@@ -1044,6 +1108,21 @@ export class ProductsService implements OnModuleInit {
         packageDimensions: meta as any,
       },
       include: { category: true, skus: true },
+    });
+
+    this.notificationsService.recordCrudEvent({
+      module: 'PRODUCTS',
+      action: tabStatus === 'DELETED' ? 'DELETE' : 'UPDATE',
+      titleVi:
+        tabStatus === 'DELETED'
+          ? 'Xóa sản phẩm khỏi kệ'
+          : 'Đổi trạng thái sản phẩm',
+      titleEn:
+        tabStatus === 'DELETED' ? 'Product Deleted' : 'Product Status Changed',
+      messageVi: `Sản phẩm "${updated.title}" đã chuyển sang trạng thái ${tabStatus}.`,
+      messageEn: `Product "${updated.title}" status changed to ${tabStatus}.`,
+      targetName: updated.title,
+      targetLink: '/products',
     });
 
     return this.transformProduct(updated);

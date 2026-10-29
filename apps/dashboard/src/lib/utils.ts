@@ -28,6 +28,22 @@ export function formatCurrencyVND(amount: number): string {
   }).format(amount);
 }
 
+export function formatDateTime(dateStr?: string | null): string {
+  if (!dateStr) return '—';
+  try {
+    const d = new Date(dateStr);
+    return d.toLocaleString('vi-VN', {
+      hour: '2-digit',
+      minute: '2-digit',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+  } catch {
+    return dateStr;
+  }
+}
+
 export function getRoleRank(roleCode?: string | null): number {
   if (!roleCode || isEmpty(trim(roleCode))) return 0;
   return ROLE_RANK[roleCode] ?? 30;
