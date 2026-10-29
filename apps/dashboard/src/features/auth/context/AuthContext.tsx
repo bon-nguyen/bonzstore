@@ -14,6 +14,7 @@ import {
   AuthUser,
   LoginPayload,
 } from '../../../api/types/auth.types';
+import { ROLES } from '../../../constants/rbac.constants';
 
 interface AuthContextValue {
   user: AuthUser | null;
@@ -82,7 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const hasPermission = useCallback(
     (permissionCode: string) => {
       if (!user) return false;
-      if (user.role?.code === 'SUPER_ADMIN') return true;
+      if (user.role?.code === ROLES.SUPER_ADMIN) return true;
       return user.permissions?.includes(permissionCode) ?? false;
     },
     [user],
@@ -91,7 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const hasAnyPermission = useCallback(
     (permissionCodes: string[]) => {
       if (!user) return false;
-      if (user.role?.code === 'SUPER_ADMIN') return true;
+      if (user.role?.code === ROLES.SUPER_ADMIN) return true;
       return permissionCodes.some((code) => user.permissions?.includes(code));
     },
     [user],
@@ -100,7 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const hasRole = useCallback(
     (roleCode: string) => {
       if (!user) return false;
-      if (user.role?.code === 'SUPER_ADMIN') return true;
+      if (user.role?.code === ROLES.SUPER_ADMIN) return true;
       return user.role?.code === roleCode;
     },
     [user],
@@ -109,7 +110,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const hasAnyRole = useCallback(
     (roleCodes: string[]) => {
       if (!user || !user.role?.code) return false;
-      if (user.role.code === 'SUPER_ADMIN') return true;
+      if (user.role.code === ROLES.SUPER_ADMIN) return true;
       return roleCodes.includes(user.role.code);
     },
     [user],

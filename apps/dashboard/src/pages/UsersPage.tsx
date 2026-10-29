@@ -26,6 +26,11 @@ import { Input } from '../components/ui/input';
 import { Pagination } from '../components/ui/pagination';
 import { Select } from '../components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '../components/ui/tabs';
+import {
+  ADMIN_MANAGER_ROLES,
+  PERMISSIONS,
+  ROLES,
+} from '../constants/rbac.constants';
 import { PermissionGate } from '../features/auth/components/PermissionGate';
 import { useAuthContext } from '../features/auth/context/AuthContext';
 import { TranslationKey, useI18n } from '../features/i18n/I18nContext';
@@ -53,18 +58,18 @@ const MAX_USERS_PER_PAGE = 20;
 
 const ROLE_TABS: Array<{ labelKey: TranslationKey; roleCode: string }> = [
   { labelKey: 'users.tabAll', roleCode: 'ALL' },
-  { labelKey: 'users.tabAdmin', roleCode: 'SUPER_ADMIN' },
-  { labelKey: 'users.tabManager', roleCode: 'STORE_MANAGER' },
-  { labelKey: 'users.tabStaff', roleCode: 'STAFF' },
-  { labelKey: 'users.tabCustomer', roleCode: 'CUSTOMER' },
+  { labelKey: 'users.tabAdmin', roleCode: ROLES.SUPER_ADMIN },
+  { labelKey: 'users.tabManager', roleCode: ROLES.STORE_MANAGER },
+  { labelKey: 'users.tabStaff', roleCode: ROLES.STAFF },
+  { labelKey: 'users.tabCustomer', roleCode: ROLES.CUSTOMER },
 ];
 
 export function UsersPage() {
   const { t } = useI18n();
   const { user: currentUser, hasAnyRole } = useAuthContext();
   const actorRoleCode = currentUser?.role?.code;
-  const isSuperAdmin = actorRoleCode === 'SUPER_ADMIN';
-  const canViewUsers = hasAnyRole(['SUPER_ADMIN', 'STORE_MANAGER']);
+  const isSuperAdmin = actorRoleCode === ROLES.SUPER_ADMIN;
+  const canViewUsers = hasAnyRole(ADMIN_MANAGER_ROLES);
 
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -249,7 +254,7 @@ export function UsersPage() {
       header: t('users.colRole'),
       sortKey: 'role',
       render: (item) => {
-        const isRowSuperAdmin = item.role?.code === 'SUPER_ADMIN';
+        const isRowSuperAdmin = item.role?.code === ROLES.SUPER_ADMIN;
         const canManageRow =
           item.canManage !== false &&
           canActorManageRole(actorRoleCode, item.role?.code);
@@ -269,7 +274,7 @@ export function UsersPage() {
 
         return (
           <PermissionGate
-            permission="users.update"
+            permission={PERMISSIONS.USERS_UPDATE}
             fallback={
               <span className="font-medium text-foreground dark:text-primary">
                 {item.role?.name} ({item.role?.code})
@@ -372,7 +377,7 @@ export function UsersPage() {
         return (
           <div className="flex items-center gap-1">
             {canViewUsers ? (
-              <PermissionGate permission="users.read">
+              <PermissionGate permission={PERMISSIONS.USERS_READ}>
                 <Button
                   type="button"
                   variant="ghost"
@@ -386,7 +391,7 @@ export function UsersPage() {
             ) : null}
 
             {canManageRow ? (
-              <PermissionGate permission="users.update">
+              <PermissionGate permission={PERMISSIONS.USERS_UPDATE}>
                 <Button
                   type="button"
                   variant="ghost"
@@ -457,7 +462,7 @@ export function UsersPage() {
             : `${t('users.desc')} — ${t('users.descManager', { role: actorRoleCode || 'STORE_MANAGER' })}`
         }
         actions={
-          <PermissionGate permission="users.create">
+          <PermissionGate permission={PERMISSIONS.USERS_CREATE}>
             <Button onClick={() => setShowCreateModal(true)}>
               <UserPlus className="h-4 w-4" />
               <span>{t('users.addBtn')}</span>

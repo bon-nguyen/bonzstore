@@ -36,9 +36,10 @@
   }
   ```
 
-### 1.2 `GET /api/categories` & `POST /api/categories` & `POST /api/categories/sync-tiktok`
-- Tự động khởi tạo (`OnModuleInit`) cây danh mục Anime chuẩn TikTok Shop `202405` nếu DB trống.
-- Bắt buộc sản phẩm (`SPU`) chỉ được gắn vào danh mục lá (`isLeaf = true`).
+### 1.2 `GET /api/categories/paginated`, `GET /api/categories`, `POST /api/categories`, `PATCH /api/categories/:id`, `DELETE /api/categories/:id`
+- Tự động khởi tạo (`OnModuleInit`) cây danh mục Anime chuẩn TikTok Shop `202405` (19 danh mục thuộc 6 nhóm ngành hàng gốc) và tự động liên kết `parentId` giữa danh mục con với danh mục cha.
+- `GET /api/categories/paginated`: Hỗ trợ phân trang (`page`, `limit`), tìm kiếm (`search`), lọc trạng thái (`status`) và sắp xếp (`sortBy`: `localName` | `productCount` | `status`, `sortOrder`: `asc` | `desc`) theo cấu trúc **Cha - Con liền kề** (danh mục con luôn nằm ngay dưới danh mục cha, không tách rời).
+- `POST /api/categories`, `PATCH /api/categories/:id`, `DELETE /api/categories/:id`: Bảo vệ bởi `@Roles('SUPER_ADMIN', 'STORE_MANAGER')` và `@RequirePermissions('products.manage')` — chỉ Admin và Manager mới có quyền thêm, sửa, xóa danh mục.
 
 ---
 

@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from 'clsx';
 import { get, isEmpty, isNil, omitBy, trim } from 'lodash';
 import { twMerge } from 'tailwind-merge';
+import { ROLE_RANK, ROLES } from '../constants/rbac.constants';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -27,13 +28,6 @@ export function formatCurrencyVND(amount: number): string {
   }).format(amount);
 }
 
-const ROLE_RANK: Record<string, number> = {
-  SUPER_ADMIN: 100,
-  STORE_MANAGER: 50,
-  STAFF: 20,
-  CUSTOMER: 10,
-};
-
 export function getRoleRank(roleCode?: string | null): number {
   if (!roleCode || isEmpty(trim(roleCode))) return 0;
   return ROLE_RANK[roleCode] ?? 30;
@@ -48,8 +42,8 @@ export function canActorManageRole(
   actorRoleCode?: string | null,
   targetRoleCode?: string | null,
 ): boolean {
-  if (actorRoleCode === 'SUPER_ADMIN') return true;
-  if (targetRoleCode === 'SUPER_ADMIN') return false;
+  if (actorRoleCode === ROLES.SUPER_ADMIN) return true;
+  if (targetRoleCode === ROLES.SUPER_ADMIN) return false;
   return getRoleRank(actorRoleCode) >= getRoleRank(targetRoleCode);
 }
 
@@ -61,8 +55,8 @@ export function canActorAssignRole(
   actorRoleCode?: string | null,
   roleToAssign?: string | null,
 ): boolean {
-  if (!roleToAssign || roleToAssign === 'SUPER_ADMIN') return false;
-  if (actorRoleCode === 'SUPER_ADMIN') return true;
+  if (!roleToAssign || roleToAssign === ROLES.SUPER_ADMIN) return false;
+  if (actorRoleCode === ROLES.SUPER_ADMIN) return true;
   return getRoleRank(actorRoleCode) >= getRoleRank(roleToAssign);
 }
 

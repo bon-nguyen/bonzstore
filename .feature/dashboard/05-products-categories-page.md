@@ -67,8 +67,14 @@ Thiết kế đồng bộ 100% với **TikTok Shop Seller Center** để dễ d�
 
 ## 2. Trang 2: Danh Mục (`/categories` — [`CategoriesPage.tsx`](file:///c:/Users/Admin/Desktop/bonzstore/apps/dashboard/src/pages/CategoriesPage.tsx))
 
-- Hiển thị cây danh mục đa cấp chuẩn `get-authorized-category-assets-202405` kèm `cipher`, `category.id`, `parent_id`, `local_name`, `is_leaf`, `permission_statuses`.
-- Cho phép xem trực tiếp JSON Envelope chuẩn TikTok Shop `202405` và bấm vào số lượng sản phẩm của từng danh mục để lọc ngay bên trang `/products?categoryId=...`.
+- **Cấu trúc Cha - Con liền kề**: Danh mục con (`↳ Light Novel & Boxset Manga Đặc biệt`, `parent_id: 607001`) luôn nằm ngay bên dưới thành phần cha (`Manga, Light Novel & Artbook`, `parent_id: 0`), không bao giờ bị tách rời khi sắp xếp, tìm kiếm hay phân trang.
+- **Đa ngôn ngữ (`i18n` VI / EN)**: Toàn bộ tiêu đề cột (`category.local_name`, `category.id / parent_id`, `category.is_leaf`, `permission_statuses`, `Sản phẩm`, `Trạng thái`, `Thao tác`) và nhãn hiển thị trong bảng được dịch đầy đủ sang Tiếng Việt và Tiếng Anh.
+- **Tìm kiếm có Debounce (`400ms`) & Bộ lọc trạng thái**: Tìm kiếm tức thì theo `local_name`, `id`, `parent_id`, `cipher` và lọc theo trạng thái (`ACTIVE` / `INACTIVE`) đồng bộ với URL (`useSearchParams`).
+- **Sắp xếp (`Sort`)**: Hỗ trợ sắp xếp tăng/giảm (`asc` / `desc`) trên 3 cột: **Tên danh mục (`localName`)**, **Sản phẩm (`productCount`)**, và **Trạng thái (`status`)** mà vẫn giữ nguyên cấu trúc cây Cha - Con liền kề.
+- **Phân trang (`Pagination`)**: Phân trang theo cụm Cha - Con (`Family-aware pagination`) đảm bảo danh mục con không bị ngắt sang trang khác tách khỏi danh mục cha.
+- **Phân quyền Thao tác (Chỉ `SUPER_ADMIN` & `STORE_MANAGER`)**:
+  - Chỉ **Admin (`SUPER_ADMIN`)** và **Quản lý (`STORE_MANAGER`)** mới có quyền **Tạo mới**, **Chỉnh sửa** ([`EditCategoryDialog.tsx`](file:///c:/Users/Admin/Desktop/bonzstore/apps/dashboard/src/features/catalog/components/EditCategoryDialog.tsx)) và **Xóa** ([`DeleteCategoryDialog.tsx`](file:///c:/Users/Admin/Desktop/bonzstore/apps/dashboard/src/features/catalog/components/DeleteCategoryDialog.tsx)) danh mục.
+  - Đã loại bỏ nút đồng bộ TikTok Shop trên trang Danh mục theo yêu cầu.
 
 ---
 

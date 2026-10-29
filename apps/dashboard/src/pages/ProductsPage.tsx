@@ -40,6 +40,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '../components/ui/tooltip';
+import { PERMISSIONS } from '../constants/rbac.constants';
 import { PermissionGate } from '../features/auth/components/PermissionGate';
 import { CatalogSubNav } from '../features/catalog/components/CatalogSubNav';
 import { CreateProductDialog } from '../features/catalog/components/CreateProductDialog';
@@ -378,7 +379,7 @@ export function ProductsPage() {
         description={t('products.desc')}
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            <PermissionGate permission="products.sync">
+            <PermissionGate permission={PERMISSIONS.PRODUCTS_SYNC}>
               <Button
                 variant="outline"
                 disabled={importMutation.isPending}
@@ -400,7 +401,7 @@ export function ProductsPage() {
               </Button>
             </PermissionGate>
 
-            <PermissionGate permission="products.manage">
+            <PermissionGate permission={PERMISSIONS.PRODUCTS_MANAGE}>
               <Button onClick={() => navigate('/products/create')}>
                 <Plus className="h-4 w-4" />
                 <span>{t('products.addBtn')}</span>
@@ -677,7 +678,7 @@ export function ProductsPage() {
                 </button>
               </div>
 
-              <PermissionGate permission="products.manage">
+              <PermissionGate permission={PERMISSIONS.PRODUCTS_MANAGE}>
                 <div className="flex flex-wrap items-center gap-2">
                   <Button
                     type="button"
@@ -1015,7 +1016,7 @@ export function ProductsPage() {
                               {item.totalStock}
                             </span>
 
-                            <PermissionGate permission="products.manage">
+                            <PermissionGate permission={PERMISSIONS.PRODUCTS_MANAGE}>
                               <button
                                 type="button"
                                 onClick={() => setStockModalProduct(item)}
@@ -1043,7 +1044,7 @@ export function ProductsPage() {
                                   item.maxOriginalPrice,
                                 )}
                               </span>
-                              <PermissionGate permission="products.manage">
+                              <PermissionGate permission={PERMISSIONS.PRODUCTS_MANAGE}>
                                 <button
                                   type="button"
                                   onClick={() => setPriceModalProduct(item)}
@@ -1067,7 +1068,7 @@ export function ProductsPage() {
                         {/* Col 6: Hành động (Square Edit button + Square More "..." menu) */}
                         <td className="px-4 py-3.5 text-right align-top">
                           <div className="relative inline-flex items-center justify-end gap-1.5">
-                            <PermissionGate permission="products.manage">
+                            <PermissionGate permission={PERMISSIONS.PRODUCTS_MANAGE}>
                               <button
                                 type="button"
                                 onClick={() => setEditingProduct(item)}

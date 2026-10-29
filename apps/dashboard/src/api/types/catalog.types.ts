@@ -12,7 +12,20 @@ export interface CategoryItem {
   permissionStatuses: string[];
   status: 'ACTIVE' | 'INACTIVE';
   productCount: number;
+  directProductCount?: number;
   childrenCount: number;
+}
+
+export type CategorySortField = 'localName' | 'productCount' | 'status';
+
+export interface CategoryQueryParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: 'ACTIVE' | 'INACTIVE' | '';
+  isLeaf?: 'true' | 'false';
+  sortBy?: CategorySortField;
+  sortOrder?: 'asc' | 'desc';
 }
 
 export interface TikTokCategoryAssetNode {
@@ -45,6 +58,17 @@ export interface CreateCategoryDto {
   isLeaf?: boolean;
   categoryVersion?: string;
   permissionStatuses?: string[];
+  status?: 'ACTIVE' | 'INACTIVE';
+}
+
+export interface UpdateCategoryDto {
+  localName?: string;
+  externalCategoryId?: string;
+  parentId?: string | null;
+  isLeaf?: boolean;
+  categoryVersion?: string;
+  permissionStatuses?: string[];
+  status?: 'ACTIVE' | 'INACTIVE';
 }
 
 export type SourcePlatform = 'LOCAL' | 'TIKTOK_SHOP' | 'SHOPEE';

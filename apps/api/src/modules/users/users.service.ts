@@ -8,20 +8,19 @@ import {
 import * as bcrypt from 'bcryptjs';
 import * as crypto from 'crypto';
 import { isEmpty, isNil, trim } from 'lodash';
+import {
+  ADMIN_MANAGER_ROLES,
+  PERMISSIONS,
+  ROLE_RANK,
+  ROLES,
+} from '../../common/constants/rbac.constants';
 import { AuthenticatedUser } from '../../common/decorators/current-user.decorator';
 import { PrismaService } from '../../database/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserQueryDto } from './dto/user-query.dto';
 
-const ROLE_RANK: Record<string, number> = {
-  SUPER_ADMIN: 100,
-  STORE_MANAGER: 50,
-  STAFF: 20,
-  CUSTOMER: 10,
-};
-
-const ALLOWED_VIEWER_ROLES = ['SUPER_ADMIN', 'STORE_MANAGER'];
+const ALLOWED_VIEWER_ROLES: string[] = [...ADMIN_MANAGER_ROLES];
 const MAX_PAGE_LIMIT = 20;
 
 @Injectable()
@@ -536,23 +535,28 @@ export class UsersService implements OnModuleInit {
     try {
       const [managerRole, staffRole, customerRole] = await Promise.all([
         this.prisma.client.role.findUnique({
-          where: { code: 'STORE_MANAGER' },
+          where: { code: ROLES.STORE_MANAGER },
         }),
-        this.prisma.client.role.findUnique({ where: { code: 'STAFF' } }),
-        this.prisma.client.role.findUnique({ where: { code: 'CUSTOMER' } }),
+        this.prisma.client.role.findUnique({ where: { code: ROLES.STAFF } }),
+        this.prisma.client.role.findUnique({ where: { code: ROLES.CUSTOMER } }),
       ]);
 
       const userPerms = await this.prisma.client.permission.findMany({
         where: {
           code: {
-            in: ['users.read', 'users.create', 'users.update', 'users.delete'],
+            in: [
+              PERMISSIONS.USERS_READ,
+              PERMISSIONS.USERS_CREATE,
+              PERMISSIONS.USERS_UPDATE,
+              PERMISSIONS.USERS_DELETE,
+            ],
           },
         },
       });
 
       if (managerRole) {
         for (const perm of userPerms) {
-          if (perm.code !== 'users.delete') {
+          if (perm.code !== PERMISSIONS.USERS_DELETE) {
             await this.prisma.client.rolePermission.upsert({
               where: {
                 roleId_permissionId: {

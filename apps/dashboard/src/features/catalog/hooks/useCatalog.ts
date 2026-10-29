@@ -3,10 +3,12 @@ import { toast } from 'sonner';
 import { categoriesApi, productsApi } from '../../../api/endpoints/catalog.api';
 import {
   BulkProductActionDto,
+  CategoryQueryParams,
   CreateCategoryDto,
   CreateProductDto,
   ProductQueryParams,
   ProductStatus,
+  UpdateCategoryDto,
   UpdateProductDto,
   UpdateProductSkusDto,
 } from '../../../api/types/catalog.types';
@@ -18,6 +20,14 @@ export function useCategories() {
     queryKey: ['categories'],
     queryFn: () => categoriesApi.getAll(),
     staleTime: 60 * 1000,
+  });
+}
+
+export function usePaginatedCategories(params?: CategoryQueryParams) {
+  return useQuery({
+    queryKey: ['categories', 'paginated', params],
+    queryFn: () => categoriesApi.getPaginated(params),
+    staleTime: 30 * 1000,
   });
 }
 
@@ -45,18 +55,37 @@ export function useCreateCategory() {
   });
 }
 
-export function useSyncTikTokCategories() {
+export function useUpdateCategory() {
   const queryClient = useQueryClient();
   const { t } = useI18n();
 
   return useMutation({
-    mutationFn: () => categoriesApi.syncTikTok(),
-    onSuccess: (res) => {
+    mutationFn: ({ id, data }: { id: string; data: UpdateCategoryDto }) =>
+      categoriesApi.update(id, data),
+    onSuccess: (updated) => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
-      toast.success(t('api.categorySyncSuccess', { count: res.syncedCount }));
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast.success(t('api.categoryUpdateSuccess', { name: updated.localName }));
     },
     onError: (err: unknown) => {
-      toast.error(getErrorMessage(err, t('api.categorySyncError')));
+      toast.error(getErrorMessage(err, t('api.categoryUpdateError')));
+    },
+  });
+}
+
+export function useDeleteCategory() {
+  const queryClient = useQueryClient();
+  const { t } = useI18n();
+
+  return useMutation({
+    mutationFn: (id: string) => categoriesApi.delete(id),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast.success(t('api.categoryDeleteSuccess', { name: res.localName }));
+    },
+    onError: (err: unknown) => {
+      toast.error(getErrorMessage(err, t('api.categoryDeleteError')));
     },
   });
 }

@@ -38,7 +38,7 @@ export function CreateCategoryDialog({
   const createMutation = useCreateCategory();
   const [formState, setFormState] = useState(INITIAL_CATEGORY_STATE);
 
-  const parentCandidates = categories.filter((c) => !c.isLeaf);
+  const parentCandidates = categories.filter((c) => c.level === 1);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();

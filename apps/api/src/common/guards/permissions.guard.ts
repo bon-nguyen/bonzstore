@@ -5,6 +5,7 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { ROLES } from '../constants/rbac.constants';
 import { AuthenticatedUser } from '../decorators/current-user.decorator';
 import { PERMISSIONS_KEY } from '../decorators/permissions.decorator';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
@@ -36,7 +37,7 @@ export class PermissionsGuard implements CanActivate {
     }
 
     // SUPER_ADMIN bypasses granular permission checks
-    if (user.role?.code === 'SUPER_ADMIN') {
+    if (user.role?.code === ROLES.SUPER_ADMIN) {
       return true;
     }
 

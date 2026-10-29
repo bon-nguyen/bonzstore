@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { RoleItem } from '../api/types/role.types';
 import { Button } from '../components/ui/button';
 import { LoadingState } from '../components/ui/empty-state';
+import { PERMISSIONS } from '../constants/rbac.constants';
 import { PermissionGate } from '../features/auth/components/PermissionGate';
 import { useAuthContext } from '../features/auth/context/AuthContext';
 import { useI18n } from '../features/i18n/I18nContext';
@@ -19,7 +20,7 @@ import { StatusBadge } from '../features/shared/StatusBadge';
 export function RolesPage() {
   const { hasPermission } = useAuthContext();
   const { t } = useI18n();
-  const canManageRoles = hasPermission('roles.manage');
+  const canManageRoles = hasPermission(PERMISSIONS.ROLES_MANAGE);
   const { data: roles = [], isLoading } = useRoles();
   const { data: permissions = [] } = usePermissionsCatalog();
   const updateRoleMutation = useUpdateRole();
@@ -51,7 +52,7 @@ export function RolesPage() {
         title={t('roles.title')}
         description={t('roles.desc')}
         actions={
-          <PermissionGate permission="roles.manage">
+          <PermissionGate permission={PERMISSIONS.ROLES_MANAGE}>
             <Button onClick={() => setShowCreateModal(true)}>
               <Plus className="h-4 w-4" />
               <span>{t('roles.addBtn')}</span>

@@ -184,17 +184,48 @@ const TRANSLATIONS = {
       'TikTok Shop Partner API — get-authorized-category-assets-202405',
     'categories.title': 'Danh mục Ngành hàng Anime (Category Assets)',
     'categories.desc':
-      'Cây danh mục Figure, Manga, Cosplay & Goods tương thích chuẩn TikTok Shop v202405',
+      'Cây danh mục Figure, Manga, Cosplay & Goods theo cấu trúc Cha - Con liền kề (Chỉ Admin & Manager mới có quyền chỉnh sửa / xóa)',
     'categories.viewJson': 'Xem JSON 202405',
     'categories.hideJson': 'Ẩn JSON 202405',
     'categories.syncBtn': 'Đồng bộ từ TikTok Shop',
     'categories.syncing': 'Đang đồng bộ...',
     'categories.addBtn': 'Tạo Danh mục',
+    'categories.editModalTitle': 'Chỉnh sửa Danh mục Ngành hàng',
+    'categories.deleteModalTitle': 'Xác nhận xóa Danh mục',
+    'categories.deleteConfirmText':
+      'Bạn có chắc chắn muốn xóa danh mục "{name}" không?',
+    'categories.deleteNotice':
+      'Lưu ý: Nếu danh mục này đang có sản phẩm hoặc danh mục con, hệ thống sẽ tự động chuyển sản phẩm sang danh mục dự phòng và đưa danh mục con lên cấp gốc.',
+    'categories.deleteBtn': 'Xóa danh mục',
+    'categories.editTooltip': 'Chỉnh sửa danh mục (Admin & Manager)',
+    'categories.deleteTooltip': 'Xóa danh mục (Admin & Manager)',
+    'categories.onlyAdminManager': 'Chỉ Admin & Manager',
+    'categories.onlyAdminManagerDesc':
+      'Chỉ tài khoản Admin (SUPER_ADMIN) và Quản lý (STORE_MANAGER) mới có quyền chỉnh sửa hoặc xóa danh mục',
+    'categories.searchPlaceholder':
+      'Tìm kiếm theo tên danh mục (local_name), mã ID, parent_id hoặc cipher...',
+    'categories.allStatus': 'Tất cả trạng thái',
+    'categories.colLocalName': 'Tên danh mục (category.local_name)',
+    'categories.colIds': 'Mã danh mục (category.id / parent_id)',
+    'categories.colIsLeaf': 'Phân cấp (category.is_leaf)',
+    'categories.colPermissions': 'Quyền danh mục (permission_statuses)',
+    'categories.colProducts': 'Sản phẩm',
+    'categories.colStatus': 'Trạng thái',
+    'categories.colActions': 'Thao tác',
+    'categories.idPrefix': 'Mã ID (id):',
+    'categories.parentIdPrefix': 'Mã cha (parent_id):',
+    'categories.parentRootBadge': '0 (Danh mục gốc)',
+    'categories.childOfPrefix': 'Thuộc cha:',
+    'categories.childrenCountBadge': '{count} danh mục con',
+    'categories.leafTrueBadge': 'is_leaf: true (SPU)',
+    'categories.leafFalseBadge': 'is_leaf: false (Cha • Cấp {level})',
+    'categories.productUnit': '{count} SP',
     'categories.localNameLabel': 'local_name (Tên Danh mục Anime)',
-    'categories.externalIdLabel': 'externalCategoryId (TikTok / Shopee ID)',
-    'categories.parentLabel': 'Danh mục Cha (Parent Category)',
+    'categories.externalIdLabel': 'externalCategoryId (Mã category.id)',
+    'categories.parentLabel': 'Danh mục Cha (parent_id)',
     'categories.rootOption': '-- Danh mục gốc (parent_id = 0) --',
     'categories.isLeafLabel': 'is_leaf = true (Cho phép gắn sản phẩm SPU)',
+    'categories.statusLabel': 'Trạng thái danh mục',
 
     // Products Page (TikTok Shop Seller Center Sync)
     'products.subtitle':
@@ -298,6 +329,10 @@ const TRANSLATIONS = {
     'api.roleUpdateError': 'Cập nhật quyền thất bại',
     'api.categoryCreateSuccess': 'Đã tạo danh mục {name}',
     'api.categoryCreateError': 'Tạo danh mục thất bại',
+    'api.categoryUpdateSuccess': 'Đã cập nhật danh mục {name}',
+    'api.categoryUpdateError': 'Cập nhật danh mục thất bại',
+    'api.categoryDeleteSuccess': 'Đã xóa danh mục {name}',
+    'api.categoryDeleteError': 'Xóa danh mục thất bại',
     'api.categorySyncSuccess': 'Đã đồng bộ {count} danh mục từ TikTok Shop',
     'api.categorySyncError': 'Đồng bộ danh mục thất bại',
     'api.productCreateSuccess': 'Đã thêm sản phẩm {title}',
@@ -486,17 +521,48 @@ const TRANSLATIONS = {
       'TikTok Shop Partner API — get-authorized-category-assets-202405',
     'categories.title': 'Anime Category Assets (202405)',
     'categories.desc':
-      'Multi-level Anime Figure, Manga, Cosplay & Merch category tree compatible with TikTok Shop v202405',
+      'Parent-child Anime Figure, Manga, Cosplay & Merch category tree (Only Admin & Manager can edit or delete)',
     'categories.viewJson': 'View 202405 JSON',
     'categories.hideJson': 'Hide 202405 JSON',
     'categories.syncBtn': 'Sync from TikTok Shop',
     'categories.syncing': 'Syncing...',
     'categories.addBtn': 'Create Category',
+    'categories.editModalTitle': 'Edit Category Asset',
+    'categories.deleteModalTitle': 'Confirm Delete Category',
+    'categories.deleteConfirmText':
+      'Are you sure you want to delete the category "{name}"?',
+    'categories.deleteNotice':
+      'Note: Any attached products will be safely moved to a fallback category, and any child categories will be promoted to root level.',
+    'categories.deleteBtn': 'Delete Category',
+    'categories.editTooltip': 'Edit category (Admin & Manager)',
+    'categories.deleteTooltip': 'Delete category (Admin & Manager)',
+    'categories.onlyAdminManager': 'Admin & Manager Only',
+    'categories.onlyAdminManagerDesc':
+      'Only Admin (SUPER_ADMIN) and Store Manager (STORE_MANAGER) are allowed to edit or delete categories',
+    'categories.searchPlaceholder':
+      'Search by category name (local_name), ID, parent_id, or cipher...',
+    'categories.allStatus': 'All statuses',
+    'categories.colLocalName': 'Category Name (category.local_name)',
+    'categories.colIds': 'Category ID / Parent ID (category.id / parent_id)',
+    'categories.colIsLeaf': 'Hierarchy Level (category.is_leaf)',
+    'categories.colPermissions': 'Permissions (permission_statuses)',
+    'categories.colProducts': 'Products',
+    'categories.colStatus': 'Status',
+    'categories.colActions': 'Actions',
+    'categories.idPrefix': 'ID (id):',
+    'categories.parentIdPrefix': 'Parent ID (parent_id):',
+    'categories.parentRootBadge': '0 (Root Category)',
+    'categories.childOfPrefix': 'Parent:',
+    'categories.childrenCountBadge': '{count} sub-categories',
+    'categories.leafTrueBadge': 'is_leaf: true (SPU)',
+    'categories.leafFalseBadge': 'is_leaf: false (Parent • L{level})',
+    'categories.productUnit': '{count} items',
     'categories.localNameLabel': 'local_name (Anime Category Name)',
-    'categories.externalIdLabel': 'externalCategoryId (TikTok / Shopee ID)',
-    'categories.parentLabel': 'Parent Category',
+    'categories.externalIdLabel': 'externalCategoryId (category.id)',
+    'categories.parentLabel': 'Parent Category (parent_id)',
     'categories.rootOption': '-- Root Category (parent_id = 0) --',
     'categories.isLeafLabel': 'is_leaf = true (Allow attaching SPU products)',
+    'categories.statusLabel': 'Category Status',
 
     // Products Page (TikTok Shop Seller Center Sync)
     'products.subtitle':
@@ -600,6 +666,10 @@ const TRANSLATIONS = {
     'api.roleUpdateError': 'Failed to update role permissions',
     'api.categoryCreateSuccess': 'Created category {name}',
     'api.categoryCreateError': 'Failed to create category',
+    'api.categoryUpdateSuccess': 'Updated category {name}',
+    'api.categoryUpdateError': 'Failed to update category',
+    'api.categoryDeleteSuccess': 'Deleted category {name}',
+    'api.categoryDeleteError': 'Failed to delete category',
     'api.categorySyncSuccess': 'Synced {count} categories from TikTok Shop',
     'api.categorySyncError': 'Failed to sync categories',
     'api.productCreateSuccess': 'Added product {title}',
@@ -719,6 +789,27 @@ const BACKEND_ERROR_MAP_EN: Array<{ match: RegExp; replace: string }> = [
   {
     match: /Tài khoản của bạn đã bị khóa/i,
     replace: 'Your account has been locked',
+  },
+  {
+    match: /Chỉ quyền Admin \(SUPER_ADMIN\) và Quản lý \(STORE_MANAGER\) mới được phép/i,
+    replace:
+      'Only Admin (SUPER_ADMIN) and Store Manager (STORE_MANAGER) are allowed to create, edit, or delete categories',
+  },
+  {
+    match: /Không tìm thấy danh mục/i,
+    replace: 'Category not found',
+  },
+  {
+    match: /Tên danh mục không được để trống/i,
+    replace: 'Category name cannot be empty',
+  },
+  {
+    match: /Danh mục cha không tồn tại/i,
+    replace: 'Parent category does not exist',
+  },
+  {
+    match: /Mã danh mục .* đã tồn tại|đã được sử dụng/i,
+    replace: 'Category external ID already exists in the system',
   },
 ];
 

@@ -8,6 +8,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { PERMISSIONS } from '../../common/constants/rbac.constants';
 import { RequirePermissions } from '../../common/decorators/permissions.decorator';
 import {
   BulkProductActionDto,
@@ -30,7 +31,7 @@ export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
   @Get('stats')
-  @RequirePermissions('products.read')
+  @RequirePermissions(PERMISSIONS.PRODUCTS_READ)
   @ApiOperation({
     summary:
       'Thống kê số lượng sản phẩm theo 7 tab TikTok Shop Seller Center + Hết hàng + Thẻ',
@@ -40,16 +41,17 @@ export class ProductsController {
   }
 
   @Get('tags')
-  @RequirePermissions('products.read')
+  @RequirePermissions(PERMISSIONS.PRODUCTS_READ)
   @ApiOperation({
-    summary: 'Danh sách toàn bộ Thẻ sản phẩm (Product Tags) kèm số sản phẩm gắn thẻ',
+    summary:
+      'Danh sách toàn bộ Thẻ sản phẩm (Product Tags) kèm số sản phẩm gắn thẻ',
   })
   async getTags() {
     return this.productsService.getTags();
   }
 
   @Post('tags')
-  @RequirePermissions('products.manage')
+  @RequirePermissions(PERMISSIONS.PRODUCTS_MANAGE)
   @ApiOperation({
     summary: 'Tạo thẻ mới hoặc gắn thẻ vào danh sách sản phẩm',
   })
@@ -58,7 +60,7 @@ export class ProductsController {
   }
 
   @Patch('tags/rename')
-  @RequirePermissions('products.manage')
+  @RequirePermissions(PERMISSIONS.PRODUCTS_MANAGE)
   @ApiOperation({
     summary: 'Đổi tên thẻ sản phẩm đồng loạt',
   })
@@ -67,7 +69,7 @@ export class ProductsController {
   }
 
   @Post('tags/delete')
-  @RequirePermissions('products.manage')
+  @RequirePermissions(PERMISSIONS.PRODUCTS_MANAGE)
   @ApiOperation({
     summary: 'Gỡ và xóa thẻ khỏi toàn bộ sản phẩm',
   })
@@ -76,7 +78,7 @@ export class ProductsController {
   }
 
   @Get()
-  @RequirePermissions('products.read')
+  @RequirePermissions(PERMISSIONS.PRODUCTS_READ)
   @ApiOperation({
     summary:
       'Danh sách sản phẩm theo 7 tab TikTok Shop Seller Center, tìm kiếm theo Tên/ID/SKU, lọc Hạng mục/Hết hàng/Thẻ & sắp xếp',
@@ -86,7 +88,7 @@ export class ProductsController {
   }
 
   @Post()
-  @RequirePermissions('products.manage')
+  @RequirePermissions(PERMISSIONS.PRODUCTS_MANAGE)
   @ApiOperation({
     summary: 'Tạo sản phẩm mới (SPU + SKU) gắn vào Danh mục lá chuẩn 202405',
   })
@@ -95,16 +97,17 @@ export class ProductsController {
   }
 
   @Patch(':id')
-  @RequirePermissions('products.manage')
+  @RequirePermissions(PERMISSIONS.PRODUCTS_MANAGE)
   @ApiOperation({
-    summary: 'Cập nhật thông tin sản phẩm, danh mục lá, thương hiệu, thẻ & trạng thái',
+    summary:
+      'Cập nhật thông tin sản phẩm, danh mục lá, thương hiệu, thẻ & trạng thái',
   })
   async update(@Param('id') id: string, @Body() dto: UpdateProductDto) {
     return this.productsService.update(id, dto);
   }
 
   @Patch(':id/status')
-  @RequirePermissions('products.manage')
+  @RequirePermissions(PERMISSIONS.PRODUCTS_MANAGE)
   @ApiOperation({
     summary:
       'Cập nhật trạng thái sản phẩm theo 7 tab TikTok Shop (ACTIVE / PENDING / FAILED / INACTIVE / DRAFT / DELETED)',
@@ -117,7 +120,7 @@ export class ProductsController {
   }
 
   @Patch(':id/skus')
-  @RequirePermissions('products.manage')
+  @RequirePermissions(PERMISSIONS.PRODUCTS_MANAGE)
   @ApiOperation({
     summary:
       'Cập nhật nhanh Tồn kho (Hàng có sẵn) và Giá bán lẻ / Khuyến mãi của từng SKU',
@@ -130,7 +133,7 @@ export class ProductsController {
   }
 
   @Post('bulk-action')
-  @RequirePermissions('products.manage')
+  @RequirePermissions(PERMISSIONS.PRODUCTS_MANAGE)
   @ApiOperation({
     summary:
       'Thao tác hàng loạt trên nhiều sản phẩm (Đưa lên kệ, Vô hiệu hóa, Xóa, Gắn thẻ)',
@@ -140,7 +143,7 @@ export class ProductsController {
   }
 
   @Post('import-from-platform')
-  @RequirePermissions('products.sync')
+  @RequirePermissions(PERMISSIONS.PRODUCTS_SYNC)
   @ApiOperation({
     summary: 'Đồng bộ / Copy sản phẩm từ TikTok Shop hoặc Shopee về Web',
   })

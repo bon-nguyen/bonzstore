@@ -3,6 +3,7 @@ import { PaginatedResponse } from '../types/auth.types';
 import {
   BulkProductActionDto,
   CategoryItem,
+  CategoryQueryParams,
   CreateCategoryDto,
   CreateProductDto,
   ProductItem,
@@ -11,6 +12,7 @@ import {
   ProductStatus,
   ProductTagSummary,
   TikTokCategoryAssetsResponse,
+  UpdateCategoryDto,
   UpdateProductDto,
   UpdateProductSkusDto,
 } from '../types/catalog.types';
@@ -18,14 +20,24 @@ import {
 export const categoriesApi = {
   getAll: (): Promise<CategoryItem[]> => apiClient.get('/categories'),
 
+  getPaginated: (
+    params?: CategoryQueryParams,
+  ): Promise<PaginatedResponse<CategoryItem>> =>
+    apiClient.get('/categories/paginated', { params }),
+
   getTikTokAssets: (): Promise<TikTokCategoryAssetsResponse> =>
     apiClient.get('/categories/assets'),
 
   create: (data: CreateCategoryDto): Promise<CategoryItem> =>
     apiClient.post('/categories', data),
 
-  syncTikTok: (): Promise<{ code: number; message: string; syncedCount: number }> =>
-    apiClient.post('/categories/sync-tiktok'),
+  update: (id: string, data: UpdateCategoryDto): Promise<CategoryItem> =>
+    apiClient.patch(`/categories/${id}`, data),
+
+  delete: (
+    id: string,
+  ): Promise<{ id: string; localName: string; deleted: boolean; message: string }> =>
+    apiClient.delete(`/categories/${id}`),
 };
 
 export const productsApi = {

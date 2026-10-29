@@ -14,6 +14,7 @@ import { useNavigate } from 'react-router-dom';
 import { ProductTagSummary } from '../api/types/catalog.types';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
+import { PERMISSIONS } from '../constants/rbac.constants';
 import { PermissionGate } from '../features/auth/components/PermissionGate';
 import { CatalogSubNav } from '../features/catalog/components/CatalogSubNav';
 import {
@@ -138,7 +139,7 @@ export function TagsPage() {
       key: 'actions',
       header: t('app.actions'),
       render: (item) => (
-        <PermissionGate permission="products.manage">
+        <PermissionGate permission={PERMISSIONS.PRODUCTS_MANAGE}>
           <div className="flex items-center gap-2">
             <Button
               type="button"
@@ -196,7 +197,7 @@ export function TagsPage() {
           />
         </div>
 
-        <PermissionGate permission="products.manage">
+        <PermissionGate permission={PERMISSIONS.PRODUCTS_MANAGE}>
           <form
             onSubmit={handleCreateTag}
             className="flex flex-1 items-center gap-2 sm:max-w-md"

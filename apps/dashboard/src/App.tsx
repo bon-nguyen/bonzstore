@@ -3,6 +3,10 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { MainLayout } from './components/layout/MainLayout';
 import { Toaster } from './components/ui/sonner';
 import { TooltipProvider } from './components/ui/tooltip';
+import {
+  ADMIN_MANAGER_ROLES,
+  PERMISSIONS,
+} from './constants/rbac.constants';
 import { ProtectedRoute } from './features/auth/components/ProtectedRoute';
 import { AuthProvider } from './features/auth/context/AuthContext';
 import { I18nProvider } from './features/i18n/I18nContext';
@@ -40,7 +44,9 @@ export function App() {
                   <Route
                     path="/"
                     element={
-                      <ProtectedRoute requiredPermission="dashboard.view">
+                      <ProtectedRoute
+                        requiredPermission={PERMISSIONS.DASHBOARD_VIEW}
+                      >
                         <MainLayout />
                       </ProtectedRoute>
                     }
@@ -49,7 +55,9 @@ export function App() {
                     <Route
                       path="products"
                       element={
-                        <ProtectedRoute requiredPermission="products.read">
+                        <ProtectedRoute
+                          requiredPermission={PERMISSIONS.PRODUCTS_READ}
+                        >
                           <ProductsPage />
                         </ProtectedRoute>
                       }
@@ -57,7 +65,9 @@ export function App() {
                     <Route
                       path="products/create"
                       element={
-                        <ProtectedRoute requiredPermission="products.manage">
+                        <ProtectedRoute
+                          requiredPermission={PERMISSIONS.PRODUCTS_MANAGE}
+                        >
                           <CreateProductPage />
                         </ProtectedRoute>
                       }
@@ -65,7 +75,9 @@ export function App() {
                     <Route
                       path="categories"
                       element={
-                        <ProtectedRoute requiredPermission="products.read">
+                        <ProtectedRoute
+                          requiredPermission={PERMISSIONS.PRODUCTS_READ}
+                        >
                           <CategoriesPage />
                         </ProtectedRoute>
                       }
@@ -73,7 +85,9 @@ export function App() {
                     <Route
                       path="tags"
                       element={
-                        <ProtectedRoute requiredPermission="products.read">
+                        <ProtectedRoute
+                          requiredPermission={PERMISSIONS.PRODUCTS_READ}
+                        >
                           <TagsPage />
                         </ProtectedRoute>
                       }
@@ -82,8 +96,8 @@ export function App() {
                       path="users"
                       element={
                         <ProtectedRoute
-                          requiredPermission="users.read"
-                          requiredRoles={['SUPER_ADMIN', 'STORE_MANAGER']}
+                          requiredPermission={PERMISSIONS.USERS_READ}
+                          requiredRoles={ADMIN_MANAGER_ROLES}
                         >
                           <UsersPage />
                         </ProtectedRoute>
@@ -92,7 +106,9 @@ export function App() {
                     <Route
                       path="roles"
                       element={
-                        <ProtectedRoute requiredPermission="roles.read">
+                        <ProtectedRoute
+                          requiredPermission={PERMISSIONS.ROLES_READ}
+                        >
                           <RolesPage />
                         </ProtectedRoute>
                       }

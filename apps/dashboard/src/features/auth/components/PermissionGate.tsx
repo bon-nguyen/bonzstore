@@ -4,6 +4,7 @@ import { useAuthContext } from '../context/AuthContext';
 interface PermissionGateProps {
   permission?: string;
   role?: string;
+  roles?: string[];
   fallback?: ReactNode;
   children: ReactNode;
 }
@@ -11,12 +12,17 @@ interface PermissionGateProps {
 export function PermissionGate({
   permission,
   role,
+  roles,
   fallback = null,
   children,
 }: PermissionGateProps) {
-  const { hasPermission, hasRole } = useAuthContext();
+  const { hasPermission, hasRole, hasAnyRole } = useAuthContext();
 
   if (role && !hasRole(role)) {
+    return <>{fallback}</>;
+  }
+
+  if (roles && roles.length > 0 && !hasAnyRole(roles)) {
     return <>{fallback}</>;
   }
 
@@ -26,4 +32,3 @@ export function PermissionGate({
 
   return <>{children}</>;
 }
-

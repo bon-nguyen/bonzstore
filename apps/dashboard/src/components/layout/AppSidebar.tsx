@@ -16,6 +16,10 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
+import {
+  ADMIN_MANAGER_ROLES,
+  PERMISSIONS,
+} from '../../constants/rbac.constants';
 import { useAuthContext } from '../../features/auth/context/AuthContext';
 import { TranslationKey, useI18n } from '../../features/i18n/I18nContext';
 import { cn } from '../../lib/utils';
@@ -34,31 +38,31 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
     to: '/',
     labelKey: 'nav.dashboard',
     icon: LayoutDashboard,
-    permission: 'dashboard.view',
+    permission: PERMISSIONS.DASHBOARD_VIEW,
   },
   {
     to: '/products',
     labelKey: 'nav.productsGroup',
     icon: Package,
-    permission: 'products.read',
+    permission: PERMISSIONS.PRODUCTS_READ,
     children: [
       {
         to: '/products',
         labelKey: 'nav.products',
         icon: Package,
-        permission: 'products.read',
+        permission: PERMISSIONS.PRODUCTS_READ,
       },
       {
         to: '/categories',
         labelKey: 'nav.categories',
         icon: FolderTree,
-        permission: 'products.read',
+        permission: PERMISSIONS.PRODUCTS_READ,
       },
       {
         to: '/tags',
         labelKey: 'nav.tags',
         icon: Tags,
-        permission: 'products.read',
+        permission: PERMISSIONS.PRODUCTS_READ,
       },
     ],
   },
@@ -66,14 +70,14 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
     to: '/users',
     labelKey: 'nav.users',
     icon: Users,
-    permission: 'users.read',
-    allowedRoles: ['SUPER_ADMIN', 'STORE_MANAGER'],
+    permission: PERMISSIONS.USERS_READ,
+    allowedRoles: ADMIN_MANAGER_ROLES,
   },
   {
     to: '/roles',
     labelKey: 'nav.roles',
     icon: KeyRound,
-    permission: 'roles.read',
+    permission: PERMISSIONS.ROLES_READ,
   },
 ];
 

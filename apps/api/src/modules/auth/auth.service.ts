@@ -9,6 +9,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { randomUUID } from 'crypto';
+import { PERMISSIONS, ROLES } from '../../common/constants/rbac.constants';
 import { PrismaService } from '../../database/prisma.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -59,8 +60,8 @@ export class AuthService {
     if (requireAdminAccess) {
       const canAccessAdmin =
         user.role.isAdminPanel ||
-        user.role.code === 'SUPER_ADMIN' ||
-        permissions.includes('dashboard.view');
+        user.role.code === ROLES.SUPER_ADMIN ||
+        permissions.includes(PERMISSIONS.DASHBOARD_VIEW);
 
       if (!canAccessAdmin) {
         throw new ForbiddenException(
@@ -108,7 +109,7 @@ export class AuthService {
     }
 
     const customerRole = await this.prisma.client.role.findUnique({
-      where: { code: 'CUSTOMER' },
+      where: { code: ROLES.CUSTOMER },
     });
     if (!customerRole) {
       throw new BadRequestException('Chưa khởi tạo vai trò CUSTOMER (hãy chạy seed)');

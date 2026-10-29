@@ -9,6 +9,10 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
+  ADMIN_MANAGER_ROLES,
+  PERMISSIONS,
+} from '../../common/constants/rbac.constants';
+import {
   AuthenticatedUser,
   CurrentUser,
 } from '../../common/decorators/current-user.decorator';
@@ -21,13 +25,13 @@ import { UsersService } from './users.service';
 
 @ApiTags('users')
 @ApiBearerAuth()
-@Roles('SUPER_ADMIN', 'STORE_MANAGER')
+@Roles(...ADMIN_MANAGER_ROLES)
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get('stats')
-  @RequirePermissions('users.read')
+  @RequirePermissions(PERMISSIONS.USERS_READ)
   @ApiOperation({
     summary:
       'Thống kê số lượng người dùng (Chỉ SUPER_ADMIN & STORE_MANAGER)',
@@ -37,7 +41,7 @@ export class UsersController {
   }
 
   @Get()
-  @RequirePermissions('users.read')
+  @RequirePermissions(PERMISSIONS.USERS_READ)
   @ApiOperation({
     summary:
       'Danh sách người dùng (Chỉ SUPER_ADMIN & STORE_MANAGER được quyền xem)',
@@ -50,7 +54,7 @@ export class UsersController {
   }
 
   @Get(':id')
-  @RequirePermissions('users.read')
+  @RequirePermissions(PERMISSIONS.USERS_READ)
   @ApiOperation({
     summary:
       'Xem chi tiết thông tin người dùng (Chỉ SUPER_ADMIN & STORE_MANAGER)',
@@ -63,7 +67,7 @@ export class UsersController {
   }
 
   @Post()
-  @RequirePermissions('users.create')
+  @RequirePermissions(PERMISSIONS.USERS_CREATE)
   @ApiOperation({
     summary:
       'Tạo người dùng mới (Chặn quyền thấp hơn tạo tài khoản SUPER_ADMIN)',
@@ -76,7 +80,7 @@ export class UsersController {
   }
 
   @Patch(':id')
-  @RequirePermissions('users.update')
+  @RequirePermissions(PERMISSIONS.USERS_UPDATE)
   @ApiOperation({
     summary:
       'Cập nhật thông tin, trạng thái hoặc Role (Chặn STORE_MANAGER sửa quyền SUPER_ADMIN)',
@@ -90,7 +94,7 @@ export class UsersController {
   }
 
   @Patch(':id/reset-password')
-  @RequirePermissions('users.update')
+  @RequirePermissions(PERMISSIONS.USERS_UPDATE)
   @ApiOperation({
     summary:
       'Reset mật khẩu người dùng & thu hồi các phiên đăng nhập cũ (Chặn STORE_MANAGER reset mật khẩu SUPER_ADMIN)',
