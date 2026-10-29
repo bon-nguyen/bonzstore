@@ -53,6 +53,7 @@ import {
   useUpdateNotificationSettings,
 } from '../features/notifications/hooks/useNotifications';
 import { PageHeader } from '../features/shared/PageHeader';
+import { PageSectionContainer } from '../features/shared/PageSectionContainer';
 import { Column, ResponsiveTable } from '../features/shared/ResponsiveTable';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import { buildCleanSearchParams, cn, formatDateTime } from '../lib/utils';
@@ -438,10 +439,11 @@ export function NotificationSettingsPage() {
   const masterEnabled = settings?.masterEnabled !== false;
 
   return (
-    <div className="space-y-6">
+    <div className="page-container">
       <PageHeader
         subtitle={t('notifications.pageSubtitle')}
         title={t('notifications.pageTitle')}
+        badge={`${stats?.total ?? 0} Events`}
         description={t('notifications.pageDesc')}
         actions={
           <PermissionGate
@@ -587,17 +589,16 @@ export function NotificationSettingsPage() {
       </div>
 
       {/* 2. Cấu hình Tổng quát & Ma trận Thông báo theo Tác vụ Thêm - Xóa - Sửa */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-start">
         {/* Cột trái: Cấu hình tổng quát & Tạo thông báo Test */}
         <div className="space-y-4 lg:col-span-4">
-          <div className="stat-card space-y-4">
-            <div className="flex items-center gap-2 border-b border-border pb-3">
-              <Settings2 className="h-4 w-4 text-foreground dark:text-primary" />
-              <h3 className="font-display text-xs font-bold uppercase tracking-wider text-foreground">
-                {t('notifications.globalConfigTitle')}
-              </h3>
-            </div>
-
+          <PageSectionContainer
+            title={t('notifications.globalConfigTitle')}
+            subBadge="Global Preferences"
+            description="Điều khiển trạng thái bật/tắt thông báo toàn cục và kiểm thử sự kiện"
+            icon={Settings2}
+            bodyClassName="space-y-4 p-5"
+          >
             <div className="space-y-3">
               <div className="flex items-start justify-between gap-3 rounded-lg border border-border bg-muted/20 p-3">
                 <div className="space-y-0.5">
@@ -718,16 +719,20 @@ export function NotificationSettingsPage() {
                 <span>{t('tags.onlyAdminManagerDesc')}</span>
               </div>
             )}
-          </div>
+          </PageSectionContainer>
         </div>
 
         {/* Cột phải: Ma trận Quản lý Thông báo của Tác vụ Thêm - Xóa - Sửa */}
         <div className="lg:col-span-8">
-          <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-            <div className="flex flex-col gap-3 border-b border-border bg-muted/20 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="section-container">
+            <div className="section-container-header">
               <div>
-                <h3 className="font-display text-sm font-bold text-foreground">
-                  {t('notifications.matrixTitle')}
+                <h3 className="text-base font-bold flex items-center gap-2 text-foreground">
+                  <Bell className="h-4 w-4 text-foreground dark:text-primary" />
+                  <span>{t('notifications.matrixTitle')}</span>
+                  <span className="rounded border border-border bg-background/80 px-1.5 py-0.5 text-[10px] font-normal text-muted-foreground">
+                    CRUD Event Matrix
+                  </span>
                 </h3>
                 <p className="mt-0.5 text-xs text-muted-foreground">
                   {t('notifications.matrixDesc')}
@@ -929,12 +934,12 @@ export function NotificationSettingsPage() {
       </div>
 
       {/* 3. Lịch sử & Danh sách Thông báo Hệ thống */}
-      <div className="space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h3 className="font-display text-sm font-bold uppercase tracking-wider text-foreground">
-            {t('notifications.historyTitle')}
-          </h3>
-
+      <PageSectionContainer
+        title={t('notifications.historyTitle')}
+        subBadge="Notification Audit Logs"
+        description="Nhật ký chi tiết các thao tác Thêm mới, Chỉnh sửa và Xóa của quản trị viên trên toàn hệ thống"
+        icon={Bell}
+        headerRight={
           <div className="flex flex-wrap items-center gap-2">
             {(stats?.unreadCount ?? 0) > 0 ? (
               <Button
@@ -962,87 +967,102 @@ export function NotificationSettingsPage() {
               </Button>
             ) : null}
           </div>
-        </div>
+        }
+        toolbar={
+          <>
+            <div className="relative flex-1">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="text"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                placeholder={t('notifications.searchPlaceholder')}
+                className="pl-9 pr-9"
+              />
+              {isSearching ? (
+                <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-foreground dark:text-primary" />
+              ) : !isEmpty(searchInput) ? (
+                <button
+                  type="button"
+                  onClick={() => setSearchInput('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              ) : null}
+            </div>
 
-        {/* Thanh Tìm kiếm có Debounce 400ms & Bộ lọc Phân hệ / Tác vụ / Trạng thái */}
-        <div className="filter-panel flex flex-col gap-3 lg:flex-row lg:items-center">
-          <div className="relative flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              type="text"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              placeholder={t('notifications.searchPlaceholder')}
-              className="pl-9 pr-9"
-            />
-            {isSearching ? (
-              <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-foreground dark:text-primary" />
-            ) : !isEmpty(searchInput) ? (
-              <button
-                type="button"
-                onClick={() => setSearchInput('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            ) : null}
-          </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Select
+                value={moduleFilter === 'ALL' ? '' : moduleFilter}
+                onChange={(e) =>
+                  updateUrlParams({
+                    module:
+                      (e.target.value as NotificationModuleType | '') || 'ALL',
+                    page: 1,
+                  })
+                }
+                placeholder={t('notifications.allModules')}
+                options={MODULE_ROWS.map((r) => ({
+                  value: r.module,
+                  label: t(r.labelKey),
+                }))}
+                className="w-48"
+              />
 
-          <div className="flex flex-wrap items-center gap-2">
-            <Select
-              value={moduleFilter === 'ALL' ? '' : moduleFilter}
-              onChange={(e) =>
-                updateUrlParams({
-                  module:
-                    (e.target.value as NotificationModuleType | '') || 'ALL',
-                  page: 1,
-                })
-              }
-              placeholder={t('notifications.allModules')}
-              options={MODULE_ROWS.map((r) => ({
-                value: r.module,
-                label: t(r.labelKey),
-              }))}
-              className="w-48"
-            />
+              <Select
+                value={actionFilter === 'ALL' ? '' : actionFilter}
+                onChange={(e) =>
+                  updateUrlParams({
+                    action: (e.target.value as NotificationAction | '') || 'ALL',
+                    page: 1,
+                  })
+                }
+                placeholder={t('notifications.allActions')}
+                options={[
+                  { value: 'CREATE', label: t('notifications.actionCreate') },
+                  { value: 'UPDATE', label: t('notifications.actionUpdate') },
+                  { value: 'DELETE', label: t('notifications.actionDelete') },
+                ]}
+                className="w-52"
+              />
 
-            <Select
-              value={actionFilter === 'ALL' ? '' : actionFilter}
-              onChange={(e) =>
-                updateUrlParams({
-                  action: (e.target.value as NotificationAction | '') || 'ALL',
-                  page: 1,
-                })
-              }
-              placeholder={t('notifications.allActions')}
-              options={[
-                { value: 'CREATE', label: t('notifications.actionCreate') },
-                { value: 'UPDATE', label: t('notifications.actionUpdate') },
-                { value: 'DELETE', label: t('notifications.actionDelete') },
-              ]}
-              className="w-52"
-            />
-
-            <Select
-              value={readStatusFilter === 'ALL' ? '' : readStatusFilter}
-              onChange={(e) =>
-                updateUrlParams({
-                  readStatus:
-                    (e.target.value as 'UNREAD' | 'READ' | '') || 'ALL',
-                  page: 1,
-                })
-              }
-              placeholder={t('notifications.tabAll')}
-              options={[
-                { value: 'UNREAD', label: t('notifications.tabUnread') },
-                { value: 'READ', label: t('notifications.tabRead') },
-              ]}
-              className="w-36"
-            />
-          </div>
-        </div>
-
+              <Select
+                value={readStatusFilter === 'ALL' ? '' : readStatusFilter}
+                onChange={(e) =>
+                  updateUrlParams({
+                    readStatus:
+                      (e.target.value as 'UNREAD' | 'READ' | '') || 'ALL',
+                    page: 1,
+                  })
+                }
+                placeholder={t('notifications.tabAll')}
+                options={[
+                  { value: 'UNREAD', label: t('notifications.tabUnread') },
+                  { value: 'READ', label: t('notifications.tabRead') },
+                ]}
+                className="w-36"
+              />
+            </div>
+          </>
+        }
+        noBodyPadding
+        footer={
+          <Pagination
+            embedded
+            page={meta?.page || pageParam}
+            totalPages={meta?.totalPages || 1}
+            total={meta?.total || 0}
+            limit={meta?.limit || limitParam}
+            onPageChange={(nextPage) => updateUrlParams({ page: nextPage })}
+            onLimitChange={(nextLimit) =>
+              updateUrlParams({ limit: nextLimit, page: 1 })
+            }
+          />
+        }
+      >
         <ResponsiveTable
+          embedded
           columns={columns}
           data={notificationsData}
           keyExtractor={(item) => item.id}
@@ -1052,18 +1072,7 @@ export function NotificationSettingsPage() {
           sortOrder={sortOrder}
           onSortChange={handleSortChange}
         />
-
-        <Pagination
-          page={meta?.page || pageParam}
-          totalPages={meta?.totalPages || 1}
-          total={meta?.total || 0}
-          limit={meta?.limit || limitParam}
-          onPageChange={(nextPage) => updateUrlParams({ page: nextPage })}
-          onLimitChange={(nextLimit) =>
-            updateUrlParams({ limit: nextLimit, page: 1 })
-          }
-        />
-      </div>
+      </PageSectionContainer>
     </div>
   );
 }

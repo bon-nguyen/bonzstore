@@ -1,4 +1,6 @@
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { Sparkles, Wand2 } from 'lucide-react';
+import { toast } from 'sonner';
 import {
   CategoryItem,
   ProductItem,
@@ -16,7 +18,12 @@ import { FormField } from '../../../components/ui/form-field';
 import { Input } from '../../../components/ui/input';
 import { Select } from '../../../components/ui/select';
 import { useI18n } from '../../i18n/I18nContext';
-import { useUpdateProduct } from '../hooks/useCatalog';
+import {
+  evaluateProductTitleSeo,
+  generateAiProductTitles,
+  TIKTOK_TITLE_FORMULA,
+} from '../constants/tiktok-ai-rules';
+import { useCategories, useUpdateProduct } from '../hooks/useCatalog';
 
 export interface EditProductDialogProps {
   product: ProductItem | null;
@@ -33,24 +40,61 @@ export function EditProductDialog({
 }: EditProductDialogProps) {
   const { t } = useI18n();
   const updateMutation = useUpdateProduct();
+  const { data: allCategories = [] } = useCategories();
 
   const [title, setTitle] = useState('');
+  const [parentCategoryId, setParentCategoryId] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [brandName, setBrandName] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [status, setStatus] = useState<ProductStatus>('ACTIVE');
   const [tagsInput, setTagsInput] = useState('');
 
+  const parentCategories = useMemo(
+    () => allCategories.filter((c) => c.level === 1 || !c.parentId),
+    [allCategories]
+  );
+
+  const childCategories = useMemo(() => {
+    if (!parentCategoryId) return leafCategories;
+    return allCategories.filter((c) => c.parentId === parentCategoryId);
+  }, [allCategories, leafCategories, parentCategoryId]);
+
   useEffect(() => {
     if (product && open) {
       setTitle(product.title);
-      setCategoryId(product.category?.id || leafCategories[0]?.id || '');
+      const currentLeafId = product.category?.id || leafCategories[0]?.id || '';
+      const matchedCat = allCategories.find((c) => c.id === currentLeafId);
+      setParentCategoryId(matchedCat?.parentId || parentCategories[0]?.id || '');
+      setCategoryId(currentLeafId);
       setBrandName(product.brandName || '');
       setImageUrl(product.thumbnailUrl || '');
       setStatus(product.status);
       setTagsInput((product.tags || []).join(', '));
     }
-  }, [product, open, leafCategories]);
+  }, [product, open, leafCategories, allCategories, parentCategories]);
+
+  const selectedCategory = useMemo(
+    () => allCategories.find((c) => c.id === categoryId) || null,
+    [allCategories, categoryId]
+  );
+
+  const aiContext = useMemo(
+    () => ({
+      title,
+      brandName,
+      categoryName: selectedCategory?.localName,
+      animeSeries: (product?.tags || [])[0] || 'Anime',
+      characterName: product?.skus?.[0]?.salesAttributes?.[0]?.value_name || '',
+      primarySku: product?.skus?.[0]?.sellerSku || '',
+    }),
+    [title, brandName, selectedCategory, product]
+  );
+
+  const seoEval = useMemo(
+    () => evaluateProductTitleSeo(title, aiContext),
+    [title, aiContext]
+  );
 
   if (!product) return null;
 
@@ -63,8 +107,20 @@ export function EditProductDialog({
     { value: 'DELETED', label: `${t('products.tabDeleted')} (DELETED)` },
   ];
 
+  const handleApplyAiStandardTitle = () => {
+    const candidates = generateAiProductTitles(aiContext);
+    if (candidates[0]) {
+      setTitle(candidates[0].title);
+      toast.success('Đã tối ưu tên sản phẩm chuẩn công thức AI TikTok Shop');
+    }
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (!categoryId) {
+      toast.error('Vui lòng chọn Hạng mục Con (Cấp 2)');
+      return;
+    }
     const tags = tagsInput
       .split(',')
       .map((s) => s.trim())
@@ -114,32 +170,63 @@ export function EditProductDialog({
             </div>
           ) : null}
 
-          <FormField label={t('products.titleLabel')} required>
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold">
+                {t('products.titleLabel')} <span className="text-destructive">*</span>
+              </span>
+              <button
+                type="button"
+                onClick={handleApplyAiStandardTitle}
+                className="inline-flex items-center gap-1 rounded-md border border-primary/30 bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary hover:bg-primary/20"
+              >
+                <Wand2 className="h-3 w-3" />
+                AI Chuẩn hóa Tên ({seoEval.score}/100)
+              </button>
+            </div>
             <Input
               type="text"
               required
               value={title}
               onChange={(e) => setTitle(e.target.value)}
             />
-          </FormField>
+            <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+              <Sparkles className="h-3 w-3 text-primary shrink-0" />
+              <span>Công thức: {TIKTOK_TITLE_FORMULA}</span>
+            </p>
+          </div>
 
+          {/* Hạng mục 2 cấp đồng bộ với trang Tạo sản phẩm */}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <FormField label={t('products.leafCategoryLabel')} required>
+            <FormField label="Bước 1: Hạng mục Cha (Cấp 1)" required>
               <Select
-                value={categoryId}
-                onChange={(e) => setCategoryId(e.target.value)}
-                options={leafCategories.map((c) => ({
-                  value: c.id,
-                  label: `${c.localName} (#${c.externalCategoryId})`,
+                value={parentCategoryId}
+                onChange={(e) => {
+                  const nextParent = e.target.value;
+                  setParentCategoryId(nextParent);
+                  const firstChild = allCategories.find(
+                    (c) => c.parentId === nextParent
+                  );
+                  setCategoryId(firstChild?.id || '');
+                }}
+                placeholder="-- Chọn Hạng mục Cha --"
+                options={parentCategories.map((p) => ({
+                  value: p.id,
+                  label: p.localName,
                 }))}
               />
             </FormField>
 
-            <FormField label={t('products.colStatus')} required>
+            <FormField label="Bước 2: Hạng mục Con (Cấp 2)" required>
               <Select
-                value={status}
-                onChange={(e) => setStatus(e.target.value as ProductStatus)}
-                options={statusOptions}
+                value={categoryId}
+                disabled={!parentCategoryId}
+                onChange={(e) => setCategoryId(e.target.value)}
+                placeholder="-- Chọn Hạng mục Con --"
+                options={childCategories.map((c) => ({
+                  value: c.id,
+                  label: `${c.localName} (#${c.externalCategoryId})`,
+                }))}
               />
             </FormField>
           </div>
@@ -153,6 +240,16 @@ export function EditProductDialog({
               />
             </FormField>
 
+            <FormField label={t('products.colStatus')} required>
+              <Select
+                value={status}
+                onChange={(e) => setStatus(e.target.value as ProductStatus)}
+                options={statusOptions}
+              />
+            </FormField>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <FormField label="URL Ảnh đại diện">
               <Input
                 type="text"
@@ -160,16 +257,16 @@ export function EditProductDialog({
                 onChange={(e) => setImageUrl(e.target.value)}
               />
             </FormField>
-          </div>
 
-          <FormField label={t('products.tagsLabel')}>
-            <Input
-              type="text"
-              placeholder="VD: Hunter x Hunter, Chibi Q-Ver, Best Seller"
-              value={tagsInput}
-              onChange={(e) => setTagsInput(e.target.value)}
-            />
-          </FormField>
+            <FormField label={t('products.tagsLabel')}>
+              <Input
+                type="text"
+                placeholder="VD: Hunter x Hunter, Chibi Q-Ver, Best Seller"
+                value={tagsInput}
+                onChange={(e) => setTagsInput(e.target.value)}
+              />
+            </FormField>
+          </div>
 
           <DialogFooter className="pt-2">
             <Button
@@ -188,4 +285,3 @@ export function EditProductDialog({
     </Dialog>
   );
 }
-

@@ -1,6 +1,3 @@
-Tạo một chuông
+http://localhost:5173/products/create
 
-Nhận thông báo của admin 
-
-Tạo một trang cài đặt thông báo 
-- Có thể quan lý thông báo của tác vụ thêm xóa sửa 
+Giao diện ở trang thêm này khá đẹo, tôi cần đồng độ ra các page khác, dạng như chưa container cho dễ nhìn

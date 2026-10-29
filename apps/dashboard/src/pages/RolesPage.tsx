@@ -15,6 +15,7 @@ import {
   useUpdateRole,
 } from '../features/roles/hooks/useRoles';
 import { PageHeader } from '../features/shared/PageHeader';
+import { PageSectionContainer } from '../features/shared/PageSectionContainer';
 import { StatusBadge } from '../features/shared/StatusBadge';
 
 export function RolesPage() {
@@ -46,10 +47,11 @@ export function RolesPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="page-container">
       <PageHeader
         subtitle={t('roles.subtitle')}
         title={t('roles.title')}
+        badge={`${roles.length} Roles • ${permissions.length} Permissions`}
         description={t('roles.desc')}
         actions={
           <PermissionGate permission={PERMISSIONS.ROLES_MANAGE}>
@@ -62,47 +64,57 @@ export function RolesPage() {
       />
 
       {isLoading ? (
-        <LoadingState message={t('app.loading')} />
+        <LoadingState />
       ) : (
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-          <div className="space-y-3 lg:col-span-4">
-            {roles.map((role) => {
-              const isSelected = activeRole?.id === role.id;
-              return (
-                <button
-                  key={role.id}
-                  type="button"
-                  onClick={() => setSelectedRole(role)}
-                  className={`stat-card w-full text-left transition ${
-                    isSelected ? 'border-primary ring-1 ring-primary' : ''
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Shield className="h-4 w-4 text-foreground dark:text-primary" />
-                      <span className="font-display font-bold text-foreground">
-                        {role.name}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-start">
+          <div className="lg:col-span-4">
+            <PageSectionContainer
+              title="Danh sách Vai trò"
+              subBadge="System Roles"
+              description="Chọn một vai trò bên dưới để xem và cấu hình ma trận quyền hạn"
+              icon={Shield}
+              bodyClassName="space-y-3 p-4"
+            >
+              {roles.map((role) => {
+                const isSelected = activeRole?.id === role.id;
+                return (
+                  <button
+                    key={role.id}
+                    type="button"
+                    onClick={() => setSelectedRole(role)}
+                    className={`w-full rounded-xl border p-4 text-left transition-all ${
+                      isSelected
+                        ? 'border-primary bg-primary/10 ring-1 ring-primary shadow-sm'
+                        : 'border-border bg-background hover:border-primary/40 hover:bg-muted/30'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Shield className="h-4 w-4 text-foreground dark:text-primary" />
+                        <span className="font-display font-bold text-foreground">
+                          {role.name}
+                        </span>
+                      </div>
+                      <StatusBadge status={role.status} />
+                    </div>
+                    <p className="mt-1 font-mono text-xs text-foreground/80 dark:text-primary">
+                      {role.code}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {role.description || '—'}
+                    </p>
+                    <div className="mt-3 flex items-center justify-between border-t border-border pt-2 text-xs text-muted-foreground">
+                      <span>
+                        {role.userCount} {t('roles.accountsCount')}
+                      </span>
+                      <span>
+                        {role.permissionCodes.length} {t('roles.permsCount')}
                       </span>
                     </div>
-                    <StatusBadge status={role.status} />
-                  </div>
-                  <p className="mt-1 font-mono text-xs text-foreground/80 dark:text-primary">
-                    {role.code}
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {role.description || '—'}
-                  </p>
-                  <div className="mt-3 flex items-center justify-between border-t border-border pt-2 text-xs text-muted-foreground">
-                    <span>
-                      {role.userCount} {t('roles.accountsCount')}
-                    </span>
-                    <span>
-                      {role.permissionCodes.length} {t('roles.permsCount')}
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
+                  </button>
+                );
+              })}
+            </PageSectionContainer>
           </div>
 
           <div className="lg:col-span-8">

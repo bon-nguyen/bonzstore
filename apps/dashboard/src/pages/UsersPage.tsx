@@ -36,6 +36,7 @@ import { useAuthContext } from '../features/auth/context/AuthContext';
 import { TranslationKey, useI18n } from '../features/i18n/I18nContext';
 import { useRoles } from '../features/roles/hooks/useRoles';
 import { PageHeader } from '../features/shared/PageHeader';
+import { PageSectionContainer } from '../features/shared/PageSectionContainer';
 import { Column, ResponsiveTable } from '../features/shared/ResponsiveTable';
 import { StatusBadge } from '../features/shared/StatusBadge';
 import { CreateUserDialog } from '../features/users/components/CreateUserDialog';
@@ -460,10 +461,11 @@ export function UsersPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="page-container">
       <PageHeader
         subtitle={t('users.subtitle')}
         title={t('users.title')}
+        badge={`${totalSystemUsers} Users`}
         description={
           isSuperAdmin
             ? `${t('users.desc')} — ${t('users.descSuperAdmin')}`
@@ -481,9 +483,9 @@ export function UsersPage() {
 
       {/* Bảng Tổng hợp: Tổng các vai trò & Tổng trạng thái */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <div className="stat-card space-y-3">
-          <div className="flex items-center justify-between border-b border-border pb-2.5">
-            <div className="flex items-center gap-2">
+        <div className="section-container">
+          <div className="section-container-header">
+            <div className="flex items-center gap-2.5">
               <div className="stat-card-icon h-8 w-8">
                 <Users className="h-4 w-4" />
               </div>
@@ -501,7 +503,7 @@ export function UsersPage() {
             </span>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <div className="p-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
             {roles.map((r) => {
               const count = userStats?.byRole?.[r.code] ?? r.userCount ?? 0;
               const active = roleFilter === r.code;
@@ -536,9 +538,9 @@ export function UsersPage() {
           </div>
         </div>
 
-        <div className="stat-card space-y-3">
-          <div className="flex items-center justify-between border-b border-border pb-2.5">
-            <div className="flex items-center gap-2">
+        <div className="section-container">
+          <div className="section-container-header">
+            <div className="flex items-center gap-2.5">
               <div className="stat-card-icon h-8 w-8">
                 <Activity className="h-4 w-4" />
               </div>
@@ -556,7 +558,7 @@ export function UsersPage() {
             </span>
           </div>
 
-          <div className="grid grid-cols-3 gap-2">
+          <div className="p-4 grid grid-cols-3 gap-2">
             {(
               [
                 {
@@ -609,78 +611,92 @@ export function UsersPage() {
         </div>
       </div>
 
-      <Tabs
-        value={roleFilter}
-        onValueChange={(val) => updateUrlParams({ roleCode: val, page: 1 })}
-      >
-        <TabsList className="flex h-auto flex-wrap justify-start gap-1">
-          {ROLE_TABS.map((tab) => {
-            const tabCount =
-              tab.roleCode === 'ALL'
-                ? totalSystemUsers
-                : (userStats?.byRole?.[tab.roleCode] ?? 0);
-            return (
-              <TabsTrigger key={tab.roleCode} value={tab.roleCode}>
-                <span>{t(tab.labelKey)}</span>
-                <span className="ml-1.5 rounded bg-background/60 px-1.5 py-0.2 font-mono text-[10px]">
-                  {tabCount}
-                </span>
-              </TabsTrigger>
-            );
-          })}
-        </TabsList>
-      </Tabs>
-
-      <div className="filter-panel flex flex-col gap-3 sm:flex-row sm:items-center">
-        <div className="relative flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            type="text"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            placeholder={t('users.searchPlaceholder')}
-            className="pl-9 pr-9"
-          />
-          {isSearching ? (
-            <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-foreground dark:text-primary" />
-          ) : null}
-        </div>
-
-        <Select
-          value={statusFilter}
-          onChange={(e) =>
-            updateUrlParams({
-              status: e.target.value as UserStatus | '',
-              page: 1,
-            })
-          }
-          placeholder={t('users.allStatus')}
-          options={userStatusOptions}
-          className="sm:w-52"
-        />
-      </div>
-
-      <ResponsiveTable
-        columns={columns}
-        data={usersResponse?.data || []}
-        keyExtractor={(u) => u.id}
-        isLoading={isLoading}
-        isFetching={isSearching}
-        sortBy={sortBy}
-        sortOrder={sortOrder}
-        onSortChange={handleSortChange}
-      />
-
-      <Pagination
-        page={meta?.page || pageParam}
-        totalPages={meta?.totalPages || 1}
-        total={meta?.total || 0}
-        limit={meta?.limit || limitParam}
-        onPageChange={(nextPage) => updateUrlParams({ page: nextPage })}
-        onLimitChange={(nextLimit) =>
-          updateUrlParams({ limit: nextLimit, page: 1 })
+      {/* Container chính: Tabs Vai trò + Bộ lọc Tìm kiếm + Bảng User + Phân trang */}
+      <PageSectionContainer
+        title="Danh sách Tài khoản & Phân quyền"
+        subBadge="User Directory & RBAC"
+        description="Quản lý tài khoản nhân sự, khách hàng và phân cấp vai trò bảo mật trong hệ thống"
+        icon={Users}
+        headerRight={
+          <Tabs
+            value={roleFilter}
+            onValueChange={(val) => updateUrlParams({ roleCode: val, page: 1 })}
+          >
+            <TabsList className="flex h-auto flex-wrap justify-start gap-1">
+              {ROLE_TABS.map((tab) => {
+                const tabCount =
+                  tab.roleCode === 'ALL'
+                    ? totalSystemUsers
+                    : (userStats?.byRole?.[tab.roleCode] ?? 0);
+                return (
+                  <TabsTrigger key={tab.roleCode} value={tab.roleCode}>
+                    <span>{t(tab.labelKey)}</span>
+                    <span className="ml-1.5 rounded bg-background/60 px-1.5 py-0.2 font-mono text-[10px]">
+                      {tabCount}
+                    </span>
+                  </TabsTrigger>
+                );
+              })}
+            </TabsList>
+          </Tabs>
         }
-      />
+        toolbar={
+          <>
+            <div className="relative flex-1">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="text"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                placeholder={t('users.searchPlaceholder')}
+                className="pl-9 pr-9"
+              />
+              {isSearching ? (
+                <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-foreground dark:text-primary" />
+              ) : null}
+            </div>
+
+            <Select
+              value={statusFilter}
+              onChange={(e) =>
+                updateUrlParams({
+                  status: e.target.value as UserStatus | '',
+                  page: 1,
+                })
+              }
+              placeholder={t('users.allStatus')}
+              options={userStatusOptions}
+              className="sm:w-52"
+            />
+          </>
+        }
+        noBodyPadding
+        footer={
+          <Pagination
+            embedded
+            page={meta?.page || pageParam}
+            totalPages={meta?.totalPages || 1}
+            total={meta?.total || 0}
+            limit={meta?.limit || limitParam}
+            onPageChange={(nextPage) => updateUrlParams({ page: nextPage })}
+            onLimitChange={(nextLimit) =>
+              updateUrlParams({ limit: nextLimit, page: 1 })
+            }
+          />
+        }
+      >
+        <ResponsiveTable
+          embedded
+          columns={columns}
+          data={usersResponse?.data || []}
+          keyExtractor={(u) => u.id}
+          isLoading={isLoading}
+          isFetching={isSearching}
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          onSortChange={handleSortChange}
+        />
+      </PageSectionContainer>
 
       {/* Modal 1: Tạo tài khoản mới */}
       <CreateUserDialog

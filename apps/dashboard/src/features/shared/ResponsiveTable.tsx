@@ -33,6 +33,7 @@ export interface ResponsiveTableProps<T> {
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
   onSortChange?: (sortKey: string) => void;
+  embedded?: boolean;
 }
 
 export function ResponsiveTable<T>({
@@ -45,6 +46,7 @@ export function ResponsiveTable<T>({
   sortBy,
   sortOrder = 'asc',
   onSortChange,
+  embedded = false,
 }: ResponsiveTableProps<T>) {
   const { t } = useI18n();
   const showLoading = isLoading || isFetching;
@@ -65,7 +67,12 @@ export function ResponsiveTable<T>({
   return (
     <>
       {/* Desktop Table (Shadcn/UI Table) */}
-      <div className="relative hidden overflow-hidden rounded-xl border border-border bg-card shadow-sm md:block">
+      <div
+        className={cn(
+          'relative hidden overflow-hidden bg-card md:block',
+          !embedded && 'rounded-xl border border-border shadow-sm',
+        )}
+      >
         <Table>
           <TableHeader>
             <tr>
@@ -129,7 +136,7 @@ export function ResponsiveTable<T>({
       </div>
 
       {/* Mobile Card Stack */}
-      <div className="space-y-3 md:hidden">
+      <div className={cn('space-y-3 md:hidden', embedded && 'p-4')}>
         {showLoading ? (
           <LoadingState />
         ) : !data.length ? (

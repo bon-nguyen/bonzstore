@@ -41,6 +41,7 @@ import {
 } from '../features/catalog/hooks/useCatalog';
 import { useI18n } from '../features/i18n/I18nContext';
 import { PageHeader } from '../features/shared/PageHeader';
+import { PageSectionContainer } from '../features/shared/PageSectionContainer';
 import { Column, ResponsiveTable } from '../features/shared/ResponsiveTable';
 import { StatusBadge } from '../features/shared/StatusBadge';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
@@ -359,7 +360,7 @@ export function CategoriesPage() {
   const meta = paginatedResponse?.meta;
 
   return (
-    <div className="space-y-5">
+    <div className="page-container">
       <CatalogSubNav
         productCount={stats?.total}
         categoryCount={allCategories.length || meta?.total}
@@ -369,6 +370,7 @@ export function CategoriesPage() {
       <PageHeader
         subtitle={t('categories.subtitle')}
         title={t('categories.title')}
+        badge={`${meta?.total ?? allCategories.length} Categories`}
         description={t('categories.desc')}
         actions={
           <div className="flex flex-wrap items-center gap-2">
@@ -401,65 +403,81 @@ export function CategoriesPage() {
         <TikTokAssetsPreview assets={tiktokAssets} />
       ) : null}
 
-      {/* Thanh tìm kiếm có Debounce 400ms & Bộ lọc trạng thái */}
-      <div className="filter-panel flex flex-col gap-3 sm:flex-row sm:items-center">
-        <div className="relative flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            type="text"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            placeholder={t('categories.searchPlaceholder')}
-            className="pl-9 pr-9"
-          />
-          {isSearching ? (
-            <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-foreground dark:text-primary" />
-          ) : !isEmpty(searchInput) ? (
-            <button
-              type="button"
-              onClick={() => setSearchInput('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          ) : null}
-        </div>
-
-        <Select
-          value={statusFilter}
-          onChange={(e) =>
-            updateUrlParams({
-              status: e.target.value as 'ACTIVE' | 'INACTIVE' | '',
-              page: 1,
-            })
-          }
-          placeholder={t('categories.allStatus')}
-          options={statusOptions}
-          className="sm:w-52"
-        />
-      </div>
-
-      <ResponsiveTable
-        columns={columns}
-        data={categoriesData}
-        keyExtractor={(c) => c.id}
-        isLoading={isLoading}
-        isFetching={isSearching}
-        sortBy={sortBy}
-        sortOrder={sortOrder}
-        onSortChange={handleSortChange}
-      />
-
-      <Pagination
-        page={meta?.page || pageParam}
-        totalPages={meta?.totalPages || 1}
-        total={meta?.total || 0}
-        limit={meta?.limit || limitParam}
-        onPageChange={(nextPage) => updateUrlParams({ page: nextPage })}
-        onLimitChange={(nextLimit) =>
-          updateUrlParams({ limit: nextLimit, page: 1 })
+      <PageSectionContainer
+        title={t('categories.title')}
+        subBadge="Category Hierarchy & Leaf Nodes"
+        description="Quản lý danh mục Cha (Cấp 1) và danh mục Con (Cấp 2 - Leaf) đồng bộ chuẩn TikTok Shop"
+        icon={FolderTree}
+        headerRight={
+          <span className="status-badge status-active font-mono text-xs">
+            {t('products.totalRows', { total: meta?.total || 0 })}
+          </span>
         }
-      />
+        toolbar={
+          <>
+            <div className="relative flex-1">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="text"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                placeholder={t('categories.searchPlaceholder')}
+                className="pl-9 pr-9"
+              />
+              {isSearching ? (
+                <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-foreground dark:text-primary" />
+              ) : !isEmpty(searchInput) ? (
+                <button
+                  type="button"
+                  onClick={() => setSearchInput('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              ) : null}
+            </div>
+
+            <Select
+              value={statusFilter}
+              onChange={(e) =>
+                updateUrlParams({
+                  status: e.target.value as 'ACTIVE' | 'INACTIVE' | '',
+                  page: 1,
+                })
+              }
+              placeholder={t('categories.allStatus')}
+              options={statusOptions}
+              className="sm:w-52"
+            />
+          </>
+        }
+        noBodyPadding
+        footer={
+          <Pagination
+            embedded
+            page={meta?.page || pageParam}
+            totalPages={meta?.totalPages || 1}
+            total={meta?.total || 0}
+            limit={meta?.limit || limitParam}
+            onPageChange={(nextPage) => updateUrlParams({ page: nextPage })}
+            onLimitChange={(nextLimit) =>
+              updateUrlParams({ limit: nextLimit, page: 1 })
+            }
+          />
+        }
+      >
+        <ResponsiveTable
+          embedded
+          columns={columns}
+          data={categoriesData}
+          keyExtractor={(c) => c.id}
+          isLoading={isLoading}
+          isFetching={isSearching}
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          onSortChange={handleSortChange}
+        />
+      </PageSectionContainer>
 
       <CreateCategoryDialog
         open={showCreateModal}

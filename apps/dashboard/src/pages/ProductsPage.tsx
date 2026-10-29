@@ -364,7 +364,7 @@ export function ProductsPage() {
   };
 
   return (
-    <div className="space-y-5">
+    <div className="page-container">
       {/* Sub-navigation: 1. Tất cả sản phẩm | 2. Danh mục | 3. Thẻ */}
       <CatalogSubNav
         productCount={stats?.total}
@@ -375,6 +375,7 @@ export function ProductsPage() {
       <PageHeader
         subtitle={t('products.subtitle')}
         title={t('products.title')}
+        badge={`${stats?.total ?? 0} Products`}
         description={t('products.desc')}
         actions={
           <div className="flex flex-wrap items-center gap-2">
@@ -411,7 +412,25 @@ export function ProductsPage() {
       />
 
       {/* TikTok Shop Seller Center Card Container */}
-      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+      <div className="section-container">
+        <div className="section-container-header">
+          <div>
+            <h2 className="text-base font-bold flex items-center gap-2">
+              <Package className="h-4 w-4 text-foreground dark:text-primary" />
+              <span>Danh sách Sản phẩm & Biến thể SKU</span>
+              <span className="rounded border border-border bg-background/80 px-1.5 py-0.5 text-[10px] font-normal text-muted-foreground">
+                TikTok Shop Product Catalog
+              </span>
+            </h2>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Theo dõi tồn kho, giá bán, hiệu suất đơn hàng và đồng bộ đa sàn theo thời gian thực
+            </p>
+          </div>
+          <span className="status-badge status-active font-mono text-xs">
+            {t('products.totalRows', { total: meta?.total ?? stats?.total ?? 0 })}
+          </span>
+        </div>
+
         {/* 1. 7 Status Tabs Bar (Tất cả / Trên kệ / Đang xem xét / Cần chú ý / Đã vô hiệu hóa / Bản nháp / Đã xóa) */}
         <div
           role="tablist"

@@ -1,6 +1,8 @@
+import { KeyRound } from 'lucide-react';
 import { PermissionItem, RoleItem } from '../../../api/types/role.types';
 import { Switch } from '../../../components/ui/switch';
 import { useI18n } from '../../i18n/I18nContext';
+import { PageSectionContainer } from '../../shared/PageSectionContainer';
 
 export interface RolePermissionMatrixProps {
   role: RoleItem;
@@ -18,31 +20,27 @@ export function RolePermissionMatrix({
   const { t } = useI18n();
 
   return (
-    <div className="stat-card space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-4">
-        <div>
-          <h2 className="font-display text-lg font-bold">
-            {t('roles.matrixTitle')}: {role.name} ({role.code})
-          </h2>
-          <p className="text-xs text-muted-foreground">
-            {t('roles.matrixDesc')}
-          </p>
-        </div>
+    <PageSectionContainer
+      title={`${t('roles.matrixTitle')}: ${role.name}`}
+      subBadge={role.code}
+      description={t('roles.matrixDesc')}
+      icon={KeyRound}
+      headerRight={
         <span className="status-badge status-active">
           {role.isAdminPanel ? t('users.portalYes') : t('users.portalNo')}
         </span>
-      </div>
-
+      }
+    >
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {permissions.map((perm) => {
           const checked = role.permissionCodes.includes(perm.code);
           return (
             <div
               key={perm.id}
-              className={`flex items-start justify-between gap-3 rounded-lg border p-3.5 transition ${
+              className={`flex items-start justify-between gap-3 rounded-xl border p-3.5 transition ${
                 checked
                   ? 'border-primary bg-primary/15'
-                  : 'border-border bg-muted/20'
+                  : 'border-border bg-muted/20 hover:bg-muted/35'
               }`}
             >
               <div className="text-xs">
@@ -64,7 +62,6 @@ export function RolePermissionMatrix({
           );
         })}
       </div>
-    </div>
+    </PageSectionContainer>
   );
 }
-

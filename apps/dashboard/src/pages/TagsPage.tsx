@@ -37,6 +37,7 @@ import {
 } from '../features/catalog/hooks/useCatalog';
 import { useI18n } from '../features/i18n/I18nContext';
 import { PageHeader } from '../features/shared/PageHeader';
+import { PageSectionContainer } from '../features/shared/PageSectionContainer';
 import { Column, ResponsiveTable } from '../features/shared/ResponsiveTable';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import { buildCleanSearchParams } from '../lib/utils';
@@ -235,7 +236,7 @@ export function TagsPage() {
   const meta = paginatedResponse?.meta;
 
   return (
-    <div className="space-y-5">
+    <div className="page-container">
       <CatalogSubNav
         productCount={stats?.total}
         categoryCount={categories.length}
@@ -245,6 +246,7 @@ export function TagsPage() {
       <PageHeader
         subtitle={t('tags.subtitle')}
         title={t('tags.title')}
+        badge={`${meta?.total ?? allTags.length} Tags`}
         description={t('tags.desc')}
         actions={
           <PermissionGate
@@ -259,52 +261,66 @@ export function TagsPage() {
         }
       />
 
-      {/* Thanh tìm kiếm thẻ có Debounce 400ms */}
-      <div className="filter-panel flex flex-col gap-3 sm:flex-row sm:items-center">
-        <div className="relative flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            type="text"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            placeholder={t('tags.searchPlaceholder')}
-            className="pl-9 pr-9"
-          />
-          {isSearching ? (
-            <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-foreground dark:text-primary" />
-          ) : !isEmpty(searchInput) ? (
-            <button
-              type="button"
-              onClick={() => setSearchInput('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          ) : null}
-        </div>
-      </div>
-
-      <ResponsiveTable
-        columns={columns}
-        data={tagsData}
-        keyExtractor={(item) => item.name}
-        isLoading={isLoading}
-        isFetching={isSearching}
-        sortBy={sortBy}
-        sortOrder={sortOrder}
-        onSortChange={handleSortChange}
-      />
-
-      <Pagination
-        page={meta?.page || pageParam}
-        totalPages={meta?.totalPages || 1}
-        total={meta?.total || 0}
-        limit={meta?.limit || limitParam}
-        onPageChange={(nextPage) => updateUrlParams({ page: nextPage })}
-        onLimitChange={(nextLimit) =>
-          updateUrlParams({ limit: nextLimit, page: 1 })
+      <PageSectionContainer
+        title={t('tags.title')}
+        subBadge="Product Tags & Series Grouping"
+        description="Gắn thẻ phân nhóm sản phẩm theo Series Anime, bộ sưu tập và chiến dịch khuyến mãi"
+        icon={Tag}
+        headerRight={
+          <span className="status-badge status-active font-mono text-xs">
+            {t('products.totalRows', { total: meta?.total || 0 })}
+          </span>
         }
-      />
+        toolbar={
+          <div className="relative flex-1">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="text"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder={t('tags.searchPlaceholder')}
+              className="pl-9 pr-9"
+            />
+            {isSearching ? (
+              <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-foreground dark:text-primary" />
+            ) : !isEmpty(searchInput) ? (
+              <button
+                type="button"
+                onClick={() => setSearchInput('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            ) : null}
+          </div>
+        }
+        noBodyPadding
+        footer={
+          <Pagination
+            embedded
+            page={meta?.page || pageParam}
+            totalPages={meta?.totalPages || 1}
+            total={meta?.total || 0}
+            limit={meta?.limit || limitParam}
+            onPageChange={(nextPage) => updateUrlParams({ page: nextPage })}
+            onLimitChange={(nextLimit) =>
+              updateUrlParams({ limit: nextLimit, page: 1 })
+            }
+          />
+        }
+      >
+        <ResponsiveTable
+          embedded
+          columns={columns}
+          data={tagsData}
+          keyExtractor={(item) => item.name}
+          isLoading={isLoading}
+          isFetching={isSearching}
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          onSortChange={handleSortChange}
+        />
+      </PageSectionContainer>
 
       <CreateTagDialog
         open={showCreateModal}

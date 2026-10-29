@@ -117,20 +117,40 @@
     @apply font-normal text-emerald-600 dark:text-emerald-400;
   }
 
-  /* 5. Layout & Typography */
+  /* 5. Layout & Unified Page Containers (Đồng bộ theo chuẩn /products/create) */
+  .page-container {
+    @apply mx-auto w-full max-w-[1440px] space-y-5;
+  }
+
   .page-header {
-    @apply mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between;
+    @apply flex flex-col gap-4 rounded-xl border border-border bg-card px-6 py-4 shadow-sm sm:flex-row sm:items-center sm:justify-between;
   }
 
   .page-title {
-    @apply font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl;
+    @apply font-display text-xl font-bold tracking-tight text-foreground sm:text-2xl;
   }
 
   .page-subtitle {
-    @apply font-display text-xs font-bold uppercase tracking-widest text-foreground/70 dark:text-primary;
+    @apply inline-flex items-center rounded-md border border-primary/30 bg-primary/15 px-2 py-0.5 font-display text-[11px] font-bold uppercase tracking-wider text-foreground dark:text-primary;
+  }
+
+  .section-container {
+    @apply overflow-hidden rounded-xl border border-border bg-card shadow-sm;
+  }
+
+  .section-container-header {
+    @apply flex flex-wrap items-center justify-between gap-3 border-b border-border bg-muted/30 px-6 py-4;
+  }
+
+  .section-container-toolbar {
+    @apply flex flex-col gap-3 border-b border-border bg-card px-6 py-4 sm:flex-row sm:items-center;
+  }
+
+  .section-container-footer {
+    @apply border-t border-border bg-muted/15 px-6 py-3;
   }
 
   .filter-panel {
-    @apply mb-6 rounded-xl border border-border bg-card p-4 shadow-sm;
+    @apply rounded-xl border border-border bg-card p-4 shadow-sm;
   }
 }
