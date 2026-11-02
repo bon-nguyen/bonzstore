@@ -63,4 +63,3 @@ Khi người dùng bấm **"AI Viết mô tả chuẩn TikTok Shop"**, AI tự �
    - Danh sách các phân loại / biến thể và mã SKU tương ứng.
 3. **Hướng dẫn bảo quản & trưng bày**: Tránh ánh nắng trực tiếp, vệ sinh bằng cọ mềm.
 4. **Cam kết từ BonzStore**: Đóng gói chống sốc 3 lớp, hỗ trợ quay video unbox, bảo hành đổi trả theo chính sách TikTok Shop.
-

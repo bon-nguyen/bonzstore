@@ -17,6 +17,7 @@ import {
   CurrentUser,
 } from '../../common/decorators/current-user.decorator';
 import { RequirePermissions } from '../../common/decorators/permissions.decorator';
+import { Public } from '../../common/decorators/public.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import {
   BulkProductActionDto,
@@ -39,6 +40,7 @@ import { ProductsService } from './products.service';
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
+  @Public()
   @Get('stats')
   @RequirePermissions(PERMISSIONS.PRODUCTS_READ)
   @ApiOperation({
@@ -49,6 +51,7 @@ export class ProductsController {
     return this.productsService.getStats();
   }
 
+  @Public()
   @Get('tags/paginated')
   @RequirePermissions(PERMISSIONS.PRODUCTS_READ)
   @ApiOperation({
@@ -59,6 +62,7 @@ export class ProductsController {
     return this.productsService.getPaginatedTags(query);
   }
 
+  @Public()
   @Get('tags')
   @RequirePermissions(PERMISSIONS.PRODUCTS_READ)
   @ApiOperation({
@@ -115,6 +119,7 @@ export class ProductsController {
     return this.productsService.deleteTag(body.name, currentUser);
   }
 
+  @Public()
   @Get()
   @RequirePermissions(PERMISSIONS.PRODUCTS_READ)
   @ApiOperation({

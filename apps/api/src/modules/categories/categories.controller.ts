@@ -21,6 +21,7 @@ import {
   CurrentUser,
 } from '../../common/decorators/current-user.decorator';
 import { RequirePermissions } from '../../common/decorators/permissions.decorator';
+import { Public } from '../../common/decorators/public.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CategoriesService } from './categories.service';
 import { CategoryQueryDto } from './dto/category-query.dto';
@@ -40,6 +41,7 @@ function resolveHeaderLang(
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
+  @Public()
   @Get('assets')
   @RequirePermissions(PERMISSIONS.PRODUCTS_READ)
   @ApiOperation({
@@ -55,6 +57,7 @@ export class CategoriesController {
     );
   }
 
+  @Public()
   @Get('paginated')
   @RequirePermissions(PERMISSIONS.PRODUCTS_READ)
   @ApiOperation({
@@ -72,6 +75,7 @@ export class CategoriesController {
     );
   }
 
+  @Public()
   @Get()
   @RequirePermissions(PERMISSIONS.PRODUCTS_READ)
   @ApiOperation({
