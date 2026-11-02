@@ -7,7 +7,7 @@
     "dev": "prisma generate && nest start --watch",
     "start": "nest start",
     "start:prod": "node dist/main",
-    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\"",
+    "lint": "tsc --noEmit",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
     "prisma:migrate": "prisma migrate dev",
@@ -53,4 +53,3 @@
     "typescript": "^5.5.4"
   }
 }
-

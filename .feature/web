@@ -1,0 +1,73 @@
+# Tài Liệu Đặc Tả Tính Năng & Kiến Trúc Storefront — BonzStore × Nekochin 24H (`apps/web`)
+
+Tài liệu này mô tả kiến trúc phân tầng Component theo chuẩn **Senior Developer / Product Manager / QC**, hệ thống **Background & Chế độ màu 24H (Sáng / Trưa / Tối / Tự động)**, quy chuẩn tái sử dụng Tailwind CSS (`@layer components` theo `css-component-guidelines`) và hệ thống **SEO 3 Trụ Cột (Google Search + ChatGPT Search + Gemini AI Overviews)** của phân hệ **Storefront (`apps/web`)**.
+
+---
+
+## 1. Hệ Thống Background & Chế Độ Màu 24H (`Sáng / Trưa / Tối / Tự động`)
+
+Hệ thống thời gian thực được điều phối bởi [`TimeModeProvider`](file:///C:/Users/Admin/Desktop/bonzstore/apps/web/src/providers/time-mode-provider.tsx), [`AmbientSkyBackground`](file:///C:/Users/Admin/Desktop/bonzstore/apps/web/src/components/layout/AmbientSkyBackground.tsx) và [`TimeModeSwitcher`](file:///C:/Users/Admin/Desktop/bonzstore/apps/web/src/components/ui/TimeModeSwitcher.tsx):
+
+| Chế độ (`TimePeriod`) | Khung giờ tự động | Bảng màu & CSS Variables (`globals.css`) | Tài nguyên Background & Mascot Minh Họa (`TIME_PERIOD_CONFIG`) |
+| :--- | :--- | :--- | :--- |
+| **☀️ Buổi Sáng (`morning`)** | `06:00 – 11:00` | Bầu trời xanh ngọc bình minh (`#BCE6FF` → `#FFFDF9`), mặt thẻ trắng kem, viền cửa sổ khoang bay `#E2E8F0`, bảng phấn xanh rừng `#1E3F2B`. | `kw_bg_morning.jpg` (Desktop), `kw_bg_morning_mb.webp` (Mobile), `kw_bg_morning.png` (Footer Sky), `kw_chalk_morning.webp`, `kw_sun.webp`, `kw_pilot_ft_morning.webp`, `kw_island_ft_day.webp`. |
+| **🌅 Buổi Trưa (`afternoon`)** | `11:00 – 18:00` | Bầu trời nắng mật ong & hoàng hôn ấm (`#FFD28E` → `#FFF9EE`), mặt thẻ kem hổ phách `#FFFDF7`, viền khoang bay vàng ấm `#FDE68A`, bảng phấn nâu ấm `#2D3A2E`, hạt nắng vàng lấp lánh. | `kw_bg_afternoon.jpg` (Desktop), `kw_bg_afternoon_mb.webp` (Mobile), `kw_bg_afternoon.png` (Footer Sky), `kw_chalk_afternoon.webp`, `kw_sun.webp`, `kw_pilot_ft_afternoon.webp`, `kw_island_ft_day.webp`. |
+| **🌙 Buổi Tối (`night`)** | `18:00 – 06:00` | Bầu trời đêm sao tím Indigo (`#0B0D1D` → `#221E41`), mặt thẻ tối `#1E2243`, chữ sáng `#F8FAFC`, viền khoang bay `#334155`, bảng phấn đêm `#162420`, sao băng nhấp nháy. | `kw_bg_night.jpg` (Desktop), `kw_bg_night_mb.webp` (Mobile), `kw_bg_night.png` (Footer Sky), `kw_chalk_night.webp`, `kw_moon.webp`, `kw_pilot_ft_night.webp`, `kw_island_ft_night.webp`. |
+| **✨ Tự Động (`auto`)** | Theo đồng hồ thiết bị | Tự động đồng bộ mỗi 60 giây với giờ hệ thống và phát sự kiện `CustomEvent('kwTimeChanged')`. | Lưu tùy chọn của người dùng vào `localStorage` (`kwTimeMode`). |
+
+---
+
+## 2. Kiến Trúc Phân Tầng Component (`apps/web/src/components`)
+
+Thay vì đặt phẳng toàn bộ file trong một thư mục duy nhất, `apps/web/src/components` được tổ chức theo **5 Domain chuyên biệt** có Barrel Exports (`index.ts`) và gắn đầy đủ `data-testid` phục vụ kiểm thử tự động (QC E2E/Playwright):
+
+```text
+apps/web/src/components/
+├── index.ts                          # Root barrel export
+├── ui/                               # 1. Design System & Atomic Primitives
+│   ├── TimeModeSwitcher.tsx          # Bộ chuyển đổi Sáng / Trưa / Tối / Tự động (full, compact, floating)
+│   ├── SectionHeader.tsx             # Tiêu đề phân cảnh chuẩn hóa (badge, title, subtitle, actionSlot)
+│   ├── WishlistHeartButton.tsx       # Nút thả tim nổ pháo hoa SVG (animate-heart-burst)
+│   └── index.ts
+├── commerce/                         # 2. Interactive E-Commerce Widgets & Modals
+│   ├── ProductImageSwap.tsx          # Khung ảnh sản phẩm lướt đổi góc nhìn 1/4
+│   ├── MiniCartDrawer.tsx            # Ngăn kéo giỏ hàng + Thanh Freeship 500k + Undo 5 giây
+│   ├── QuickViewDialog.tsx           # Hộp thoại xem nhanh & chọn biến thể SKU
+│   ├── SearchSpotlightModal.tsx      # Tìm kiếm tức thì (Ctrl+K, debounce 220ms)
+│   ├── SkyTreasureMapModal.tsx       # Bản đồ kho báu 5 đảo điều hướng nhanh
+│   ├── DynamicIslandPreOrder.tsx     # Widget Dynamic Island nhắc lịch Pre-Order
+│   └── index.ts
+├── sections/                         # 3. 11 Storytelling Storefront Sections
+│   ├── HeroCabinSection.tsx          # Chương 1: Khung cửa sổ khoang tàu bay 24H
+│   ├── MagicChalkboardSection.tsx    # Chương 2: Bảng phấn lớp học phép thuật (Series Anime)
+│   ├── TrainStationSection.tsx       # Chương 3: Ga tàu tốc hành Bonz Express (Toa tàu hàng sẵn)
+│   ├── DetectiveSpotlightSection.tsx # Chương 4: Hồ sơ thám tử #NK-4869 & Radar manh mối
+│   ├── FlashSaleStallSection.tsx     # Chương 5: Quầy xổ số lễ hội trên mây (Vé số Flash Sale)
+│   ├── PreOrderDiarySection.tsx      # Chương 6: Cuốn nhật ký Pre-Order & Bút máy tự viết
+│   ├── VideoBillboardSection.tsx     # Chương 7: Bảng gỗ quảng cáo cuộn phim 35mm
+│   ├── GlassShowcaseSection.tsx      # Chương 8: Tủ kính trưng bày bảo tàng (Best-sellers)
+│   ├── MemberClubSection.tsx         # Chương 9: Đặc quyền câu lạc bộ phi hành gia
+│   ├── AirshipBlogSection.tsx        # Chương 10: Tạp chí khinh khí cầu & Cẩm nang Figure
+│   ├── SeoKnowledgeFaqSection.tsx    # Chương 11: AI Knowledge Base & FAQ (Google/ChatGPT/Gemini)
+│   └── index.ts
+├── layout/                           # 4. Global Layout, 24H Sky & App Shell
+│   ├── AmbientSkyBackground.tsx      # Đa tầng nền trời 24H (Desktop/Mobile art + mây + sao/nắng)
+│   ├── HeaderCockpit.tsx             # Buồng lái điều hướng + Bộ chọn Sáng/Trưa/Tối
+│   ├── MobileBottomDock.tsx          # Thanh điều hướng nổi 5 nút trên di động
+│   ├── LandingFooter.tsx             # Bến đỗ hạ cánh 24H + Bảng phấn thống kê + Đảo bay Chin-chan
+│   ├── StorefrontShell.tsx           # Orchestrator kết nối Layout + 11 Sections + Commerce Modals
+│   └── index.ts
+└── seo/                              # 5. Structured Data & Search/AI Discovery
+    ├── StorefrontJsonLd.tsx          # Server-rendered Schema.org @graph (OnlineStore, Product, FAQPage)
+    └── index.ts
+```
+
+---
+
+## 3. Hệ Thống SEO 3 Trụ Cột: Google + ChatGPT + Gemini
+
+| Trụ cột SEO | Điểm cuối / Thành phần | Mô tả kỹ thuật & Cơ chế hoạt động |
+| :--- | :--- | :--- |
+| **1. SEO cho Google** (`Googlebot`, `Google Shopping`, `Rich Results`) | [`layout.tsx`](file:///C:/Users/Admin/Desktop/bonzstore/apps/web/src/app/layout.tsx), [`sitemap.ts`](file:///C:/Users/Admin/Desktop/bonzstore/apps/web/src/app/sitemap.ts), [`robots.ts`](file:///C:/Users/Admin/Desktop/bonzstore/apps/web/src/app/robots.ts), [`manifest.ts`](file:///C:/Users/Admin/Desktop/bonzstore/apps/web/src/app/manifest.ts), [`StorefrontJsonLd.tsx`](file:///C:/Users/Admin/Desktop/bonzstore/apps/web/src/components/seo/StorefrontJsonLd.tsx) | - Next.js Metadata API đầy đủ (`canonical`, `openGraph`, `twitter`, `googleBot` với `max-image-preview: 'large'`, `max-snippet: -1`).<br>- Dynamic `/sitemap.xml` liệt kê trang chủ, các Series Anime và từng mã sản phẩm.<br>- Server-rendered JSON-LD `@graph` gồm `OnlineStore`, `Organization`, `WebSite` (`SearchAction`), `BreadcrumbList`, `ItemList` (`Product` + `Offer` bằng `VND` + `AggregateRating`) và `FAQPage`. |
+| **2. SEO cho ChatGPT** (`OAI-SearchBot`, `ChatGPT-User`, `GPTBot`) | [`/llms.txt`](file:///C:/Users/Admin/Desktop/bonzstore/apps/web/src/app/llms.txt/route.ts), [`/llms-full.txt`](file:///C:/Users/Admin/Desktop/bonzstore/apps/web/src/app/llms-full.txt/route.ts), [`robots.ts`](file:///C:/Users/Admin/Desktop/bonzstore/apps/web/src/app/robots.ts) | - Mở quyền crawl tường minh cho `OAI-SearchBot`, `ChatGPT-User`, `GPTBot` trong `/robots.txt`.<br>- Cung cấp 2 endpoint Markdown chuẩn AI (`/llms.txt` và `/llms-full.txt`) tổng hợp thông tin định danh thương hiệu, danh sách sản phẩm 6 thành phần, giá bán `VND`, tồn kho SKU, chính sách Freeship `500.000₫` và quy trình cọc Pre-Order. |
+| **3. SEO cho Gemini** (`Google-Extended`, `GoogleOther`, `AI Overviews`) | [`SeoKnowledgeFaqSection.tsx`](file:///C:/Users/Admin/Desktop/bonzstore/apps/web/src/components/sections/SeoKnowledgeFaqSection.tsx), [`StorefrontJsonLd.tsx`](file:///C:/Users/Admin/Desktop/bonzstore/apps/web/src/components/seo/StorefrontJsonLd.tsx) | - Cho phép `Google-Extended` và `GoogleOther` thu thập dữ liệu.<br>- Khu vực **AI Knowledge Base & FAQ** trên trang chủ sử dụng thẻ ngữ nghĩa HTML5 (`<section aria-labelledby>`, `<dl>`, `<dt>`, `<dd>`) đồng bộ 1-1 với Schema `FAQPage`. |

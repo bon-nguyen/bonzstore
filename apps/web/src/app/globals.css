@@ -2,8 +2,217 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  background-color: #0b0b0d;
-  color: #f2f9f9;
-  -webkit-font-smoothing: antialiased;
+@layer base {
+  :root {
+    --font-display: 'Mali', 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-body: 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-main: 'Mulish', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-mono: 'Space Grotesk', monospace;
+    --nk-font-storybook: 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif;
+
+    --kw-pastel-pink: #FFB5C2;
+    --kw-pastel-pink-dark: #FF8DA1;
+    --kw-pastel-blue: #A2D2FF;
+    --kw-pastel-purple: #DCD3FF;
+    --kw-pastel-yellow: #FFF3B0;
+    --kw-pastel-mint: #B8F2E6;
+    --kw-cream: #FFFDF9;
+    --kw-text-dark: #4A3E3D;
+    --kw-text-muted: #8E7F7F;
+    --kw-border-color: #4A3E3D;
+
+    /* Default Morning Palette */
+    --surface-base: #F0F9FF;
+    --surface-card: rgba(255, 255, 255, 0.92);
+    --surface-elevated: #FFFFFF;
+    --surface-accent: #E0F2FE;
+    --text-primary: #0C4A6E;
+    --text-secondary: #0369A1;
+    --cabin-sky-top: #BCE5ED;
+    --cabin-sky-bottom: #EEF9ED;
+    --cabin-rim: #FFF9E8;
+    --cabin-frame: #CFBC94;
+    --chalk-board-bg: #2D5016;
+    --chalk-frame-bg: #8B5E3C;
+    --sky-gradient: linear-gradient(180deg, #BCE0FD 0%, #E0F2FE 48%, #FFFDF9 100%);
+  }
+
+  /* ════════════════ 1. MODE BUỔI SÁNG (06:00 - 11:00) ════════════════ */
+  html.is-morning,
+  body.is-morning {
+    --surface-base: #F0F9FF;
+    --surface-card: rgba(255, 255, 255, 0.90);
+    --surface-elevated: #FFFFFF;
+    --surface-accent: #E0F2FE;
+    --text-primary: #1E3A5F;
+    --text-secondary: #0369A1;
+    --kw-border-color: #4A3E3D;
+    --cabin-sky-top: #BCE5ED;
+    --cabin-sky-bottom: #EEF9ED;
+    --cabin-rim: #FFF9E8;
+    --cabin-frame: #CFBC94;
+    --chalk-board-bg: #2D5016;
+    --chalk-frame-bg: #8B5E3C;
+    --sky-gradient: linear-gradient(180deg, #93C5FD 0%, #E0F2FE 45%, #FFFDF9 100%);
+  }
+
+  /* ════════════════ 2. MODE BUỔI TRƯA / CHIỀU (11:00 - 18:00) ════════════════ */
+  html.is-afternoon,
+  body.is-afternoon {
+    --surface-base: #FFFBEB;
+    --surface-card: rgba(255, 251, 235, 0.92);
+    --surface-elevated: #FEF3C7;
+    --surface-accent: #FDE68A;
+    --text-primary: #78350F;
+    --text-secondary: #B45309;
+    --kw-border-color: #5C3A1B;
+    --cabin-sky-top: #F5C18E;
+    --cabin-sky-bottom: #FFECD2;
+    --cabin-rim: #FFF0D2;
+    --cabin-frame: #C6986B;
+    --chalk-board-bg: #1B3409;
+    --chalk-frame-bg: #6D3B1E;
+    --sky-gradient: linear-gradient(180deg, #FDBA74 0%, #FDE68A 50%, #FFFBEB 100%);
+  }
+
+  /* ════════════════ 3. MODE BUỔI TỐI (18:00 - 06:00) ════════════════ */
+  html.is-night,
+  body.is-night {
+    --surface-base: #14102A;
+    --surface-card: rgba(31, 27, 58, 0.90);
+    --surface-elevated: #2A2452;
+    --surface-accent: #312E81;
+    --text-primary: #F8F3FF;
+    --text-secondary: #C4B5FD;
+    --kw-border-color: #A78BFA;
+    --cabin-sky-top: #302951;
+    --cabin-sky-bottom: #5B496C;
+    --cabin-rim: #3E334F;
+    --cabin-frame: #897090;
+    --chalk-board-bg: #0F172A;
+    --chalk-frame-bg: #3B2F4A;
+    --sky-gradient: linear-gradient(180deg, #090818 0%, #1F1B3A 52%, #14102A 100%);
+  }
+
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    background: var(--sky-gradient);
+    @apply bg-kw-surface font-body text-kw-primary antialiased transition-colors duration-500 overflow-x-hidden;
+  }
+}
+
+/* =========================================================
+   REUSABLE TAILWIND @layer components (css-component-guidelines)
+   ========================================================= */
+@layer components {
+  /* 1. Cards & Stats */
+  .stat-card {
+    @apply rounded-2xl border-[2.5px] border-kw-border bg-kw-card p-3.5 shadow-kw-hard backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5;
+  }
+  .stat-card-icon {
+    @apply flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border-2 border-[#4A3E3D] bg-white shadow-kw-hard-sm;
+  }
+
+  /* 2. Buttons & Actions */
+  .action-btn,
+  .kw-btn-pop {
+    @apply inline-flex items-center justify-center gap-1.5 border-[2.5px] border-[#4A3E3D] font-display font-bold text-[#4A3E3D] shadow-[3px_3px_0px_#4A3E3D] transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-kw-hard-md active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-50;
+  }
+  .action-btn-primary {
+    @apply action-btn rounded-2xl bg-kw-pink px-5 py-3 text-sm;
+  }
+  .action-btn-secondary {
+    @apply action-btn rounded-2xl bg-kw-mint px-5 py-3 text-sm;
+  }
+  .table-action-btn {
+    @apply flex h-8 w-8 items-center justify-center rounded-lg border-[1.5px] border-[#4A3E3D] bg-white transition-colors hover:bg-kw-pink;
+  }
+
+  /* 3. Status & Priority Badges */
+  .status-badge {
+    @apply inline-flex items-center gap-1.5 rounded-full border-2 border-[#4A3E3D] px-3 py-0.5 font-display text-xs font-bold text-[#4A3E3D] shadow-kw-hard-sm;
+  }
+  .status-active {
+    @apply bg-kw-mint text-[#4A3E3D];
+  }
+  .status-maintenance {
+    @apply bg-kw-yellow text-[#4A3E3D];
+  }
+  .status-inactive {
+    @apply bg-kw-pink text-[#4A3E3D];
+  }
+  .priority-high {
+    @apply font-mono font-bold text-[#E11D48] dark:text-[#FDA4AF];
+  }
+  .priority-medium {
+    @apply font-mono font-bold text-[#0284C7] dark:text-[#7DD3FC];
+  }
+  .priority-low {
+    @apply font-mono font-bold text-[#059669] dark:text-[#6EE7B7];
+  }
+
+  /* 4. Layout & Typography */
+  .page-header {
+    @apply mb-6 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-end;
+  }
+  .page-title {
+    @apply mt-2 font-display text-2xl font-bold tracking-tight text-kw-primary md:text-3xl;
+  }
+  .page-subtitle {
+    @apply inline-flex items-center gap-1.5 rounded-full border-2 border-[#4A3E3D] px-3.5 py-1 font-display text-xs font-bold uppercase tracking-wide text-[#4A3E3D] shadow-kw-hard-sm;
+  }
+  .filter-panel {
+    @apply rounded-[28px] border-[3px] border-kw-border bg-kw-card p-5 text-kw-primary shadow-kw-hard backdrop-blur-md transition-colors duration-500;
+  }
+
+  /* 5. Time-Adaptive Storytelling Containers */
+  .kw-card-shell {
+    @apply rounded-kw-md border-[2.5px] border-kw-border bg-kw-card text-kw-primary shadow-kw-hard backdrop-blur-md transition-all duration-200 hover:-translate-x-0.5 hover:-translate-y-1;
+  }
+  .kw-chalkboard-frame {
+    background-color: var(--chalk-board-bg);
+    border-color: var(--chalk-frame-bg);
+    @apply relative rounded-[28px] border-[10px] shadow-[inset_0_0_40px_rgba(0,0,0,0.45),0_10px_0_rgba(0,0,0,0.35)] transition-colors duration-500;
+  }
+  .kw-train-car-card {
+    @apply relative rounded-b-2xl rounded-t-3xl border-[2.5px] border-kw-border bg-kw-card text-kw-primary shadow-kw-hard backdrop-blur-md transition-transform duration-200 hover:-translate-y-1.5;
+  }
+  .kw-train-wheel-svg {
+    @apply animate-wheel-spin origin-center;
+  }
+  .neko-clue-radar {
+    @apply relative overflow-hidden rounded-full border-[2.5px] border-emerald-400/70 bg-emerald-950/40;
+  }
+  .neko-evidence-card {
+    @apply relative rounded-2xl border-[2.5px] border-[#4A3E3D] bg-[#FFFDF7] text-[#3B302E] shadow-kw-hard-md transition-transform duration-200 hover:-rotate-1 hover:-translate-y-1;
+  }
+  .neko-sale-card {
+    @apply relative rounded-kw-md border-[2.5px] border-kw-border bg-kw-card text-kw-primary shadow-kw-hard backdrop-blur-md;
+  }
+  .kw-diary-book {
+    @apply rounded-l-[18px] rounded-r-[28px] border-[3px] border-kw-border bg-kw-card text-kw-primary shadow-kw-hard-lg backdrop-blur-md transition-colors duration-500;
+  }
+  .kw-preorder-ticket {
+    @apply relative rounded-[22px] border-[2.5px] border-kw-border bg-kw-card text-kw-primary shadow-kw-hard transition-all duration-200 hover:-translate-y-1 hover:shadow-kw-hard-md;
+  }
+  .kw-wood-board {
+    @apply rounded-kw-lg border-[3.5px] border-[#4A3E3D] bg-gradient-to-b from-[#C88A51] to-[#A96E38] shadow-[0_8px_0_#5C3A1B];
+  }
+  .kw-member-card {
+    @apply rounded-kw-hand border-[2.5px] border-[#4A3E3D] shadow-kw-hard-md transition-transform duration-200 hover:-translate-y-1 hover:-rotate-1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
