@@ -35,6 +35,13 @@ import { Input } from '../components/ui/input';
 import { Pagination } from '../components/ui/pagination';
 import { Select } from '../components/ui/select';
 import {
+  AntdEmptyBoxIcon,
+  Table,
+  TableBody,
+  TableHead,
+  TableHeader,
+} from '../components/ui/table';
+import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
@@ -776,98 +783,131 @@ export function ProductsPage() {
           <div className="h-0.5 w-full animate-pulse bg-primary" />
         ) : null}
 
-        {/* 3. TikTok Shop Seller Center Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-left text-xs">
-            <thead>
-              <tr className="border-b border-border bg-muted/40 font-display text-[11px] font-bold uppercase text-muted-foreground">
-                <th className="w-10 px-4 py-3 text-center">
-                  <input
-                    type="checkbox"
-                    checked={allCurrentSelected}
-                    onChange={toggleSelectAll}
-                    className="h-4 w-4 rounded border-border accent-foreground"
-                  />
-                </th>
-                <th className="min-w-[290px] max-w-[360px] px-3 py-3">
-                  {t('products.colProduct')}
-                </th>
-                <th className="min-w-[165px] px-3 py-3">
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => handleSortColumn('soldCount')}
-                      className="inline-flex items-center gap-1 hover:text-foreground"
-                    >
-                      <span>{t('products.colPerformance')}</span>
-                      {renderSortIcon('soldCount')}
-                    </button>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Info className="h-3.5 w-3.5 cursor-help text-muted-foreground" />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        Số món bán ra, Lượt xem & Doanh số đồng bộ từ TikTok
-                        Shop
-                      </TooltipContent>
-                    </Tooltip>
-                  </div>
-                </th>
-                <th className="min-w-[145px] px-3 py-3">
+        {/* 3. TikTok Shop Seller Center Table (Ant Design Table inspired Tailwind Table) */}
+        <Table className="text-xs">
+          <TableHeader>
+            <tr>
+              <TableHead align="center" className="w-10 px-4 py-3">
+                <input
+                  type="checkbox"
+                  checked={allCurrentSelected}
+                  onChange={toggleSelectAll}
+                  className="h-4 w-4 rounded border-border accent-foreground"
+                />
+              </TableHead>
+              <TableHead className="min-w-[290px] max-w-[360px] px-3 py-3">
+                {t('products.colProduct')}
+              </TableHead>
+              <TableHead sortable className="min-w-[165px] px-3 py-3">
+                <div className="flex items-center gap-1.5">
                   <button
                     type="button"
-                    onClick={() => handleSortColumn('status')}
+                    onClick={() => handleSortColumn('soldCount')}
                     className="inline-flex items-center gap-1 hover:text-foreground"
                   >
-                    <span>{t('products.colStatus')}</span>
-                    {renderSortIcon('status')}
+                    <span>{t('products.colPerformance')}</span>
+                    {renderSortIcon('soldCount')}
                   </button>
-                </th>
-                <th className="min-w-[125px] px-3 py-3">
-                  <button
-                    type="button"
-                    onClick={() => handleSortColumn('stock')}
-                    className="inline-flex items-center gap-1 hover:text-foreground"
-                  >
-                    <span>{t('products.colStock')}</span>
-                    {renderSortIcon('stock')}
-                  </button>
-                </th>
-                <th className="min-w-[195px] px-3 py-3">
-                  <button
-                    type="button"
-                    onClick={() => handleSortColumn('price')}
-                    className="inline-flex items-center gap-1 hover:text-foreground"
-                  >
-                    <span>{t('products.colRetailPrice')}</span>
-                    {renderSortIcon('price')}
-                  </button>
-                </th>
-                <th className="w-28 px-4 py-3 text-right">
-                  {t('products.colActions')}
-                </th>
-              </tr>
-            </thead>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="h-3.5 w-3.5 cursor-help text-muted-foreground" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      Số món bán ra, Lượt xem & Doanh số đồng bộ từ TikTok Shop
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+              </TableHead>
+              <TableHead sortable className="min-w-[145px] px-3 py-3">
+                <button
+                  type="button"
+                  onClick={() => handleSortColumn('status')}
+                  className="inline-flex items-center gap-1 hover:text-foreground"
+                >
+                  <span>{t('products.colStatus')}</span>
+                  {renderSortIcon('status')}
+                </button>
+              </TableHead>
+              <TableHead sortable className="min-w-[125px] px-3 py-3">
+                <button
+                  type="button"
+                  onClick={() => handleSortColumn('stock')}
+                  className="inline-flex items-center gap-1 hover:text-foreground"
+                >
+                  <span>{t('products.colStock')}</span>
+                  {renderSortIcon('stock')}
+                </button>
+              </TableHead>
+              <TableHead sortable className="min-w-[195px] px-3 py-3">
+                <button
+                  type="button"
+                  onClick={() => handleSortColumn('price')}
+                  className="inline-flex items-center gap-1 hover:text-foreground"
+                >
+                  <span>{t('products.colRetailPrice')}</span>
+                  {renderSortIcon('price')}
+                </button>
+              </TableHead>
+              <TableHead align="right" className="w-28 px-4 py-3">
+                {t('products.colActions')}
+              </TableHead>
+            </tr>
+          </TableHeader>
 
-            <tbody className="divide-y divide-border">
-              {isLoading ? (
-                Array.from({ length: 4 }).map((_, idx) => (
-                  <tr key={idx} className="animate-pulse">
-                    <td colSpan={7} className="px-4 py-6">
-                      <div className="h-12 rounded-lg bg-muted/60" />
-                    </td>
-                  </tr>
-                ))
-              ) : products.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={7}
-                    className="px-4 py-14 text-center text-sm text-muted-foreground"
-                  >
-                    {t('app.empty')}
+          <TableBody>
+            {isLoading ? (
+              Array.from({ length: 4 }).map((_, idx) => (
+                <tr key={idx} className="animate-pulse">
+                  <td className="px-4 py-4 text-center">
+                    <div className="mx-auto h-4 w-4 rounded bg-muted" />
+                  </td>
+                  <td className="px-3 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="h-12 w-12 rounded-lg bg-muted" />
+                      <div className="space-y-1.5">
+                        <div className="h-4 w-44 rounded bg-muted" />
+                        <div className="h-3 w-28 rounded bg-muted/70" />
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-3 py-4">
+                    <div className="space-y-1.5">
+                      <div className="h-3.5 w-24 rounded bg-muted" />
+                      <div className="h-3 w-32 rounded bg-muted/70" />
+                    </div>
+                  </td>
+                  <td className="px-3 py-4">
+                    <div className="h-5 w-20 rounded-full bg-muted" />
+                  </td>
+                  <td className="px-3 py-4">
+                    <div className="h-4 w-16 rounded bg-muted" />
+                  </td>
+                  <td className="px-3 py-4">
+                    <div className="h-4 w-28 rounded bg-muted" />
+                  </td>
+                  <td className="px-4 py-4 text-right">
+                    <div className="ml-auto flex justify-end gap-1">
+                      <div className="h-7 w-7 rounded bg-muted" />
+                      <div className="h-7 w-7 rounded bg-muted" />
+                    </div>
                   </td>
                 </tr>
-              ) : (
+              ))
+            ) : products.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={7}
+                  className="px-4 py-14 text-center text-sm text-muted-foreground"
+                >
+                  <div className="mx-auto flex flex-col items-center gap-2">
+                    <AntdEmptyBoxIcon />
+                    <p className="font-display text-sm font-bold text-foreground">
+                      {t('app.empty')}
+                    </p>
+                  </div>
+                </td>
+              </tr>
+            ) : (
                 products.map((item) => {
                   const isExpanded = !!expandedRowIds[item.id];
                   const isSelected = selectedIds.includes(item.id);
@@ -1308,9 +1348,8 @@ export function ProductsPage() {
                   );
                 })
               )}
-            </tbody>
-          </table>
-        </div>
+          </TableBody>
+        </Table>
 
         {/* 4. Pagination Footer (test.md lines 186-209: Tổng số hàng: N | < 1 > | 20/Trang) */}
         <Pagination

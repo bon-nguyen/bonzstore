@@ -1,6 +1,7 @@
 import {
   BarChart3,
   Bell,
+  Building2,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -75,6 +76,13 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
     labelKey: 'nav.imports',
     icon: Truck,
     permission: PERMISSIONS.DASHBOARD_VIEW,
+  },
+  {
+    to: '/logistics',
+    labelKey: 'nav.logistics',
+    icon: Building2,
+    permission: PERMISSIONS.DASHBOARD_VIEW,
+    allowedRoles: ADMIN_MANAGER_ROLES,
   },
   {
     to: '/cashbook',

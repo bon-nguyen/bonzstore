@@ -198,9 +198,11 @@ export function TagsPage() {
     {
       key: 'actions',
       header: t('app.actions'),
+      align: 'right',
+      width: 110,
       render: (item) =>
         canManageTags ? (
-          <div className="flex items-center gap-1">
+          <div className="inline-flex items-center justify-end gap-1">
             <Button
               type="button"
               variant="ghost"

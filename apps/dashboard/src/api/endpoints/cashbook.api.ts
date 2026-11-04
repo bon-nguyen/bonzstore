@@ -31,56 +31,50 @@ export const cashbookApi = {
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
   }): Promise<CashbookPaginatedResponse> => {
-    try {
-      return await apiClient.get('/cashbook', { params });
-    } catch {
-      return getFallbackCashbookPaginated(params);
-    }
+    return getFallbackCashbookPaginated(params);
   },
 
   getSummary: async (
     params?: Record<string, any>,
   ): Promise<CashbookSummaryReport> => {
-    try {
-      return await apiClient.get('/cashbook/summary', { params });
-    } catch {
-      return getFallbackCashbookPaginated(params).summary;
-    }
+    return getFallbackCashbookPaginated(params).summary;
   },
 
   getChartsAnalytics: async (): Promise<CashbookChartsAnalyticsResponse> => {
-    try {
-      return await apiClient.get('/cashbook/charts');
-    } catch {
-      return getFallbackChartsAnalytics();
-    }
+    return getFallbackChartsAnalytics();
   },
 
   createVoucher: async (data: CreateCashbookVoucherPayload) => {
+    const created = createLocalCashbookVoucher(data);
     try {
-      return await apiClient.post('/cashbook', data);
+      await apiClient.post('/cashbook', data);
     } catch {
-      return createLocalCashbookVoucher(data);
+      // ignore
     }
+    return created;
   },
 
   updateVoucher: async (
     id: string,
     data: Partial<CreateCashbookVoucherPayload>,
   ) => {
+    const updated = updateLocalCashbookVoucher(id, data);
     try {
-      return await apiClient.patch(`/cashbook/${id}`, data);
+      await apiClient.patch(`/cashbook/${id}`, data);
     } catch {
-      return updateLocalCashbookVoucher(id, data);
+      // ignore
     }
+    return updated;
   },
 
   deleteVoucher: async (id: string) => {
+    const deleted = deleteLocalCashbookVoucher(id);
     try {
-      return await apiClient.delete(`/cashbook/${id}`);
+      await apiClient.delete(`/cashbook/${id}`);
     } catch {
-      return deleteLocalCashbookVoucher(id);
+      // ignore
     }
+    return deleted;
   },
 
   updateOpeningBalance: async (data: {
@@ -88,19 +82,23 @@ export const cashbookApi = {
     card: number;
     transfer: number;
   }): Promise<CashbookSummaryReport> => {
+    const updated = updateLocalOpeningBalance(data);
     try {
-      return await apiClient.patch('/cashbook/opening-balance', data);
+      await apiClient.patch('/cashbook/opening-balance', data);
     } catch {
-      return updateLocalOpeningBalance(data);
+      // ignore
     }
+    return updated;
   },
 
   restoreDefaultData: async () => {
+    const cleared = restoreLocalAllData();
     try {
-      return await apiClient.post('/cashbook/restore');
+      await apiClient.post('/cashbook/restore');
     } catch {
-      return restoreLocalAllData();
+      // ignore
     }
+    return cleared;
   },
 };
 

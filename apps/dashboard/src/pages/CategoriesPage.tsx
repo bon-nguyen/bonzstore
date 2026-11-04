@@ -322,9 +322,11 @@ export function CategoriesPage() {
     {
       key: 'actions',
       header: t('categories.colActions'),
+      align: 'right',
+      width: 110,
       render: (item) =>
         canManageCategories ? (
-          <div className="flex items-center gap-1">
+          <div className="inline-flex items-center justify-end gap-1">
             <Button
               type="button"
               variant="ghost"

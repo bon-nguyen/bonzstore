@@ -378,13 +378,15 @@ export function UsersPage() {
     {
       key: 'actions',
       header: t('app.actions'),
+      align: 'right',
+      width: 150,
       render: (item) => {
         const canManageRow =
           item.canManage !== false &&
           canActorManageRole(actorRoleCode, item.role?.code);
 
         return (
-          <div className="flex items-center gap-1">
+          <div className="inline-flex items-center justify-end gap-1">
             {canViewUsers ? (
               <PermissionGate permission={PERMISSIONS.USERS_READ}>
                 <Button

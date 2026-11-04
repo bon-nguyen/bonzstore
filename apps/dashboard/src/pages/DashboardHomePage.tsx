@@ -2,18 +2,23 @@ import {
   Activity,
   ArrowRight,
   BarChart3,
+  Building2,
   CheckCircle2,
-  ExternalLink,
   KeyRound,
   Lock,
   Package,
-  RefreshCw,
   ShieldCheck,
+  Trash2,
   Truck,
   Users,
   Wallet,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import {
+  ADMIN_MANAGER_ROLES,
+  PERMISSIONS,
+} from '../constants/rbac.constants';
+import { PermissionGate } from '../features/auth/components/PermissionGate';
 import { useAuthContext } from '../features/auth/context/AuthContext';
 import {
   useCashbookVouchers,
@@ -24,6 +29,7 @@ import {
   useImportOrders,
   useRestoreImportsData,
 } from '../features/imports/hooks/useImports';
+import { useLogisticsUnits } from '../features/logistics/hooks/useLogistics';
 import { useRoles } from '../features/roles/hooks/useRoles';
 import { PageHeader } from '../features/shared/PageHeader';
 import { PageSectionContainer } from '../features/shared/PageSectionContainer';
@@ -43,13 +49,15 @@ export function DashboardHomePage() {
   const { data: roles } = useRoles();
   const { data: importsData } = useImportOrders({ page: 1, limit: 5 });
   const { data: cashbookData } = useCashbookVouchers({ page: 1, limit: 5 });
+  const { data: logisticsData } = useLogisticsUnits({ page: 1, limit: 5 });
   const restoreImportMutation = useRestoreImportsData();
   const restoreCashbookMutation = useRestoreCashbookData();
 
   const importStats = importsData?.stats;
   const cashbookSummary = cashbookData?.summary;
+  const totalLogisticsUnits = logisticsData?.totalCount ?? 0;
 
-  const handleQuickRestoreAll = async () => {
+  const handleClearAllData = async () => {
     await Promise.all([
       restoreImportMutation.mutateAsync(),
       restoreCashbookMutation.mutateAsync(),
@@ -65,9 +73,20 @@ export function DashboardHomePage() {
         description={t('home.desc')}
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            <Link to="/imports" className="action-btn-primary">
+            <PermissionGate
+              roles={ADMIN_MANAGER_ROLES}
+              permission={PERMISSIONS.DASHBOARD_VIEW}
+            >
+              <Link to="/logistics" className="action-btn-primary">
+                <Building2 className="h-4 w-4" />
+                <span>
+                  {t('nav.logistics')} ({totalLogisticsUnits})
+                </span>
+              </Link>
+            </PermissionGate>
+            <Link to="/imports" className="action-btn-secondary">
               <Truck className="h-4 w-4" />
-              <span>Nhập hàng (#55479)</span>
+              <span>Nhập hàng</span>
             </Link>
             <Link to="/cashbook" className="action-btn-secondary">
               <Wallet className="h-4 w-4" />
@@ -75,7 +94,7 @@ export function DashboardHomePage() {
             </Link>
             <Link to="/charts" className="action-btn-secondary">
               <BarChart3 className="h-4 w-4" />
-              <span>Biểu đồ</span>
+              <span>Dòng tiền & Biểu đồ</span>
             </Link>
             <Link to="/roles" className="action-btn-secondary">
               <KeyRound className="h-4 w-4" />
@@ -85,81 +104,101 @@ export function DashboardHomePage() {
         }
       />
 
-      {/* Section Mới: Trung tâm Nhập Hàng Hoà Bình Logistics (#55479), Sổ Quỹ & Biểu Đồ */}
+      {/* Section: Trung tâm Đơn vị Logistics, Nhập Hàng, Sổ Quỹ & Dòng Tiền */}
       <PageSectionContainer
-        title="Phân hệ Nhập hàng Logistics (#55479), Sổ Quỹ & Biểu Đồ"
-        subBadge="Hoà Bình Logistics API • Sổ Quỹ 3 Kênh • Biểu Đồ Trực Quan"
-        description="Quy trình 3 bước Open Tabs Login → Lấy Token → Lấy Chi Tiết Đơn #55479, tự động đồng bộ Sản phẩm (/products), Sổ Quỹ (/cashbook) và Biểu đồ (/charts) kèm Auto-Restore khi gọi API"
+        title="Phân hệ Đơn vị Logistics, Nhập hàng, Sổ Quỹ & Dòng tiền"
+        subBadge="Đơn vị Logistics • Nhập hàng • Sổ Quỹ 3 Kênh • Biểu Đồ"
+        description="Toàn bộ dữ liệu ở trạng thái sạch để bạn tự thao tác."
         icon={Truck}
         headerRight={
           <button
             type="button"
-            onClick={handleQuickRestoreAll}
+            onClick={handleClearAllData}
             disabled={
               restoreImportMutation.isPending ||
               restoreCashbookMutation.isPending
             }
-            className="action-btn-secondary"
+            className="action-btn-secondary text-destructive"
           >
-            <RefreshCw
-              className={`h-3.5 w-3.5 ${
-                restoreImportMutation.isPending ||
-                restoreCashbookMutation.isPending
-                  ? 'animate-spin'
-                  : ''
-              }`}
-            />
-            <span>Restore Data #55479</span>
+            <Trash2 className="h-3.5 w-3.5" />
+            <span>Xóa trắng dữ liệu</span>
           </button>
         }
         bodyClassName="space-y-4"
       >
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          {/* Card 1: Nhập hàng #55479 */}
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {/* Card 0: Cục tổng Đơn vị Logistics */}
+          <PermissionGate
+            roles={ADMIN_MANAGER_ROLES}
+            permission={PERMISSIONS.DASHBOARD_VIEW}
+          >
+            <div className="stat-card flex flex-col justify-between border-primary/40 bg-primary/10">
+              <div>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="inline-flex items-center gap-1.5 rounded-lg bg-primary/20 px-2.5 py-1 font-mono text-xs font-bold text-foreground dark:text-primary">
+                    <Building2 className="h-3.5 w-3.5" />
+                    {t('logistics.totalCardTitle')}
+                  </span>
+                </div>
+                <p className="mt-3 font-display text-3xl font-bold text-foreground dark:text-primary">
+                  {totalLogisticsUnits}
+                </p>
+                <h4 className="mt-1 font-display text-sm font-bold text-foreground">
+                  {t('logistics.title')}
+                </h4>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {t('logistics.desc')}
+                </p>
+              </div>
+              <div className="mt-4 flex items-center justify-between border-t border-border/60 pt-3">
+                <span className="text-[11px] text-muted-foreground">
+                  <strong>{totalLogisticsUnits}</strong>
+                </span>
+                <Link
+                  to="/logistics"
+                  className="inline-flex items-center gap-1.5 font-display text-xs font-bold text-foreground hover:text-primary dark:text-primary"
+                >
+                  <span>{t('logistics.openPageBtn')}</span>
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </div>
+            </div>
+          </PermissionGate>
+
+          {/* Card 1: Nhập hàng */}
           <div className="stat-card flex flex-col justify-between border-primary/30 bg-primary/5">
             <div>
               <div className="flex items-center justify-between gap-2">
                 <span className="inline-flex items-center gap-1.5 rounded-lg bg-primary/15 px-2.5 py-1 font-mono text-xs font-bold text-foreground dark:text-primary">
                   <Truck className="h-3.5 w-3.5" />
-                  Đơn #55479 • Đã hoàn thành
+                  {importStats?.totalOrders ?? 0} đơn nhập
                 </span>
-                <a
-                  href="https://hoabinhlogistics.com/api/main-order/55479"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-1 font-mono text-[11px] text-muted-foreground hover:text-foreground"
-                >
-                  <span>API</span>
-                  <ExternalLink className="h-3 w-3" />
-                </a>
               </div>
               <h4 className="mt-3 font-display text-base font-bold text-foreground">
-                1. Nhập hàng Hoà Bình Logistics
+                1. Quản lý Nhập hàng
               </h4>
               <p className="mt-1 text-xs text-muted-foreground">
-                Open Tabs Login → Lấy Bearer Token → Lấy chi tiết đơn{' '}
-                <code className="font-mono font-semibold">#55479</code> (3 mặt
-                hàng 1688 • {importStats?.totalItemsQuantity ?? 50} sp •{' '}
-                {importStats?.totalWeightKg ?? 34.04} kg / 4 kiện vận đơn).
+                Gồm 2 chế độ: <strong>Nhập hàng (Custom nội bộ)</strong> và{' '}
+                <strong>Nhập hàng đơn trước đó</strong> (mở Pop-up đăng nhập lấy Token).
               </p>
               <div className="mt-3 grid grid-cols-2 gap-2 rounded-lg border border-border/70 bg-background/70 p-2.5 text-xs">
                 <div>
                   <span className="text-muted-foreground">Tổng tiền đơn:</span>
                   <p className="font-mono font-bold text-foreground">
-                    {formatVND(importStats?.totalImportValueVND ?? 9844276)}
+                    {formatVND(importStats?.totalImportValueVND ?? 0)}
                   </p>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Đã thanh toán:</span>
                   <p className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                    {formatVND(importStats?.totalDepositPaidVND ?? 9844276)}
+                    {formatVND(importStats?.totalDepositPaidVND ?? 0)}
                   </p>
                 </div>
               </div>
             </div>
             <div className="mt-4 flex items-center justify-between border-t border-border/60 pt-3">
               <span className="text-[11px] text-muted-foreground">
-                Tự động đồng bộ sang <code className="font-mono">/products</code>
+                3 Sub-tabs: Hiện tại • Bản nháp • Đã duyệt
               </span>
               <Link
                 to="/imports"
@@ -187,30 +226,26 @@ export function DashboardHomePage() {
                 2. Quản lý Sổ Quỹ Thu / Chi
               </h4>
               <p className="mt-1 text-xs text-muted-foreground">
-                Bảng 10 cột chuẩn kế toán, 4 thẻ Đầu kỳ / Tổng thu / Tổng chi /
-                Cuối kỳ tách theo Tiền mặt, Thẻ, Chuyển khoản và Lập Phiếu Thu /
-                Phiếu Chi.
+                Tự thiết lập Quỹ Đầu kỳ, lập Phiếu Thu / Phiếu Chi theo Tiền mặt, Thẻ, Chuyển khoản.
               </p>
               <div className="mt-3 grid grid-cols-2 gap-2 rounded-lg border border-border/70 bg-muted/20 p-2.5 text-xs">
                 <div>
                   <span className="text-muted-foreground">Tổng thu kỳ này:</span>
                   <p className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                    +{formatVND(cashbookSummary?.totalIncome.total ?? 33140000)}
+                    +{formatVND(cashbookSummary?.totalIncome.total ?? 0)}
                   </p>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Tồn quỹ cuối kỳ:</span>
                   <p className="font-mono font-bold text-foreground">
-                    {formatVND(
-                      cashbookSummary?.closingBalance.total ?? 47165724,
-                    )}
+                    {formatVND(cashbookSummary?.closingBalance.total ?? 0)}
                   </p>
                 </div>
               </div>
             </div>
             <div className="mt-4 flex items-center justify-between border-t border-border/60 pt-3">
               <span className="text-[11px] text-muted-foreground">
-                Khớp phiếu chi cọc & tất toán #55479
+                {cashbookSummary?.voucherCount ?? 0} phiếu giao dịch
               </span>
               <Link
                 to="/cashbook"
@@ -228,7 +263,7 @@ export function DashboardHomePage() {
               <div className="flex items-center justify-between gap-2">
                 <span className="inline-flex items-center gap-1.5 rounded-lg bg-sky-500/15 px-2.5 py-1 font-mono text-xs font-bold text-sky-700 dark:text-sky-400">
                   <BarChart3 className="h-3.5 w-3.5" />
-                  Analytics & Charts
+                  Dòng Tiền & Biểu Đồ
                 </span>
                 <span className="font-mono text-[11px] text-muted-foreground">
                   Real-time Sync
@@ -238,22 +273,20 @@ export function DashboardHomePage() {
                 3. Biểu Đồ Dòng Tiền & Nhập Hàng
               </h4>
               <p className="mt-1 text-xs text-muted-foreground">
-                Trực quan hoá xu hướng Thu/Chi theo ngày, tỷ trọng Tiền mặt /
-                Thẻ / Chuyển khoản, cơ cấu chi phí và trọng lượng 4 kiện hàng
-                đơn #55479.
+                Trực quan hoá xu hướng Thu/Chi theo ngày, tỷ trọng Tiền mặt / Thẻ / Chuyển khoản từ dữ liệu thực tế bạn nhập.
               </p>
               <div className="mt-3 grid grid-cols-2 gap-2 rounded-lg border border-border/70 bg-muted/20 p-2.5 text-xs">
                 <div>
-                  <span className="text-muted-foreground">Kiện hàng về VN:</span>
+                  <span className="text-muted-foreground">Kiện hàng:</span>
                   <p className="font-mono font-bold text-foreground">
-                    {importStats?.totalSmallPackages ?? 4} kiện (
-                    {importStats?.totalWeightKg ?? 34.04} kg)
+                    {importStats?.totalSmallPackages ?? 0} kiện (
+                    {importStats?.totalWeightKg ?? 0} kg)
                   </p>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">SP đồng bộ kho:</span>
+                  <span className="text-muted-foreground">Tổng SL hàng:</span>
                   <p className="font-mono font-bold text-sky-600 dark:text-sky-400">
-                    3 SKU • 50 đơn vị
+                    {importStats?.totalItemsQuantity ?? 0} đơn vị
                   </p>
                 </div>
               </div>
@@ -285,7 +318,13 @@ export function DashboardHomePage() {
         description="Theo dõi số lượng tài khoản hoạt động, đội ngũ quản trị và cấu trúc vai trò hiện hành"
         icon={Activity}
       >
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <StatCard
+            label={t('logistics.totalCardTitle')}
+            value={totalLogisticsUnits}
+            icon={Building2}
+            highlight
+          />
           <StatCard
             label={t('home.totalUsers')}
             value={userStats?.total ?? '—'}
@@ -295,7 +334,6 @@ export function DashboardHomePage() {
             label={t('home.activeUsers')}
             value={userStats?.active ?? '—'}
             icon={CheckCircle2}
-            highlight
           />
           <StatCard
             label={t('home.adminStaff')}

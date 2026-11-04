@@ -65,163 +65,19 @@ interface PersistedCashbookState {
   updatedAt: string;
 }
 
-const KV_STORE_KEY = 'bonzstore_cashbook_state_v1';
+const KV_STORE_KEY = 'bonzstore_cashbook_clean_v1';
 
 function createInitialOpeningBalance(): CashbookChannelBreakdown {
-  const cash = 5000000;
-  const card = 3500000;
-  const transfer = 16500000;
   return {
-    cash,
-    card,
-    transfer,
-    total: cash + card + transfer, // 25,000,000 VND
+    cash: 0,
+    card: 0,
+    transfer: 0,
+    total: 0,
   };
 }
 
 function createInitialVouchers(): CashbookVoucherItem[] {
-  return [
-    {
-      id: 'cb-hb-72865',
-      voucherCode: 'PC-HB72865',
-      transactionDate: '2026-10-07T09:20:30.286+07:00',
-      type: 'EXPENSE',
-      category: 'Đặt cọc nhập hàng 1688',
-      content:
-        'Đặt cọc (80%) đơn hàng mua hộ #55479 — Shop 1688 中山市源柯玩具商行 (50 mô hình Kimetsu no Yaiba & Naruto Shippuden)',
-      cashAmount: 0,
-      cardAmount: 0,
-      transferAmount: 7378400,
-      totalAmount: 7378400,
-      partnerName: 'Hoà Bình Logistics (Ví điện tử - Đơn #55479)',
-      staffName: 'tranbon1 (bon)',
-      importOrderId: 55479,
-      externalPaymentId: 72865,
-      note: 'Tự động đồng bộ từ PayOrderHistories #72865 (Loại: Ví điện tử / Chuyển khoản)',
-      createdAt: '2026-10-07T09:20:30.286+07:00',
-      updatedAt: '2026-10-07T09:20:30.286+07:00',
-    },
-    {
-      id: 'cb-inc-1001',
-      voucherCode: 'PT-202610-001',
-      transactionDate: '2026-10-10T14:15:00.000+07:00',
-      type: 'INCOME',
-      category: 'Thu tiền bán hàng TikTok Shop',
-      content:
-        'Đối soát doanh thu tuần 1 tháng 10 — Đơn mô hình Hunter x Hunter Chibi Q-Ver & One Piece Luffy Gear 5',
-      cashAmount: 0,
-      cardAmount: 0,
-      transferAmount: 6850000,
-      totalAmount: 6850000,
-      partnerName: 'TikTok Shop Seller Settlement VN',
-      staffName: 'Admin BonzStore',
-      importOrderId: null,
-      externalPaymentId: null,
-      note: 'Rút tiền đối soát tự động về tài khoản ngân hàng cửa hàng',
-      createdAt: '2026-10-10T14:15:00.000+07:00',
-      updatedAt: '2026-10-10T14:15:00.000+07:00',
-    },
-    {
-      id: 'cb-inc-1002',
-      voucherCode: 'PT-202610-002',
-      transactionDate: '2026-10-14T18:30:00.000+07:00',
-      type: 'INCOME',
-      category: 'Thu tiền cọc Pre-order khách lẻ',
-      content:
-        'Khách đặt cọc trước lô mô hình Naruto Đại Chiến Nhẫn Giả (9 mẫu) & Kimetsu Dáng Ngủ thuộc đơn #55479',
-      cashAmount: 1200000,
-      cardAmount: 2450000,
-      transferAmount: 1850000,
-      totalAmount: 5500000,
-      partnerName: 'Nguyễn Minh Quân & 6 Khách Otaku Pre-order',
-      staffName: 'Quản lý Cửa hàng',
-      importOrderId: 55479,
-      externalPaymentId: null,
-      note: 'Thu tiền mặt tại quầy Q7 + Quẹt thẻ POS Visa + Chuyển khoản QR',
-      createdAt: '2026-10-14T18:30:00.000+07:00',
-      updatedAt: '2026-10-14T18:30:00.000+07:00',
-    },
-    {
-      id: 'cb-hb-74261',
-      voucherCode: 'PC-HB74261',
-      transactionDate: '2026-10-18T15:26:15.263+07:00',
-      type: 'EXPENSE',
-      category: 'Tất toán & Cước vận chuyển TQ-VN',
-      content:
-        'Thanh toán tất toán đơn #55479 khi nhận 3 kiện hàng (34.04kg — Bao K910-118) tại kho HCM: Phần thiếu tiền hàng + Phí mua hộ (110.676₫) + Cước cân nặng (510.600₫)',
-      cashAmount: 2465876,
-      cardAmount: 0,
-      transferAmount: 0,
-      totalAmount: 2465876,
-      partnerName: 'Kho Hoà Bình Logistics (KHOHN.BATU - Đơn #55479)',
-      staffName: 'tranbon1 (bon)',
-      importOrderId: 55479,
-      externalPaymentId: 74261,
-      note: 'Tự động đồng bộ từ PayOrderHistories #74261 (Loại: Trực tiếp / Tiền mặt)',
-      createdAt: '2026-10-18T15:26:15.263+07:00',
-      updatedAt: '2026-10-18T15:26:15.263+07:00',
-    },
-    {
-      id: 'cb-exp-1003',
-      voucherCode: 'PC-202610-003',
-      transactionDate: '2026-10-19T10:00:00.000+07:00',
-      type: 'EXPENSE',
-      category: 'Chi phí đóng gói & Vận hành kho',
-      content:
-        'Mua thùng carton 3 lớp, xốp nổ chống sốc và băng keo in logo BonzStore phục vụ đóng đơn lô hàng #55479',
-      cashAmount: 450000,
-      cardAmount: 680000,
-      transferAmount: 0,
-      totalAmount: 1130000,
-      partnerName: 'Bao Bì Đóng Gói Nam Phát Q7',
-      staffName: 'Nhân viên Anime #01',
-      importOrderId: 55479,
-      externalPaymentId: null,
-      note: 'Thanh toán tiền mặt + thẻ công ty',
-      createdAt: '2026-10-19T10:00:00.000+07:00',
-      updatedAt: '2026-10-19T10:00:00.000+07:00',
-    },
-    {
-      id: 'cb-inc-1004',
-      voucherCode: 'PT-202610-004',
-      transactionDate: '2026-10-21T16:40:00.000+07:00',
-      type: 'INCOME',
-      category: 'Thu tiền bán lẻ tại Showroom & Online',
-      content:
-        'Bán lẻ 12 bộ Naruto Shippuden Đại Chiến Nhẫn Giả (6 mẫu & 9 mẫu) và 5 bộ Kimetsu Dáng Ngủ sau khi nhập kho đơn #55479',
-      cashAmount: 2680000,
-      cardAmount: 3120000,
-      transferAmount: 4490000,
-      totalAmount: 10290000,
-      partnerName: 'Khách mua lẻ Showroom Quận 7 & Đơn COD',
-      staffName: 'tranbon1 (bon)',
-      importOrderId: 55479,
-      externalPaymentId: null,
-      note: 'Doanh thu trực tiếp từ lô hàng nhập #55479',
-      createdAt: '2026-10-21T16:40:00.000+07:00',
-      updatedAt: '2026-10-21T16:40:00.000+07:00',
-    },
-    {
-      id: 'cb-inc-1005',
-      voucherCode: 'PT-202610-005',
-      transactionDate: '2026-10-24T11:20:00.000+07:00',
-      type: 'INCOME',
-      category: 'Thu tiền bán hàng TikTok Shop',
-      content:
-        'Thanh toán đơn hàng TikTok Shop chiến dịch Flash Sale Cuối Tháng (Naruto & Kimetsu Blindbox)',
-      cashAmount: 0,
-      cardAmount: 1580000,
-      transferAmount: 5920000,
-      totalAmount: 7500000,
-      partnerName: 'TikTok Shop Seller Settlement VN',
-      staffName: 'Admin BonzStore',
-      importOrderId: 55479,
-      externalPaymentId: null,
-      note: 'Đã đối soát hoàn tất',
-      createdAt: '2026-10-24T11:20:00.000+07:00',
-      updatedAt: '2026-10-24T11:20:00.000+07:00',
-    },
-  ];
+  return [];
 }
 
 @Injectable()
@@ -250,10 +106,6 @@ export class CashbookService implements OnModuleInit {
     }
   }
 
-  /**
-   * Tự động khởi tạo bảng KV và khôi phục dữ liệu Sổ Quỹ mỗi khi gọi API
-   * Đảm bảo tương thích 100% với database production hiện tại mà không cần đổi migration
-   */
   async ensureRestoredOnApiCall(): Promise<void> {
     try {
       await this.prisma.client.$executeRawUnsafe(`
@@ -271,57 +123,26 @@ export class CashbookService implements OnModuleInit {
 
         if (rows && rows.length > 0 && rows[0].value) {
           const parsed = rows[0].value;
-          if (
-            parsed.openingBalance &&
-            Array.isArray(parsed.vouchers) &&
-            parsed.vouchers.length > 0
-          ) {
+          if (parsed.openingBalance && Array.isArray(parsed.vouchers)) {
             this.openingBalance = parsed.openingBalance;
             this.vouchers = parsed.vouchers;
             this.initializedFromDb = true;
-            // Đảm bảo 2 phiếu thanh toán của đơn #55479 luôn tồn tại
-            await this.ensureOrder55479VouchersPresent();
             return;
           }
         }
 
-        // Nếu DB chưa có hoặc bị rỗng -> Tự động Restore dữ liệu chuẩn và lưu xuống DB
         this.openingBalance = createInitialOpeningBalance();
         this.vouchers = createInitialVouchers();
         this.initializedFromDb = true;
         await this.persistStateToDb();
-      } else if (this.vouchers.length === 0) {
-        // Nếu danh sách phiếu bị xóa trắng -> Tự động restore lại khi call API
-        this.openingBalance = createInitialOpeningBalance();
-        this.vouchers = createInitialVouchers();
-        await this.persistStateToDb();
       }
     } catch {
-      // Fallback an toàn trên bộ nhớ RAM nếu DB đang khởi động
-      if (this.vouchers.length === 0) {
-        this.openingBalance = createInitialOpeningBalance();
-        this.vouchers = createInitialVouchers();
-      }
+      // Non-blocking fallback
     }
   }
 
   private async ensureOrder55479VouchersPresent(): Promise<void> {
-    const initial = createInitialVouchers();
-    let changed = false;
-    for (const reqVoucher of initial.filter((v) => v.externalPaymentId)) {
-      const exists = this.vouchers.some(
-        (v) =>
-          v.externalPaymentId === reqVoucher.externalPaymentId ||
-          v.voucherCode === reqVoucher.voucherCode,
-      );
-      if (!exists) {
-        this.vouchers.push(reqVoucher);
-        changed = true;
-      }
-    }
-    if (changed) {
-      await this.persistStateToDb();
-    }
+    return;
   }
 
   private async persistStateToDb(): Promise<void> {
@@ -960,17 +781,6 @@ export class CashbookService implements OnModuleInit {
       }))
       .sort((a, b) => b.amount - a.amount);
 
-    // 3. Phân tích chi tiết Đơn Nhập Hàng #55479 (Hoà Bình Logistics)
-    const order55479Vouchers = this.vouchers.filter(
-      (v) => v.importOrderId === 55479,
-    );
-    const order55479Income = order55479Vouchers
-      .filter((v) => v.type === 'INCOME')
-      .reduce((s, v) => s + v.totalAmount, 0);
-    const order55479Expense = order55479Vouchers
-      .filter((v) => v.type === 'EXPENSE')
-      .reduce((s, v) => s + v.totalAmount, 0);
-
     return {
       summary,
       timelineSeries,
@@ -1006,107 +816,26 @@ export class CashbookService implements OnModuleInit {
       incomeByCategory,
       expenseByCategory,
       order55479Analytics: {
-        orderId: 55479,
-        shopName: '中山市源柯玩具商行（个体工商户）',
-        site: '1688',
-        exchangeRate: 4010,
-        totalPriceCNY: 2300,
-        productCostVND: 9223000,
-        buyingFeeVND: 110676,
-        weightFeeVND: 510600,
-        totalImportCostVND: 9844276,
-        depositPaidVND: 7378400,
-        finalPaymentVND: 2465876,
-        totalWeightKg: 34.04,
-        totalQuantity: 50,
-        recordedRevenueVND: order55479Income,
-        recordedExpenseVND: order55479Expense,
-        netProfitToDateVND: order55479Income - 9844276,
-        costBreakdown: [
-          {
-            labelVi: 'Tiền hàng gốc 1688 (2.300¥ × 4.010₫)',
-            labelEn: '1688 Merchandise Cost (2,300 CNY)',
-            amount: 9223000,
-            percent: 93.69,
-          },
-          {
-            labelVi: 'Cước cân nặng TQ-VN (34.04kg × 15.000₫)',
-            labelEn: 'CN-VN Weight Shipping Fee (34.04kg)',
-            amount: 510600,
-            percent: 5.19,
-          },
-          {
-            labelVi: 'Phí dịch vụ mua hộ (27.6¥)',
-            labelEn: 'Buying Service Fee (27.6 CNY)',
-            amount: 110676,
-            percent: 1.12,
-          },
-        ],
-        packagesBreakdown: [
-          {
-            packageId: 495282,
-            trackingCode: '50028196897700030003',
-            weightKg: 18.86,
-            feeVND: 282900,
-            statusName: 'Đã giao khách hàng',
-          },
-          {
-            packageId: 495283,
-            trackingCode: '50028196897700030002',
-            weightKg: 12.78,
-            feeVND: 191700,
-            statusName: 'Đã giao khách hàng',
-          },
-          {
-            packageId: 495286,
-            trackingCode: '50028196897700030001',
-            weightKg: 2.4,
-            feeVND: 36000,
-            statusName: 'Đã giao khách hàng',
-          },
-          {
-            packageId: 495068,
-            trackingCode: '500281968977',
-            weightKg: 0,
-            feeVND: 0,
-            statusName: 'Chưa về kho TQ (Mã tổng 3k)',
-          },
-        ],
-        itemsBreakdown: [
-          {
-            itemId: '1073254875055',
-            rowId: 177035,
-            nameVi: 'Mô hình Kimetsu no Yaiba Dáng Ngủ (8 mẫu túi)',
-            property: ';被窝睡眠鬼灭8款（袋装）',
-            quantity: 10,
-            unitPriceCNY: 14,
-            unitPriceVND: 56140,
-            totalCNY: 140,
-            totalVND: 561400,
-          },
-          {
-            itemId: '1060302986040',
-            rowId: 177034,
-            nameVi: 'Mô hình Naruto Đại Chiến Nhẫn Giả (6 mẫu túi)',
-            property: ';6款终极火影袋装',
-            quantity: 20,
-            unitPriceCNY: 43,
-            unitPriceVND: 172430,
-            totalCNY: 860,
-            totalVND: 3448600,
-          },
-          {
-            itemId: '1060302986040',
-            rowId: 177033,
-            nameVi: 'Mô hình Naruto Đại Chiến Nhẫn Giả (9 mẫu túi)',
-            property: ';终极火影9款袋装',
-            quantity: 20,
-            unitPriceCNY: 65,
-            unitPriceVND: 260650,
-            totalCNY: 1300,
-            totalVND: 5213000,
-          },
-        ],
+        orderId: 0,
+        shopName: 'Chưa có dữ liệu đơn nhập',
+        site: '',
+        exchangeRate: 0,
+        totalPriceCNY: 0,
+        productCostVND: 0,
+        buyingFeeVND: 0,
+        weightFeeVND: 0,
+        totalImportCostVND: 0,
+        depositPaidVND: 0,
+        finalPaymentVND: 0,
+        totalWeightKg: 0,
+        totalQuantity: 0,
+        recordedRevenueVND: summary.totalIncome.total,
+        recordedExpenseVND: summary.totalExpense.total,
+        netProfitToDateVND:
+          summary.totalIncome.total - summary.totalExpense.total,
+        costBreakdown: [],
+        packagesBreakdown: [],
+        itemsBreakdown: [],
       },
     };
   }
