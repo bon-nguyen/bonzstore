@@ -11,6 +11,7 @@ import { CashbookModule } from './modules/cashbook/cashbook.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { HealthModule } from './modules/health/health.module';
 import { ImportsModule } from './modules/imports/imports.module';
+import { LogisticsModule } from './modules/logistics/logistics.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { ProductsModule } from './modules/products/products.module';
 import { RolesModule } from './modules/roles/roles.module';
@@ -44,6 +45,7 @@ import { UsersModule } from './modules/users/users.module';
     ProductsModule,
     CashbookModule,
     ImportsModule,
+    LogisticsModule,
     HealthModule,
   ],
   providers: [

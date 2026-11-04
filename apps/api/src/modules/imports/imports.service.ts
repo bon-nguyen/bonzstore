@@ -53,7 +53,7 @@ interface PersistedImportsState {
   updatedAt: string;
 }
 
-const KV_IMPORTS_KEY = 'bonzstore_imports_state_v1';
+const KV_IMPORTS_KEY = 'bonzstore_imports_clean_v1';
 
 function maskBearerToken(raw: string): string {
   const cleaned = trim(raw).replace(/^Bearer\s+/i, '');
@@ -63,16 +63,14 @@ function maskBearerToken(raw: string): string {
 }
 
 function createDefaultTokenConfig(): ImportTokenConfig {
-  const defaultDemoToken =
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3VzZXJkYXRhIjoie1wiVXNlcklkXCI6NjE3NixcIlVzZXJHcm91cElkXCI6MixcIlVzZXJOYW1lXCI6XCJ0cmFuYm9uMVwiLFwiSXNDaGVja09UUFwiOnRydWUsXCJSb2xlc1wiOm51bGwsXCJJc0NvbmZpcm1PVFBcIjpmYWxzZX0iLCJuYmYiOjE3OTM3MjU2MzAsImV4cCI6MTc5MzgzNzIzMCwiaWF0IjoxNzkzNzI1NjMwfQ.D72EKNd37kG2FtN_-B879IhmeK0IAYK__SVYbBJ7dPo';
   return {
-    token: defaultDemoToken,
-    maskedToken: maskBearerToken(defaultDemoToken),
-    accountUsername: 'tranbon1 (UID: 6176)',
+    token: '',
+    maskedToken: '',
+    accountUsername: '',
     loginUrl: 'https://hoabinhlogistics.com',
     apiBaseUrl: 'https://hoabinhlogistics.com/api/main-order',
-    updatedAt: new Date().toISOString(),
-    hasToken: true,
+    updatedAt: '',
+    hasToken: false,
   };
 }
 
@@ -81,20 +79,7 @@ function cloneOrder55479(): HoabinhMainOrderData {
 }
 
 function createInitialImportOrders(): StoredImportOrderRecord[] {
-  const data55479 = cloneOrder55479();
-  return [
-    {
-      id: 55479,
-      orderCode:
-        data55479.MainOrderCodes?.[0]?.Code || '5127805405728007936',
-      sourceUrl: 'https://hoabinhlogistics.com/api/main-order/55479',
-      syncedToCatalog: true,
-      syncedToCashbook: true,
-      lastSyncedAt: '2026-10-22T00:57:47.720+07:00',
-      syncedProductIds: ['1073254875055', '1060302986040'],
-      rawData: data55479,
-    },
-  ];
+  return [];
 }
 
 @Injectable()
@@ -102,7 +87,6 @@ export class ImportsService implements OnModuleInit {
   private tokenConfig: ImportTokenConfig = createDefaultTokenConfig();
   private orders: StoredImportOrderRecord[] = createInitialImportOrders();
   private initializedFromDb = false;
-  private catalogSeededFor55479 = false;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -124,13 +108,6 @@ export class ImportsService implements OnModuleInit {
     }
   }
 
-  /**
-   * Tự động kiểm tra và Restore Data mỗi khi gọi API (Lưu ý quan trọng từ yêu cầu):
-   * - Đảm bảo bảng lưu trữ tồn tại trên PostgreSQL hiện tại.
-   * - Đảm bảo đơn hàng mẫu #55479 luôn tồn tại trong hệ thống.
-   * - Tự động đồng bộ 3 mặt hàng 1688 của đơn #55479 vào bảng Product & ProductSku của Production.
-   * - Tự động đồng bộ 2 phiếu thanh toán (#72865 & #74261) của đơn #55479 vào Sổ Quỹ.
-   */
   async ensureRestoredOnApiCall(): Promise<void> {
     try {
       await this.prisma.client.$executeRawUnsafe(`
@@ -154,33 +131,14 @@ export class ImportsService implements OnModuleInit {
           if (parsed.tokenConfig) {
             this.tokenConfig = parsed.tokenConfig;
           }
-          if (Array.isArray(parsed.orders) && parsed.orders.length > 0) {
+          if (Array.isArray(parsed.orders)) {
             this.orders = parsed.orders;
           }
         }
         this.initializedFromDb = true;
       }
-
-      // Đảm bảo đơn #55479 luôn có mặt (Restore nếu thiếu)
-      const has55479 = this.orders.some((o) => o.id === 55479);
-      if (!has55479) {
-        const initial = createInitialImportOrders();
-        this.orders.unshift(...initial);
-        await this.persistStateToDb();
-      }
-
-      const order55479 = this.orders.find((o) => o.id === 55479);
-      if (order55479) {
-        await this.cashbookService.syncFromHoabinhOrder(order55479.rawData);
-        if (!this.catalogSeededFor55479) {
-          this.catalogSeededFor55479 = true;
-          await this.syncOrderItemsToProductionCatalog(order55479.rawData, 1.38);
-        }
-      }
     } catch {
-      if (this.orders.length === 0) {
-        this.orders = createInitialImportOrders();
-      }
+      // Non-blocking fallback
     }
   }
 
@@ -987,20 +945,14 @@ export class ImportsService implements OnModuleInit {
     this.initializedFromDb = true;
     await this.persistStateToDb();
 
-    const order55479 = this.orders[0].rawData;
-    const catSync = await this.syncOrderItemsToProductionCatalog(
-      order55479,
-      1.38,
-    );
     const cbRestore = await this.cashbookService.restoreDefaultData(currentUser);
 
     return {
       restored: true,
-      message:
-        'Đã khôi phục (Restore) hoàn chỉnh dữ liệu đơn nhập hàng #55479 (Hoà Bình Logistics), đồng bộ 3 sản phẩm 1688 vào Kho Sản Phẩm (/products) và khôi phục Sổ Quỹ (/cashbook)',
-      orderId: 55479,
-      syncedProductsCount: catSync.syncedProductsCount,
-      syncedSkusCount: catSync.syncedSkusCount,
+      message: 'Đã xóa trắng dữ liệu Nhập hàng và Sổ Quỹ để bạn tự thao tác.',
+      orderId: 0,
+      syncedProductsCount: 0,
+      syncedSkusCount: 0,
       cashbookSummary: cbRestore.summary,
     };
   }

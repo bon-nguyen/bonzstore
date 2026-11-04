@@ -19,6 +19,7 @@ import { DashboardHomePage } from './pages/DashboardHomePage';
 import { ForbiddenPage } from './pages/ForbiddenPage';
 import { ImportsPage } from './pages/ImportsPage';
 import { LoginPage } from './pages/LoginPage';
+import { LogisticsPage } from './pages/LogisticsPage';
 import { NotificationSettingsPage } from './pages/NotificationSettingsPage';
 import { ProductsPage } from './pages/ProductsPage';
 import { RolesPage } from './pages/RolesPage';
@@ -103,6 +104,17 @@ export function App() {
                           requiredPermission={PERMISSIONS.DASHBOARD_VIEW}
                         >
                           <ImportsPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="logistics"
+                      element={
+                        <ProtectedRoute
+                          requiredPermission={PERMISSIONS.DASHBOARD_VIEW}
+                          requiredRoles={ADMIN_MANAGER_ROLES}
+                        >
+                          <LogisticsPage />
                         </ProtectedRoute>
                       }
                     />

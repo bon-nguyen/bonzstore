@@ -433,6 +433,153 @@ export function NotificationSettingsPage() {
     },
   ];
 
+  const matrixColumns: Column<(typeof MODULE_ROWS)[number]>[] = [
+    {
+      key: 'module',
+      header: t('notifications.colModule'),
+      isPrimary: true,
+      render: (row) => {
+        const Icon = row.icon;
+        return (
+          <div className="flex items-start gap-2.5">
+            <div className="stat-card-icon h-8 w-8 shrink-0">
+              <Icon className="h-4 w-4" />
+            </div>
+            <div>
+              <p className="font-semibold text-foreground">{t(row.labelKey)}</p>
+              <p className="mt-0.5 text-[11px] text-muted-foreground">
+                {t(row.descKey)}
+              </p>
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      key: 'createToggle',
+      mobileHeader: t('notifications.colCreateToggle'),
+      header: (
+        <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+          <PlusCircle className="h-3.5 w-3.5" />
+          <span>{t('notifications.colCreateToggle')}</span>
+        </span>
+      ),
+      align: 'center',
+      width: 150,
+      render: (row) => {
+        const prefs = settings?.modules?.[row.module] || {
+          CREATE: true,
+          UPDATE: true,
+          DELETE: true,
+        };
+        return (
+          <div className="inline-flex justify-center">
+            <Switch
+              checked={Boolean(prefs.CREATE)}
+              disabled={!canManageNotifications || !masterEnabled}
+              onCheckedChange={(checked) =>
+                handleToggleModuleAction(row.module, 'CREATE', checked)
+              }
+            />
+          </div>
+        );
+      },
+    },
+    {
+      key: 'updateToggle',
+      mobileHeader: t('notifications.colUpdateToggle'),
+      header: (
+        <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400">
+          <Pencil className="h-3.5 w-3.5" />
+          <span>{t('notifications.colUpdateToggle')}</span>
+        </span>
+      ),
+      align: 'center',
+      width: 150,
+      render: (row) => {
+        const prefs = settings?.modules?.[row.module] || {
+          CREATE: true,
+          UPDATE: true,
+          DELETE: true,
+        };
+        return (
+          <div className="inline-flex justify-center">
+            <Switch
+              checked={Boolean(prefs.UPDATE)}
+              disabled={!canManageNotifications || !masterEnabled}
+              onCheckedChange={(checked) =>
+                handleToggleModuleAction(row.module, 'UPDATE', checked)
+              }
+            />
+          </div>
+        );
+      },
+    },
+    {
+      key: 'deleteToggle',
+      mobileHeader: t('notifications.colDeleteToggle'),
+      header: (
+        <span className="inline-flex items-center gap-1 text-rose-600 dark:text-rose-400">
+          <Trash2 className="h-3.5 w-3.5" />
+          <span>{t('notifications.colDeleteToggle')}</span>
+        </span>
+      ),
+      align: 'center',
+      width: 150,
+      render: (row) => {
+        const prefs = settings?.modules?.[row.module] || {
+          CREATE: true,
+          UPDATE: true,
+          DELETE: true,
+        };
+        return (
+          <div className="inline-flex justify-center">
+            <Switch
+              checked={Boolean(prefs.DELETE)}
+              disabled={!canManageNotifications || !masterEnabled}
+              onCheckedChange={(checked) =>
+                handleToggleModuleAction(row.module, 'DELETE', checked)
+              }
+            />
+          </div>
+        );
+      },
+    },
+    {
+      key: 'quickAction',
+      header: t('notifications.colQuickAction'),
+      align: 'right',
+      width: 150,
+      render: (row) => {
+        const prefs = settings?.modules?.[row.module] || {
+          CREATE: true,
+          UPDATE: true,
+          DELETE: true,
+        };
+        const allRowEnabled = prefs.CREATE && prefs.UPDATE && prefs.DELETE;
+        return canManageNotifications ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={!masterEnabled}
+            onClick={() => handleToggleRowAll(row.module, !allRowEnabled)}
+            className="h-7 px-2.5 text-[11px]"
+          >
+            {allRowEnabled
+              ? t('notifications.disableAllRow')
+              : t('notifications.enableAllRow')}
+          </Button>
+        ) : (
+          <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+            <Lock className="h-3.5 w-3.5" />
+            <span>{t('tags.onlyAdminManager')}</span>
+          </span>
+        );
+      },
+    },
+  ];
+
   const stats = paginatedResponse?.stats;
   const meta = paginatedResponse?.meta;
   const notificationsData = paginatedResponse?.data || [];
@@ -778,157 +925,13 @@ export function NotificationSettingsPage() {
               ) : null}
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-left text-xs">
-                <thead>
-                  <tr className="border-b border-border bg-muted/40 font-display text-[11px] font-bold uppercase text-muted-foreground">
-                    <th className="px-4 py-3">
-                      {t('notifications.colModule')}
-                    </th>
-                    <th className="px-3 py-3 text-center">
-                      <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
-                        <PlusCircle className="h-3.5 w-3.5" />
-                        <span>{t('notifications.colCreateToggle')}</span>
-                      </span>
-                    </th>
-                    <th className="px-3 py-3 text-center">
-                      <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400">
-                        <Pencil className="h-3.5 w-3.5" />
-                        <span>{t('notifications.colUpdateToggle')}</span>
-                      </span>
-                    </th>
-                    <th className="px-3 py-3 text-center">
-                      <span className="inline-flex items-center gap-1 text-rose-600 dark:text-rose-400">
-                        <Trash2 className="h-3.5 w-3.5" />
-                        <span>{t('notifications.colDeleteToggle')}</span>
-                      </span>
-                    </th>
-                    <th className="px-4 py-3 text-right">
-                      {t('notifications.colQuickAction')}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {MODULE_ROWS.map((row) => {
-                    const Icon = row.icon;
-                    const prefs = settings?.modules?.[row.module] || {
-                      CREATE: true,
-                      UPDATE: true,
-                      DELETE: true,
-                    };
-                    const allRowEnabled =
-                      prefs.CREATE && prefs.UPDATE && prefs.DELETE;
-
-                    return (
-                      <tr
-                        key={row.module}
-                        className={cn(
-                          'transition-colors hover:bg-muted/25',
-                          !masterEnabled && 'opacity-50',
-                        )}
-                      >
-                        <td className="px-4 py-3.5">
-                          <div className="flex items-start gap-2.5">
-                            <div className="stat-card-icon h-8 w-8 shrink-0">
-                              <Icon className="h-4 w-4" />
-                            </div>
-                            <div>
-                              <p className="font-semibold text-foreground">
-                                {t(row.labelKey)}
-                              </p>
-                              <p className="mt-0.5 text-[11px] text-muted-foreground">
-                                {t(row.descKey)}
-                              </p>
-                            </div>
-                          </div>
-                        </td>
-
-                        {/* Tác vụ Thêm mới (CREATE) */}
-                        <td className="px-3 py-3.5 text-center">
-                          <div className="inline-flex justify-center">
-                            <Switch
-                              checked={Boolean(prefs.CREATE)}
-                              disabled={
-                                !canManageNotifications || !masterEnabled
-                              }
-                              onCheckedChange={(checked) =>
-                                handleToggleModuleAction(
-                                  row.module,
-                                  'CREATE',
-                                  checked,
-                                )
-                              }
-                            />
-                          </div>
-                        </td>
-
-                        {/* Tác vụ Chỉnh sửa (UPDATE) */}
-                        <td className="px-3 py-3.5 text-center">
-                          <div className="inline-flex justify-center">
-                            <Switch
-                              checked={Boolean(prefs.UPDATE)}
-                              disabled={
-                                !canManageNotifications || !masterEnabled
-                              }
-                              onCheckedChange={(checked) =>
-                                handleToggleModuleAction(
-                                  row.module,
-                                  'UPDATE',
-                                  checked,
-                                )
-                              }
-                            />
-                          </div>
-                        </td>
-
-                        {/* Tác vụ Xóa (DELETE) */}
-                        <td className="px-3 py-3.5 text-center">
-                          <div className="inline-flex justify-center">
-                            <Switch
-                              checked={Boolean(prefs.DELETE)}
-                              disabled={
-                                !canManageNotifications || !masterEnabled
-                              }
-                              onCheckedChange={(checked) =>
-                                handleToggleModuleAction(
-                                  row.module,
-                                  'DELETE',
-                                  checked,
-                                )
-                              }
-                            />
-                          </div>
-                        </td>
-
-                        <td className="px-4 py-3.5 text-right">
-                          {canManageNotifications ? (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              disabled={!masterEnabled}
-                              onClick={() =>
-                                handleToggleRowAll(row.module, !allRowEnabled)
-                              }
-                              className="h-7 px-2.5 text-[11px]"
-                            >
-                              {allRowEnabled
-                                ? t('notifications.disableAllRow')
-                                : t('notifications.enableAllRow')}
-                            </Button>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
-                              <Lock className="h-3.5 w-3.5" />
-                              <span>{t('tags.onlyAdminManager')}</span>
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+            <ResponsiveTable
+              embedded
+              columns={matrixColumns}
+              data={MODULE_ROWS}
+              keyExtractor={(row) => row.module}
+              rowClassName={() => (!masterEnabled ? 'opacity-50' : undefined)}
+            />
           </div>
         </div>
       </div>

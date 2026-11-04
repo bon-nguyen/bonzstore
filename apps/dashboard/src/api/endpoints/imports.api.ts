@@ -1,12 +1,14 @@
 import { apiClient } from '../client';
 import {
   decodeHoabinhJwt,
+  deleteStoredImportOrderRecord,
   getFallbackImportsPaginated,
   getStoredImportTokenConfig,
   HOABINH_ORDER_55479_DATA,
   HOABINH_REAL_JWT_TOKEN,
   loginHoabinhFallback,
   restoreLocalAllData,
+  saveStoredImportOrderRecord,
   saveStoredImportTokenConfig,
   simulateLocalTokenExpired401,
   updateLocalOrderWorkflowTab,
@@ -23,20 +25,16 @@ import {
 } from '../types/imports.types';
 
 export const importsApi = {
-  /**
-   * 1. Luồng Xác thực & Đăng nhập (POST https://hoabinhlogistics.com/api/authenticate/login)
-   * Trả về { Success: true, Data: { token }, ResultCode: 200, ResultMessage: null }
-   * kèm giải mã JWT (UID: 6176, UserName: tranbon1)
-   */
   loginHoabinh: async (
     payload: HoabinhLoginPayload,
   ): Promise<HoabinhLoginResponse> => {
     try {
-      const res: any = await apiClient.post('/imports/authenticate/login', payload);
+      const res: any = await apiClient.post(
+        '/imports/authenticate/login',
+        payload,
+      );
       const token =
-        res?.Data?.token ||
-        payload.customToken?.trim() ||
-        HOABINH_REAL_JWT_TOKEN;
+        res?.Data?.token || payload.customToken?.trim() || '';
       const localRes = loginHoabinhFallback({
         ...payload,
         customToken: token,
@@ -53,13 +51,6 @@ export const importsApi = {
     }
   },
 
-  /**
-   * 2 & 3. Lấy danh sách đơn hàng theo 3 Tabs:
-   * - Tab 1 (CURRENT): OrderType = 1
-   * - Tab 2 (DRAFT): OrderType = 0
-   * - Tab 3 (APPROVED): OrderType = 2
-   * Endpoint chuẩn: GET https://hoabinhlogistics.com/api/main-order?OrderBy=Id+desc&PageIndex=1&PageSize=20&UID=6176&OrderType=1
-   */
   getAll: async (params?: {
     page?: number;
     limit?: number;
@@ -75,68 +66,20 @@ export const importsApi = {
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
   }): Promise<ImportOrdersPaginatedResponse> => {
-    // Ưu tiên đồng bộ danh sách 3 Tabs kèm thông tin Token UID=6176 đã lưu
-    const localResult = getFallbackImportsPaginated(params);
-    try {
-      const apiRes: any = await apiClient.get('/imports', {
-        params: {
-          page: params?.PageIndex || params?.page || 1,
-          limit: params?.PageSize || params?.limit || 20,
-          search: params?.search,
-          status: params?.status,
-          site: params?.site,
-          tab: params?.tab,
-          OrderType: params?.OrderType,
-          UID: params?.UID || localResult.tokenConfig.uid || 6176,
-          OrderBy: params?.OrderBy || 'Id desc',
-        },
-      });
-      // Nếu backend đã hỗ trợ phân chia 3 tab (có currentTabCount), kết hợp cùng tokenConfig local
-      if (
-        apiRes &&
-        apiRes.stats &&
-        typeof apiRes.stats.currentTabCount === 'number'
-      ) {
-        return {
-          ...apiRes,
-          tokenConfig: localResult.tokenConfig,
-          requestInspector:
-            apiRes.requestInspector || localResult.requestInspector,
-        };
-      }
-      return localResult;
-    } catch {
-      return localResult;
-    }
+    return getFallbackImportsPaginated(params);
   },
 
-  getById: async (id: number): Promise<StoredImportOrderRecord> => {
-    try {
-      return await apiClient.get(`/imports/${id}`);
-    } catch {
-      const all = getFallbackImportsPaginated({ page: 1, limit: 50 }).data;
-      return (
-        all.find((r) => r.id === id) || getFallbackImportsPaginated().data[0]
-      );
-    }
+  getById: async (id: number): Promise<StoredImportOrderRecord | null> => {
+    const all = getFallbackImportsPaginated({ page: 1, limit: 100 }).data;
+    return all.find((r) => r.id === id) || null;
   },
 
   getStats: async (): Promise<ImportOrderStats> => {
-    try {
-      return await apiClient.get('/imports/stats');
-    } catch {
-      return getFallbackImportsPaginated().stats;
-    }
+    return getFallbackImportsPaginated().stats;
   },
 
   getTokenConfig: async (): Promise<ImportTokenConfig> => {
-    const localToken = getStoredImportTokenConfig();
-    try {
-      await apiClient.get('/imports/token');
-      return localToken;
-    } catch {
-      return localToken;
-    }
+    return getStoredImportTokenConfig();
   },
 
   saveTokenConfig: async (data: {
@@ -151,10 +94,10 @@ export const importsApi = {
     );
     try {
       await apiClient.post('/imports/token', data);
-      return savedLocal;
     } catch {
-      return savedLocal;
+      // ignore
     }
+    return savedLocal;
   },
 
   simulateTokenExpired401: async (): Promise<ImportTokenConfig> => {
@@ -173,24 +116,6 @@ export const importsApi = {
     updateLocalOrderWorkflowTab(orderId, targetTab);
     const orderType =
       targetTab === 'DRAFT' ? 0 : targetTab === 'APPROVED' ? 2 : 1;
-    try {
-      if (targetTab === 'APPROVED') {
-        await apiClient.post(`/imports/${orderId}/sync-catalog`, {
-          priceMarkupMultiplier: 1.38,
-        });
-      }
-      await apiClient.patch(`/imports/${orderId}`, {
-        status: targetTab === 'DRAFT' ? 0 : 14,
-        statusName:
-          targetTab === 'DRAFT'
-            ? 'Bản nháp (Chờ duyệt)'
-            : targetTab === 'APPROVED'
-              ? 'Đã duyệt & Nhập kho'
-              : 'Đã hoàn thành',
-      });
-    } catch {
-      // fallback already updated in localStorage
-    }
     return {
       orderId,
       targetTab,
@@ -200,27 +125,76 @@ export const importsApi = {
   },
 
   fetchExternalOrder: async (data: FetchExternalOrderPayload) => {
-    if (data.targetTab) {
-      const idMatch = (data.orderIdOrUrl || '55479').match(/(\d+)\s*$/);
-      const oid = idMatch ? Number(idMatch[1]) : 55479;
-      updateLocalOrderWorkflowTab(oid, data.targetTab);
-    }
-    try {
-      return await apiClient.post('/imports/fetch-order', data);
-    } catch {
-      return {
-        Success: true,
-        Data: HOABINH_ORDER_55479_DATA,
-        syncMeta: {
-          sourceMode: 'AUTO_RESTORE_55479',
-          syncedProductsCount: 2,
-          syncedSkusCount: 3,
-          syncedProductIds: ['1073254875055', '1060302986040'],
-          syncedToCashbook: true,
+    // Nếu người dùng dán JSON thật hoặc gọi API thật khi đã có Token
+    if (data.rawJson?.trim()) {
+      const parsed = JSON.parse(data.rawJson.trim());
+      const candidate = parsed?.Data || parsed?.data || parsed;
+      if (candidate && candidate.Id) {
+        const record: StoredImportOrderRecord = {
+          id: Number(candidate.Id),
+          orderCode:
+            candidate.MainOrderCodes?.[0]?.Code ||
+            candidate.MainOrderCode ||
+            String(candidate.Id),
+          sourceUrl:
+            data.orderIdOrUrl ||
+            `https://hoabinhlogistics.com/api/main-order/${candidate.Id}`,
+          workflowTab: data.targetTab || 'CURRENT',
+          orderTypeParam:
+            data.targetTab === 'DRAFT'
+              ? 0
+              : data.targetTab === 'APPROVED'
+                ? 2
+                : 1,
+          approvedAt:
+            data.targetTab === 'APPROVED' ? new Date().toISOString() : null,
+          approvedBy: null,
+          syncedToCatalog: Boolean(data.autoSyncProducts),
+          syncedToCashbook: Boolean(data.autoSyncCashbook),
           lastSyncedAt: new Date().toISOString(),
-        },
-      };
+          syncedProductIds: [],
+          rawData: candidate,
+        };
+        saveStoredImportOrderRecord(record);
+        return {
+          Success: true,
+          Data: candidate,
+          syncMeta: {
+            sourceMode: 'LIVE_HOABINH_API',
+          },
+        };
+      }
     }
+
+    const res: any = await apiClient.post('/imports/fetch-order', data);
+    if (res?.Data?.Id) {
+      saveStoredImportOrderRecord({
+        id: Number(res.Data.Id),
+        orderCode:
+          res.Data.MainOrderCodes?.[0]?.Code ||
+          res.Data.MainOrderCode ||
+          String(res.Data.Id),
+        sourceUrl:
+          data.orderIdOrUrl ||
+          `https://hoabinhlogistics.com/api/main-order/${res.Data.Id}`,
+        workflowTab: data.targetTab || 'CURRENT',
+        orderTypeParam:
+          data.targetTab === 'DRAFT'
+            ? 0
+            : data.targetTab === 'APPROVED'
+              ? 2
+              : 1,
+        approvedAt:
+          data.targetTab === 'APPROVED' ? new Date().toISOString() : null,
+        approvedBy: null,
+        syncedToCatalog: Boolean(data.autoSyncProducts),
+        syncedToCashbook: Boolean(data.autoSyncCashbook),
+        lastSyncedAt: new Date().toISOString(),
+        syncedProductIds: [],
+        rawData: res.Data,
+      });
+    }
+    return res;
   },
 
   syncToCatalog: async (
@@ -243,10 +217,10 @@ export const importsApi = {
       );
     } catch {
       return {
-        orderId: orderId || 55479,
-        syncedProductsCount: 2,
-        syncedSkusCount: 3,
-        syncedProductIds: ['1073254875055', '1060302986040'],
+        orderId,
+        syncedProductsCount: 0,
+        syncedSkusCount: 0,
+        syncedProductIds: [],
       };
     }
   },
@@ -258,13 +232,20 @@ export const importsApi = {
     syncedProductsCount: number;
     syncedSkusCount: number;
   }> => {
-    const localRestored = restoreLocalAllData();
+    const localCleared = restoreLocalAllData();
     try {
-      return await apiClient.post('/imports/restore');
+      await apiClient.post('/imports/restore');
     } catch {
-      return localRestored;
+      // ignore
     }
+    return localCleared;
   },
 };
 
-export { decodeHoabinhJwt, HOABINH_REAL_JWT_TOKEN };
+export {
+  decodeHoabinhJwt,
+  deleteStoredImportOrderRecord,
+  HOABINH_ORDER_55479_DATA,
+  HOABINH_REAL_JWT_TOKEN,
+  saveStoredImportOrderRecord,
+};

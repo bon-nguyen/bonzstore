@@ -79,13 +79,29 @@
     @apply inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground;
   }
 
-  /* 3. Tables & Data Display */
+  /* 3. Tables & Data Display (Ant Design Table inspired Tailwind styles) */
   .table-row-interactive {
-    @apply border-b border-border border-l-2 border-l-transparent transition-colors hover:border-l-primary hover:bg-muted/50;
+    @apply border-b border-border border-l-2 border-l-transparent transition-colors duration-150 hover:border-l-primary hover:bg-primary/[0.07] dark:hover:bg-muted/45;
   }
 
   .table-header-cell {
-    @apply px-4 py-3 text-left font-display text-xs font-bold uppercase tracking-wider text-muted-foreground;
+    @apply relative select-none whitespace-nowrap px-4 py-3.5 text-left font-display text-xs font-semibold tracking-normal text-foreground/85 transition-colors dark:text-foreground/90 after:absolute after:right-0 after:top-1/2 after:h-4 after:w-[1px] after:-translate-y-1/2 after:bg-border after:content-[''] last:after:hidden;
+  }
+
+  .ant-tw-table-wrapper {
+    @apply relative w-full overflow-x-auto bg-card;
+  }
+
+  .ant-tw-thead {
+    @apply border-b border-border bg-muted/50 dark:bg-muted/35 [&_tr]:border-b [&_tr]:border-border;
+  }
+
+  .ant-tw-th-sortable {
+    @apply cursor-pointer hover:bg-muted/80 dark:hover:bg-muted/60;
+  }
+
+  .ant-tw-td {
+    @apply px-4 py-3.5 align-middle text-sm;
   }
 
   /* 4. Status & Priority Badges */
