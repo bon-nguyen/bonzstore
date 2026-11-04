@@ -11,10 +11,13 @@ import { ProtectedRoute } from './features/auth/components/ProtectedRoute';
 import { AuthProvider } from './features/auth/context/AuthContext';
 import { I18nProvider } from './features/i18n/I18nContext';
 import { ThemeProvider } from './features/theme/ThemeContext';
+import { CashbookPage } from './pages/CashbookPage';
 import { CategoriesPage } from './pages/CategoriesPage';
+import { ChartsPage } from './pages/ChartsPage';
 import CreateProductPage from './pages/CreateProductPage';
 import { DashboardHomePage } from './pages/DashboardHomePage';
 import { ForbiddenPage } from './pages/ForbiddenPage';
+import { ImportsPage } from './pages/ImportsPage';
 import { LoginPage } from './pages/LoginPage';
 import { NotificationSettingsPage } from './pages/NotificationSettingsPage';
 import { ProductsPage } from './pages/ProductsPage';
@@ -90,6 +93,46 @@ export function App() {
                           requiredPermission={PERMISSIONS.PRODUCTS_READ}
                         >
                           <TagsPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="imports"
+                      element={
+                        <ProtectedRoute
+                          requiredPermission={PERMISSIONS.DASHBOARD_VIEW}
+                        >
+                          <ImportsPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="cashbook"
+                      element={
+                        <ProtectedRoute
+                          requiredPermission={PERMISSIONS.DASHBOARD_VIEW}
+                        >
+                          <CashbookPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="charts"
+                      element={
+                        <ProtectedRoute
+                          requiredPermission={PERMISSIONS.DASHBOARD_VIEW}
+                        >
+                          <ChartsPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="analytics"
+                      element={
+                        <ProtectedRoute
+                          requiredPermission={PERMISSIONS.DASHBOARD_VIEW}
+                        >
+                          <ChartsPage />
                         </ProtectedRoute>
                       }
                     />

@@ -1,4 +1,5 @@
 import {
+  BarChart3,
   Bell,
   ChevronDown,
   ChevronLeft,
@@ -13,7 +14,9 @@ import {
   ShieldAlert,
   Sparkles,
   Tags,
+  Truck,
   Users,
+  Wallet,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
@@ -66,6 +69,24 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
         permission: PERMISSIONS.PRODUCTS_READ,
       },
     ],
+  },
+  {
+    to: '/imports',
+    labelKey: 'nav.imports',
+    icon: Truck,
+    permission: PERMISSIONS.DASHBOARD_VIEW,
+  },
+  {
+    to: '/cashbook',
+    labelKey: 'nav.cashbook',
+    icon: Wallet,
+    permission: PERMISSIONS.DASHBOARD_VIEW,
+  },
+  {
+    to: '/charts',
+    labelKey: 'nav.charts',
+    icon: BarChart3,
+    permission: PERMISSIONS.DASHBOARD_VIEW,
   },
   {
     to: '/users',
@@ -208,7 +229,6 @@ export function AppSidebar() {
           const Icon = item.icon;
           const label = t(item.labelKey);
 
-          // Dropdown Group Item (e.g. Sản phẩm -> Tất cả sản phẩm / Danh mục / Thẻ)
           if (item.children && item.children.length > 0) {
             const visibleChildren = item.children.filter(
               (child) =>
@@ -253,7 +273,6 @@ export function AppSidebar() {
                   ) : null}
                 </button>
 
-                {/* Expanded Sidebar Dropdown Sub-menu */}
                 {!collapsed && isOpen ? (
                   <div className="ml-5 space-y-1 border-l border-border pl-2.5">
                     {visibleChildren.map((child) => {
@@ -279,7 +298,6 @@ export function AppSidebar() {
                   </div>
                 ) : null}
 
-                {/* Collapsed Sidebar Hover Flyout Dropdown */}
                 {collapsed ? (
                   <div className="invisible absolute left-full top-0 z-30 ml-2 w-48 rounded-xl border border-border bg-card p-1.5 opacity-0 shadow-lg transition-all group-hover/dropdown:visible group-hover/dropdown:opacity-100">
                     <div className="border-b border-border px-2.5 py-1.5 font-display text-xs font-bold text-foreground">
@@ -313,7 +331,6 @@ export function AppSidebar() {
             );
           }
 
-          // Standard Single Nav Item
           return (
             <NavLink
               key={item.to}
@@ -337,7 +354,7 @@ export function AppSidebar() {
         })}
       </nav>
 
-      {/* Footer RBAC Summary / Expand Toggle */}
+      {/* Footer RBAC Summary */}
       <div className="border-t border-border p-3">
         {collapsed ? (
           <button

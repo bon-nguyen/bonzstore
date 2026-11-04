@@ -1,4 +1,4 @@
-import { Languages } from 'lucide-react';
+﻿import { Languages } from 'lucide-react';
 import {
   createContext,
   ReactNode,
@@ -47,6 +47,9 @@ const TRANSLATIONS = {
     'nav.products': 'Tất cả sản phẩm',
     'nav.categories': 'Danh mục',
     'nav.tags': 'Thẻ',
+    'nav.imports': 'Nhập hàng (#55479)',
+    'nav.cashbook': 'Sổ quỹ Thu/Chi',
+    'nav.charts': 'Biểu đồ & Phân tích',
     'nav.users': 'Tài khoản & Nhân sự',
     'nav.roles': 'Phân quyền RBAC',
     'nav.notifications': 'Cài đặt thông báo',
@@ -500,6 +503,9 @@ const TRANSLATIONS = {
     'nav.products': 'All Products',
     'nav.categories': 'Categories',
     'nav.tags': 'Tags',
+    'nav.imports': 'Import Orders (#55479)',
+    'nav.cashbook': 'Cashbook Ledger',
+    'nav.charts': 'Charts & Analytics',
     'nav.users': 'Users & Staff',
     'nav.roles': 'RBAC Permissions',
     'nav.notifications': 'Notification Settings',
