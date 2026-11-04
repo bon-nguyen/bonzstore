@@ -20,7 +20,7 @@ Giao diện Dashboard sử dụng bộ CSS Component chuẩn trong [`apps/dashbo
   - Tích hợp **Chuông Thông Báo Admin ([`NotificationBell.tsx`](file:///c:/Users/Admin/Desktop/bonzstore/apps/dashboard/src/features/notifications/components/NotificationBell.tsx))** hiển thị số lượng thông báo chưa đọc thời gian thực, lọc nhanh theo tác vụ **Thêm mới (`CREATE`) / Chỉnh sửa (`UPDATE`) / Xóa (`DELETE`)** và dẫn tới trang **Cài đặt thông báo (`/settings/notifications`)**.
   - Tích hợp nút chuyển đổi ngôn ngữ **Song ngữ `VI / EN` (`LanguageToggle`)** và giao diện **Sáng / Tối (`ThemeToggle`)**.
 - **Chuẩn Phân Trang Dùng Chung ([`Pagination.tsx`](file:///c:/Users/Admin/Desktop/bonzstore/apps/dashboard/src/components/ui/pagination.tsx))**:
-  - Đồng bộ trên toàn bộ 5 trang danh sách (`/products`, `/categories`, `/tags`, `/users`, `/settings/notifications`) theo chuẩn TikTok Shop Seller Center:
+  - Đồng bộ trên toàn bộ các trang danh sách (`/products`, `/categories`, `/tags`, `/imports`, `/cashbook`, `/users`, `/settings/notifications`) theo chuẩn TikTok Shop Seller Center:
   - Bên trái hiển thị `Tổng số hàng: {total}` (`Total rows: {total}`).
   - Bên phải hiển thị cụm nút chuyển trang `< 1 2 ... >` kèm bộ chọn số dòng mỗi trang `10/Trang`, `20/Trang`, `50/Trang` đồng bộ trực tiếp với URL query params (`?page=...&limit=...`).
 
@@ -36,40 +36,10 @@ Giao diện Dashboard sử dụng bộ CSS Component chuẩn trong [`apps/dashbo
 | 4 | `/products/create` | [`CreateProductPage.tsx`](file:///c:/Users/Admin/Desktop/bonzstore/apps/dashboard/src/pages/CreateProductPage.tsx) | `PERMISSIONS.PRODUCTS_MANAGE` | Admin, Quản lý, Nhân viên SP | [05-products-categories-page.md](./05-products-categories-page.md) |
 | 5 | `/categories` | [`CategoriesPage.tsx`](file:///c:/Users/Admin/Desktop/bonzstore/apps/dashboard/src/pages/CategoriesPage.tsx) | `PERMISSIONS.PRODUCTS_READ` *(Thêm/Sửa/Xóa: `ADMIN_MANAGER_ROLES`)* | Admin, Quản lý, Nhân viên | [05-products-categories-page.md](./05-products-categories-page.md) |
 | 6 | `/tags` | [`TagsPage.tsx`](file:///c:/Users/Admin/Desktop/bonzstore/apps/dashboard/src/pages/TagsPage.tsx) | `PERMISSIONS.PRODUCTS_READ` *(Thêm/Sửa/Xóa: `ADMIN_MANAGER_ROLES`)* | Admin, Quản lý, Nhân viên | [05-products-categories-page.md](./05-products-categories-page.md) |
-| 7 | `/users` | [`UsersPage.tsx`](file:///c:/Users/Admin/Desktop/bonzstore/apps/dashboard/src/pages/UsersPage.tsx) | `PERMISSIONS.USERS_READ` + `ADMIN_MANAGER_ROLES` | Super Admin, Quản lý | [03-users-management-page.md](./03-users-management-page.md) |
-| 8 | `/roles` | [`RolesPage.tsx`](file:///c:/Users/Admin/Desktop/bonzstore/apps/dashboard/src/pages/RolesPage.tsx) | `PERMISSIONS.ROLES_READ` | Super Admin, Quản lý | [04-roles-permissions-page.md](./04-roles-permissions-page.md) |
-| 9 | `/settings/notifications` | [`NotificationSettingsPage.tsx`](file:///c:/Users/Admin/Desktop/bonzstore/apps/dashboard/src/pages/NotificationSettingsPage.tsx) | `PERMISSIONS.DASHBOARD_VIEW` *(Cấu hình: `ADMIN_MANAGER_ROLES`)* | Admin, Quản lý, Nhân viên | [06-notifications-settings-page.md](./06-notifications-settings-page.md) |
-| 10 | `/forbidden` | [`ForbiddenPage.tsx`](file:///c:/Users/Admin/Desktop/bonzstore/apps/dashboard/src/pages/ForbiddenPage.tsx) | Đã đăng nhập | Hiển thị khi thiếu quyền vào trang | — |
-
----
-
-## 3. Cơ Chế Kiểm Tra Quyền Trên Dashboard (2 Lớp Frontend)
-
-### Lớp A — Kiểm tra Quyền Truy Cập Trang (`ProtectedRoute`)
-File: [`ProtectedRoute.tsx`](file:///c:/Users/Admin/Desktop/bonzstore/apps/dashboard/src/features/auth/components/ProtectedRoute.tsx)
-```tsx
-<ProtectedRoute
-  requiredPermission={PERMISSIONS.USERS_READ}
-  requiredRoles={ADMIN_MANAGER_ROLES}
->
-  <UsersPage />
-</ProtectedRoute>
-```
-1. Nếu chưa đăng nhập (`!isAuthenticated`) → Tự động chuyển hướng về `/login`.
-2. Nếu đã đăng nhập nhưng thiếu Permission hoặc không thuộc Role yêu cầu → Tự động chuyển hướng sang `/forbidden` (`403 — Không đủ quyền truy cập`).
-
-### Lớp B — Kiểm tra Quyền Thao Tác Trong Trang (`PermissionGate`)
-File: [`PermissionGate.tsx`](file:///c:/Users/Admin/Desktop/bonzstore/apps/dashboard/src/features/auth/components/PermissionGate.tsx)
-```tsx
-<PermissionGate
-  roles={ADMIN_MANAGER_ROLES}
-  permission={PERMISSIONS.PRODUCTS_MANAGE}
->
-  <Button onClick={() => setShowCreateModal(true)}>
-    <Plus className="h-4 w-4" />
-    <span>{t('tags.addBtn')}</span>
-  </Button>
-</PermissionGate>
-```
-1. Cho phép cùng một trang `/categories` hoặc `/tags`, **Super Admin** và **Quản lý (`STORE_MANAGER`)** nhìn thấy và bấm được nút `+ Tạo mới`, `Pencil` (Sửa), `Trash2` (Xóa).
-2. Trong khi đó **Nhân viên (`STAFF`)** chỉ có quyền xem danh sách ở chế độ **Read-only** (cột Thao tác hiển thị biểu tượng khóa `Chỉ Admin & Manager`).
+| 7 | `/imports` | [`ImportsPage.tsx`](file:///c:/Users/Admin/Desktop/bonzstore/apps/dashboard/src/pages/ImportsPage.tsx) | `PERMISSIONS.DASHBOARD_VIEW` *(Đồng bộ & Restore: `ADMIN_MANAGER_ROLES`)* | Admin, Quản lý, Nhân viên | [07-imports-cashbook-charts-page.md](./07-imports-cashbook-charts-page.md) |
+| 8 | `/cashbook` | [`CashbookPage.tsx`](file:///c:/Users/Admin/Desktop/bonzstore/apps/dashboard/src/pages/CashbookPage.tsx) | `PERMISSIONS.DASHBOARD_VIEW` *(Lập phiếu Thu/Chi: `ADMIN_MANAGER_ROLES`)* | Admin, Quản lý, Nhân viên | [07-imports-cashbook-charts-page.md](./07-imports-cashbook-charts-page.md) |
+| 9 | `/charts` | [`ChartsPage.tsx`](file:///c:/Users/Admin/Desktop/bonzstore/apps/dashboard/src/pages/ChartsPage.tsx) | `PERMISSIONS.DASHBOARD_VIEW` | Admin, Quản lý, Nhân viên | [07-imports-cashbook-charts-page.md](./07-imports-cashbook-charts-page.md) |
+| 10 | `/users` | [`UsersPage.tsx`](file:///c:/Users/Admin/Desktop/bonzstore/apps/dashboard/src/pages/UsersPage.tsx) | `PERMISSIONS.USERS_READ` + `ADMIN_MANAGER_ROLES` | Super Admin, Quản lý | [03-users-management-page.md](./03-users-management-page.md) |
+| 11 | `/roles` | [`RolesPage.tsx`](file:///c:/Users/Admin/Desktop/bonzstore/apps/dashboard/src/pages/RolesPage.tsx) | `PERMISSIONS.ROLES_READ` | Super Admin, Quản lý | [04-roles-permissions-page.md](./04-roles-permissions-page.md) |
+| 12 | `/settings/notifications` | [`NotificationSettingsPage.tsx`](file:///c:/Users/Admin/Desktop/bonzstore/apps/dashboard/src/pages/NotificationSettingsPage.tsx) | `PERMISSIONS.DASHBOARD_VIEW` *(Cấu hình: `ADMIN_MANAGER_ROLES`)* | Admin, Quản lý, Nhân viên | [06-notifications-settings-page.md](./06-notifications-settings-page.md) |
+| 13 | `/forbidden` | [`ForbiddenPage.tsx`](file:///c:/Users/Admin/Desktop/bonzstore/apps/dashboard/src/pages/ForbiddenPage.tsx) | Đã đăng nhập | Hiển thị khi thiếu quyền vào trang | — |

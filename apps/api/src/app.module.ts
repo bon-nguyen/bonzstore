@@ -7,8 +7,10 @@ import { PermissionsGuard } from './common/guards/permissions.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { PrismaModule } from './database/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { CashbookModule } from './modules/cashbook/cashbook.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { HealthModule } from './modules/health/health.module';
+import { ImportsModule } from './modules/imports/imports.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { ProductsModule } from './modules/products/products.module';
 import { RolesModule } from './modules/roles/roles.module';
@@ -24,9 +26,13 @@ import { UsersModule } from './modules/users/users.module';
           .default('development'),
         PORT: Joi.number().default(4000),
         DATABASE_URL: Joi.string().required(),
-        JWT_SECRET: Joi.string().default('bonzstore-super-secret-jwt-access-key-2026'),
+        JWT_SECRET: Joi.string().default(
+          'bonzstore-super-secret-jwt-access-key-2026',
+        ),
         JWT_EXPIRES_IN: Joi.string().default('1d'),
-        CORS_ORIGIN: Joi.string().default('http://localhost:3000,http://localhost:5173'),
+        CORS_ORIGIN: Joi.string().default(
+          'http://localhost:3000,http://localhost:5173',
+        ),
       }),
     }),
     PrismaModule,
@@ -36,6 +42,8 @@ import { UsersModule } from './modules/users/users.module';
     UsersModule,
     CategoriesModule,
     ProductsModule,
+    CashbookModule,
+    ImportsModule,
     HealthModule,
   ],
   providers: [
@@ -54,4 +62,3 @@ import { UsersModule } from './modules/users/users.module';
   ],
 })
 export class AppModule {}
-

@@ -1,4 +1,8 @@
-import { ClassSerializerInterceptor, Logger, ValidationPipe } from '@nestjs/common';
+import {
+  ClassSerializerInterceptor,
+  Logger,
+  ValidationPipe,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -50,7 +54,9 @@ async function bootstrap() {
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('BonzStore API')
-    .setDescription('BonzStore Backend REST API - Authentication & Dynamic RBAC')
+    .setDescription(
+      'BonzStore Backend REST API - Authentication & Dynamic RBAC',
+    )
     .setVersion('1.0.0')
     .addBearerAuth()
     .addTag('auth', 'Xác thực & Phiên đăng nhập')
@@ -58,6 +64,8 @@ async function bootstrap() {
     .addTag('roles', 'Quản lý Vai trò & Phân quyền (RBAC)')
     .addTag('categories', 'Danh mục ngành hàng chuẩn TikTok Shop 202405')
     .addTag('products', 'Sản phẩm (SPU/SKU) & Đồng bộ Sàn')
+    .addTag('imports', 'Quản lý Nhập hàng (Hoà Bình Logistics & 1688)')
+    .addTag('cashbook', 'Sổ Quỹ Thu/Chi & Biểu đồ Phân tích')
     .addTag('health', 'Kiểm tra hệ thống')
     .build();
 
@@ -67,8 +75,9 @@ async function bootstrap() {
   const port = configService.get<number>('PORT', 4000);
   await app.listen(port);
   logger.log(`🚀 BonzStore API running on http://localhost:${port}/api`);
-  logger.log(`📚 Swagger Docs available at http://localhost:${port}/api/docs`);
+  logger.log(
+    `📚 Swagger Docs available at http://localhost:${port}/api/docs`,
+  );
 }
 
 bootstrap();
-
