@@ -1,12 +1,15 @@
 import debounce from 'lodash/debounce';
 import {
   BarChart3,
+  Calendar,
   Loader2,
   MinusCircle,
   Pencil,
   PlusCircle,
   RefreshCw,
+  RotateCcw,
   Search,
+  SlidersHorizontal,
   Trash2,
   X,
 } from 'lucide-react';
@@ -17,6 +20,7 @@ import {
   CashbookVoucherType,
 } from '../api/types/cashbook.types';
 import { Button } from '../components/ui/button';
+import { Drawer } from '../components/ui/drawer';
 import { Pagination } from '../components/ui/pagination';
 import {
   ADMIN_MANAGER_ROLES,
@@ -52,6 +56,15 @@ function formatDateTime(iso?: string | null): string {
   });
 }
 
+function toLocalDateStr(d: Date): string {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+type DatePresetType = 'ALL' | 'TODAY' | 'LAST_7_DAYS' | 'THIS_MONTH' | 'CUSTOM';
+
 export function CashbookPage() {
   const navigate = useNavigate();
   const { t } = useI18n();
@@ -68,16 +81,42 @@ export function CashbookPage() {
     (searchParams.get('channel') as 'ALL' | 'CASH' | 'CARD' | 'TRANSFER') ||
     'ALL';
   const categoryParam = searchParams.get('category') || 'ALL';
+  const startDateParam = searchParams.get('startDate') || '';
+  const endDateParam = searchParams.get('endDate') || '';
+  const datePresetParam =
+    (searchParams.get('datePreset') as DatePresetType) ||
+    (startDateParam || endDateParam ? 'CUSTOM' : 'ALL');
 
   const [searchInput, setSearchInput] = useState(searchQuery);
 
-  // Modular Modal States
+  // Modular Modal & Filter Drawer States
   const [voucherModalOpen, setVoucherModalOpen] = useState(false);
   const [modalType, setModalType] = useState<CashbookVoucherType>('INCOME');
   const [editingVoucher, setEditingVoucher] =
     useState<CashbookVoucherItem | null>(null);
   const [openingModalOpen, setOpeningModalOpen] = useState(false);
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const activeFilterCount =
+    (typeParam !== 'ALL' ? 1 : 0) +
+    (channelParam !== 'ALL' ? 1 : 0) +
+    (categoryParam !== 'ALL' ? 1 : 0) +
+    (startDateParam || endDateParam ? 1 : 0);
+
+  const handleResetAllFilters = () => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.delete('type');
+      next.delete('channel');
+      next.delete('category');
+      next.delete('datePreset');
+      next.delete('startDate');
+      next.delete('endDate');
+      next.set('page', '1');
+      return next;
+    });
+  };
 
   const { data, isLoading, isFetching, refetch } = useCashbookVouchers({
     page: pageParam,
@@ -86,7 +125,41 @@ export function CashbookPage() {
     type: typeParam,
     paymentChannel: channelParam,
     category: categoryParam !== 'ALL' ? categoryParam : undefined,
+    startDate: startDateParam || undefined,
+    endDate: endDateParam || undefined,
   });
+
+  const handleSelectDatePreset = (preset: DatePresetType) => {
+    const now = new Date();
+    const todayStr = toLocalDateStr(now);
+
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set('page', '1');
+
+      if (preset === 'ALL') {
+        next.delete('datePreset');
+        next.delete('startDate');
+        next.delete('endDate');
+      } else if (preset === 'TODAY') {
+        next.set('datePreset', 'TODAY');
+        next.set('startDate', todayStr);
+        next.set('endDate', todayStr);
+      } else if (preset === 'LAST_7_DAYS') {
+        const d7 = new Date(now);
+        d7.setDate(now.getDate() - 6);
+        next.set('datePreset', 'LAST_7_DAYS');
+        next.set('startDate', toLocalDateStr(d7));
+        next.set('endDate', todayStr);
+      } else if (preset === 'THIS_MONTH') {
+        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+        next.set('datePreset', 'THIS_MONTH');
+        next.set('startDate', toLocalDateStr(firstDay));
+        next.set('endDate', todayStr);
+      }
+      return next;
+    });
+  };
 
   const deleteMutation = useDeleteCashbookVoucher();
 
@@ -489,7 +562,7 @@ export function CashbookPage() {
             )}
           </div>
 
-          {/* Right: Type, Channel, Category Filters */}
+          {/* Right: Quick Type Tabs + Filter Drawer Button + Refresh */}
           <div className="flex flex-wrap items-center gap-2">
             <div className="inline-flex rounded-lg border border-border bg-muted/40 p-0.5 text-xs">
               {[
@@ -535,45 +608,24 @@ export function CashbookPage() {
               ))}
             </div>
 
-            <select
-              value={channelParam}
-              onChange={(e) =>
-                setSearchParams((prev) => {
-                  const next = new URLSearchParams(prev);
-                  next.set('channel', e.target.value);
-                  next.set('page', '1');
-                  return next;
-                })
-              }
-              className="rounded-lg border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-foreground focus:border-primary focus:outline-none"
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setFilterDrawerOpen(true)}
+              leftIcon={<SlidersHorizontal className="h-3.5 w-3.5" />}
+              className={cn(
+                activeFilterCount > 0 &&
+                  'border-primary bg-primary/10 text-foreground dark:text-primary',
+              )}
             >
-              <option value="ALL">{t('cashbook.channelAll')}</option>
-              <option value="CASH">{t('cashbook.channelCashTab')}</option>
-              <option value="CARD">{t('cashbook.channelCardTab')}</option>
-              <option value="TRANSFER">
-                {t('cashbook.channelTransferTab')}
-              </option>
-            </select>
-
-            <select
-              value={categoryParam}
-              onChange={(e) =>
-                setSearchParams((prev) => {
-                  const next = new URLSearchParams(prev);
-                  next.set('category', e.target.value);
-                  next.set('page', '1');
-                  return next;
-                })
-              }
-              className="max-w-[200px] truncate rounded-lg border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-foreground focus:border-primary focus:outline-none"
-            >
-              <option value="ALL">Tất cả loại nguồn thu/chi</option>
-              {categoriesList.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-            </select>
+              <span>Bộ lọc</span>
+              {activeFilterCount > 0 && (
+                <span className="ml-1 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-primary px-1 font-mono text-[10px] font-bold text-primary-foreground">
+                  {activeFilterCount}
+                </span>
+              )}
+            </Button>
 
             <Button
               type="button"
@@ -585,6 +637,86 @@ export function CashbookPage() {
             />
           </div>
         </div>
+
+        {/* Active Filters Summary Strip (when any filter is active) */}
+        {activeFilterCount > 0 && (
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-muted/20 px-4 py-2 text-xs">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="font-semibold text-muted-foreground">
+                Đang lọc:
+              </span>
+              {(startDateParam || endDateParam) && (
+                <span className="inline-flex items-center gap-1 rounded-md border border-primary/30 bg-primary/10 px-2 py-0.5 font-medium text-foreground">
+                  <Calendar className="h-3 w-3 text-primary" />
+                  <span>
+                    {startDateParam || '...'} → {endDateParam || '...'}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleSelectDatePreset('ALL')}
+                    className="ml-0.5 text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              )}
+              {channelParam !== 'ALL' && (
+                <span className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-2 py-0.5 font-medium text-foreground">
+                  <span>
+                    Kênh:{' '}
+                    {channelParam === 'CASH'
+                      ? t('cashbook.channelCashTab')
+                      : channelParam === 'CARD'
+                        ? t('cashbook.channelCardTab')
+                        : t('cashbook.channelTransferTab')}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSearchParams((prev) => {
+                        const next = new URLSearchParams(prev);
+                        next.delete('channel');
+                        next.set('page', '1');
+                        return next;
+                      })
+                    }
+                    className="ml-0.5 text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              )}
+              {categoryParam !== 'ALL' && (
+                <span className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-2 py-0.5 font-medium text-foreground">
+                  <span>Nguồn: {categoryParam}</span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSearchParams((prev) => {
+                        const next = new URLSearchParams(prev);
+                        next.delete('category');
+                        next.set('page', '1');
+                        return next;
+                      })
+                    }
+                    className="ml-0.5 text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={handleResetAllFilters}
+              className="inline-flex items-center gap-1 text-xs font-semibold text-rose-600 hover:underline dark:text-rose-400"
+            >
+              <RotateCcw className="h-3 w-3" />
+              <span>Xóa tất cả bộ lọc</span>
+            </button>
+          </div>
+        )}
 
         {/* Ant Design Table inspired Tailwind Table */}
         <ResponsiveTable
@@ -614,6 +746,246 @@ export function CashbookPage() {
           />
         </div>
       </div>
+
+      {/* Drawer Bộ lọc Sổ Quỹ (Thời gian, Loại phiếu, Kênh thanh toán, Nguồn thu/chi) */}
+      <Drawer
+        open={filterDrawerOpen}
+        onClose={() => setFilterDrawerOpen(false)}
+        size="md"
+        title="Bộ lọc Sổ Quỹ"
+        subtitle="Lọc phiếu thu/chi theo khoảng thời gian, loại phiếu, kênh thanh toán và nguồn thu/chi"
+        headerBadge={
+          activeFilterCount > 0 ? (
+            <span className="rounded-full bg-primary/15 px-2 py-0.5 font-mono text-[10px] font-bold text-foreground dark:text-primary">
+              {activeFilterCount} đang chọn
+            </span>
+          ) : null
+        }
+        footer={
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleResetAllFilters}
+              leftIcon={<RotateCcw className="h-3.5 w-3.5" />}
+            >
+              Đặt lại mặc định
+            </Button>
+            <Button
+              type="button"
+              onClick={() => setFilterDrawerOpen(false)}
+            >
+              Áp dụng & Đóng
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-6">
+          {/* 1. Bộ lọc Thời gian */}
+          <div className="space-y-2.5">
+            <label className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-foreground">
+              <Calendar className="h-3.5 w-3.5 text-primary" />
+              <span>Khoảng thời gian</span>
+            </label>
+
+            <div className="grid grid-cols-2 gap-2">
+              {(
+                [
+                  { key: 'ALL', label: t('cashbook.datePresetAll') },
+                  { key: 'TODAY', label: t('cashbook.datePresetToday') },
+                  { key: 'LAST_7_DAYS', label: t('cashbook.datePreset7Days') },
+                  { key: 'THIS_MONTH', label: t('cashbook.datePresetThisMonth') },
+                ] as const
+              ).map((preset) => (
+                <button
+                  key={preset.key}
+                  type="button"
+                  onClick={() => handleSelectDatePreset(preset.key)}
+                  className={cn(
+                    'rounded-lg border px-3 py-2 text-left text-xs font-medium transition-colors',
+                    datePresetParam === preset.key
+                      ? 'border-primary bg-primary/15 font-semibold text-foreground dark:text-primary'
+                      : 'border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground',
+                  )}
+                >
+                  {preset.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 pt-1 sm:grid-cols-2">
+              <div className="space-y-1">
+                <span className="text-[11px] font-medium text-muted-foreground">
+                  {t('cashbook.dateFrom')}
+                </span>
+                <input
+                  type="date"
+                  value={startDateParam}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setSearchParams((prev) => {
+                      const next = new URLSearchParams(prev);
+                      if (val) {
+                        next.set('startDate', val);
+                        next.set('datePreset', 'CUSTOM');
+                      } else {
+                        next.delete('startDate');
+                        if (!next.get('endDate')) {
+                          next.delete('datePreset');
+                        }
+                      }
+                      next.set('page', '1');
+                      return next;
+                    });
+                  }}
+                  className="h-9 w-full rounded-lg border border-slate-300 bg-background px-3 font-mono text-xs text-foreground focus:border-primary focus:outline-none dark:border-zinc-700"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <span className="text-[11px] font-medium text-muted-foreground">
+                  {t('cashbook.dateTo')}
+                </span>
+                <input
+                  type="date"
+                  value={endDateParam}
+                  min={startDateParam || undefined}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setSearchParams((prev) => {
+                      const next = new URLSearchParams(prev);
+                      if (val) {
+                        next.set('endDate', val);
+                        next.set('datePreset', 'CUSTOM');
+                      } else {
+                        next.delete('endDate');
+                        if (!next.get('startDate')) {
+                          next.delete('datePreset');
+                        }
+                      }
+                      next.set('page', '1');
+                      return next;
+                    });
+                  }}
+                  className="h-9 w-full rounded-lg border border-slate-300 bg-background px-3 font-mono text-xs text-foreground focus:border-primary focus:outline-none dark:border-zinc-700"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* 2. Loại Phiếu Sổ Quỹ */}
+          <div className="space-y-2 border-t border-border pt-4">
+            <label className="block text-xs font-bold uppercase tracking-wider text-foreground">
+              Loại phiếu Sổ Quỹ
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                {
+                  key: 'ALL',
+                  label: t('cashbook.tabAll', {
+                    count: summary?.voucherCounts?.total ?? 0,
+                  }),
+                },
+                {
+                  key: 'INCOME',
+                  label: t('cashbook.tabIncome', {
+                    count: summary?.voucherCounts?.incomeCount ?? 0,
+                  }),
+                },
+                {
+                  key: 'EXPENSE',
+                  label: t('cashbook.tabExpense', {
+                    count: summary?.voucherCounts?.expenseCount ?? 0,
+                  }),
+                },
+              ].map((tItem) => (
+                <button
+                  key={tItem.key}
+                  type="button"
+                  onClick={() =>
+                    setSearchParams((prev) => {
+                      const next = new URLSearchParams(prev);
+                      next.set('type', tItem.key);
+                      next.set('page', '1');
+                      return next;
+                    })
+                  }
+                  className={cn(
+                    'rounded-lg border px-2.5 py-2 text-center text-xs font-semibold transition-colors',
+                    typeParam === tItem.key
+                      ? 'border-primary bg-primary/15 text-foreground dark:text-primary'
+                      : 'border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground',
+                  )}
+                >
+                  {tItem.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* 3. Kênh thanh toán */}
+          <div className="space-y-2 border-t border-border pt-4">
+            <label className="block text-xs font-bold uppercase tracking-wider text-foreground">
+              Kênh thanh toán
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { key: 'ALL', label: t('cashbook.channelAll') },
+                { key: 'CASH', label: t('cashbook.channelCashTab') },
+                { key: 'CARD', label: t('cashbook.channelCardTab') },
+                { key: 'TRANSFER', label: t('cashbook.channelTransferTab') },
+              ].map((ch) => (
+                <button
+                  key={ch.key}
+                  type="button"
+                  onClick={() =>
+                    setSearchParams((prev) => {
+                      const next = new URLSearchParams(prev);
+                      next.set('channel', ch.key);
+                      next.set('page', '1');
+                      return next;
+                    })
+                  }
+                  className={cn(
+                    'rounded-lg border px-3 py-2 text-left text-xs font-medium transition-colors',
+                    channelParam === ch.key
+                      ? 'border-primary bg-primary/15 font-semibold text-foreground dark:text-primary'
+                      : 'border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground',
+                  )}
+                >
+                  {ch.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* 4. Nguồn thu / Khoản chi */}
+          <div className="space-y-2 border-t border-border pt-4">
+            <label className="block text-xs font-bold uppercase tracking-wider text-foreground">
+              Loại nguồn thu / khoản chi
+            </label>
+            <select
+              value={categoryParam}
+              onChange={(e) =>
+                setSearchParams((prev) => {
+                  const next = new URLSearchParams(prev);
+                  next.set('category', e.target.value);
+                  next.set('page', '1');
+                  return next;
+                })
+              }
+              className="h-9 w-full rounded-lg border border-slate-300 bg-background px-3 text-xs font-medium text-foreground focus:border-primary focus:outline-none dark:border-zinc-700"
+            >
+              <option value="ALL">Tất cả loại nguồn thu/chi</option>
+              {categoriesList.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </Drawer>
 
       {/* Modal Lập / Sửa Phiếu Thu & Phiếu Chi (React Hook Form) */}
       <CashbookVoucherModal

@@ -833,6 +833,36 @@ export function getFallbackCashbookPaginated(
   if (params?.category && params.category !== 'ALL') {
     list = list.filter((v) => v.category === params.category);
   }
+  if (params?.startDate) {
+    const startObj = new Date(
+      params.startDate.includes('T')
+        ? params.startDate
+        : `${params.startDate}T00:00:00`,
+    );
+    const startMs = startObj.getTime();
+    if (!Number.isNaN(startMs)) {
+      list = list.filter((v) => {
+        const txMs = new Date(v.transactionDate || v.createdAt).getTime();
+        const createdMs = new Date(v.createdAt || v.transactionDate).getTime();
+        return txMs >= startMs || createdMs >= startMs;
+      });
+    }
+  }
+  if (params?.endDate) {
+    const endObj = new Date(
+      params.endDate.includes('T')
+        ? params.endDate
+        : `${params.endDate}T23:59:59.999`,
+    );
+    const endMs = endObj.getTime();
+    if (!Number.isNaN(endMs)) {
+      list = list.filter((v) => {
+        const txMs = new Date(v.transactionDate || v.createdAt).getTime();
+        const createdMs = new Date(v.createdAt || v.transactionDate).getTime();
+        return txMs <= endMs || createdMs <= endMs;
+      });
+    }
+  }
   if (params?.search) {
     const q = String(params.search).toLowerCase();
     list = list.filter(
