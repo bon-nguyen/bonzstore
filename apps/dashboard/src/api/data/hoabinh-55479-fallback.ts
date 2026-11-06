@@ -1,9 +1,13 @@
 import {
   CashbookChartsAnalyticsResponse,
   CashbookPaginatedResponse,
+  CashbookSourceCategoryItem,
   CashbookSummaryReport,
   CashbookVoucherItem,
+  CashbookVoucherType,
+  CreateCashbookSourceCategoryPayload,
   CreateCashbookVoucherPayload,
+  UpdateCashbookSourceCategoryPayload,
 } from '../types/cashbook.types';
 import {
   HoabinhDecodedJwt,
@@ -20,9 +24,94 @@ import {
 export const HOABINH_REAL_JWT_TOKEN = '';
 
 const LS_CASHBOOK_KEY = 'bonzstore_clean_cashbook_v1';
+const LS_CASHBOOK_CATEGORIES_KEY = 'bonzstore_clean_cashbook_categories_v1';
 const LS_OPENING_KEY = 'bonzstore_clean_opening_v1';
 const LS_IMPORT_TOKEN_KEY = 'bonzstore_clean_import_token_v1';
 const LS_IMPORT_ORDERS_KEY = 'bonzstore_clean_import_orders_v1';
+
+const DEFAULT_CASHBOOK_SOURCE_CATEGORIES: CashbookSourceCategoryItem[] = [
+  {
+    id: 'cat-inc-1',
+    type: 'INCOME',
+    code: 'INC-SALES',
+    name: 'Bán hàng & Dịch vụ',
+    description: 'Thu tiền bán hàng hóa và dịch vụ tại cửa hàng / online',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+  },
+  {
+    id: 'cat-inc-2',
+    type: 'INCOME',
+    code: 'INC-REFUND',
+    name: 'Hoàn tiền đối tác / Logistics',
+    description: 'Khoản hoàn tiền từ nhà cung cấp hoặc đơn vị vận chuyển',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+  },
+  {
+    id: 'cat-inc-3',
+    type: 'INCOME',
+    code: 'INC-DEBT',
+    name: 'Thu hồi công nợ khách hàng',
+    description: 'Khách hàng thanh toán công nợ kỳ trước',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+  },
+  {
+    id: 'cat-inc-4',
+    type: 'INCOME',
+    code: 'INC-OTHER',
+    name: 'Thu nhập khác',
+    description: 'Các khoản thu phát sinh ngoài hoạt động bán hàng chính',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+  },
+  {
+    id: 'cat-exp-1',
+    type: 'EXPENSE',
+    code: 'EXP-IMPORT',
+    name: 'Nhập hàng & Thanh toán NCC',
+    description: 'Thanh toán tiền cọc, tất toán đơn nhập hàng và nhà cung cấp',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+  },
+  {
+    id: 'cat-exp-2',
+    type: 'EXPENSE',
+    code: 'EXP-LOGISTICS',
+    name: 'Cước vận chuyển & Logistics',
+    description: 'Chi phí vận chuyển quốc tế, nội địa và phí kho bãi',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+  },
+  {
+    id: 'cat-exp-3',
+    type: 'EXPENSE',
+    code: 'EXP-SALARY',
+    name: 'Lương & Thưởng nhân viên',
+    description: 'Chi trả lương, phụ cấp và thưởng cho nhân sự hệ thống',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+  },
+  {
+    id: 'cat-exp-4',
+    type: 'EXPENSE',
+    code: 'EXP-OPS',
+    name: 'Chi phí vận hành cửa hàng',
+    description: 'Tiền mặt bằng, điện nước, văn phòng phẩm, phần mềm',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+  },
+  {
+    id: 'cat-exp-5',
+    type: 'EXPENSE',
+    code: 'EXP-OTHER',
+    name: 'Khoản chi khác',
+    description: 'Các khoản chi phát sinh khác',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+  },
+];
 
 // Xóa toàn bộ key dữ liệu mẫu cũ nếu còn tồn tại trên trình duyệt
 function purgeLegacySampleKeys() {
@@ -672,6 +761,107 @@ export function getFallbackCashbookPaginated(
   };
 }
 
+export function getLocalSourceCategories(
+  type?: CashbookVoucherType,
+): CashbookSourceCategoryItem[] {
+  let list: CashbookSourceCategoryItem[] = DEFAULT_CASHBOOK_SOURCE_CATEGORIES;
+  try {
+    const raw = localStorage.getItem(LS_CASHBOOK_CATEGORIES_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        list = parsed;
+      }
+    } else {
+      localStorage.setItem(
+        LS_CASHBOOK_CATEGORIES_KEY,
+        JSON.stringify(DEFAULT_CASHBOOK_SOURCE_CATEGORIES),
+      );
+    }
+  } catch {
+    // ignore
+  }
+  if (type === 'INCOME' || type === 'EXPENSE') {
+    return list.filter((c) => c.type === type);
+  }
+  return list;
+}
+
+export function createLocalSourceCategory(
+  payload: CreateCashbookSourceCategoryPayload,
+): CashbookSourceCategoryItem {
+  const all = getLocalSourceCategories();
+  const normalizedCode = payload.code.trim().toUpperCase();
+  const exists = all.find(
+    (c) =>
+      c.type === payload.type &&
+      (c.code.toUpperCase() === normalizedCode ||
+        c.name.toLowerCase() === payload.name.trim().toLowerCase()),
+  );
+  if (exists) {
+    throw new Error('Mã hoặc tên nguồn thu/khoản chi đã tồn tại');
+  }
+  const now = new Date().toISOString();
+  const item: CashbookSourceCategoryItem = {
+    id: `cat-${Date.now()}`,
+    type: payload.type,
+    code: normalizedCode,
+    name: payload.name.trim(),
+    description: payload.description?.trim() || '',
+    createdAt: now,
+    updatedAt: now,
+  };
+  const next = [item, ...all];
+  try {
+    localStorage.setItem(LS_CASHBOOK_CATEGORIES_KEY, JSON.stringify(next));
+  } catch {
+    // ignore
+  }
+  return item;
+}
+
+export function updateLocalSourceCategory(
+  id: string,
+  payload: UpdateCashbookSourceCategoryPayload,
+): CashbookSourceCategoryItem {
+  const all = getLocalSourceCategories();
+  const idx = all.findIndex((c) => c.id === id);
+  if (idx === -1) {
+    throw new Error('Không tìm thấy loại nguồn thu/chi');
+  }
+  const current = all[idx];
+  const updated: CashbookSourceCategoryItem = {
+    ...current,
+    code:
+      payload.code !== undefined
+        ? payload.code.trim().toUpperCase()
+        : current.code,
+    name: payload.name !== undefined ? payload.name.trim() : current.name,
+    description:
+      payload.description !== undefined
+        ? payload.description.trim()
+        : current.description,
+    updatedAt: new Date().toISOString(),
+  };
+  all[idx] = updated;
+  try {
+    localStorage.setItem(LS_CASHBOOK_CATEGORIES_KEY, JSON.stringify(all));
+  } catch {
+    // ignore
+  }
+  return updated;
+}
+
+export function deleteLocalSourceCategory(id: string): { deletedId: string } {
+  const all = getLocalSourceCategories().filter((c) => c.id !== id);
+  try {
+    localStorage.setItem(LS_CASHBOOK_CATEGORIES_KEY, JSON.stringify(all));
+  } catch {
+    // ignore
+  }
+  return { deletedId: id };
+}
+
 export function createLocalCashbookVoucher(
   payload: CreateCashbookVoucherPayload,
 ) {
@@ -681,9 +871,10 @@ export function createLocalCashbookVoucher(
   const transferAmount = Math.max(0, Number(payload.transferAmount || 0));
   const totalAmount = cashAmount + cardAmount + transferAmount;
   const prefix = payload.type === 'INCOME' ? 'PT' : 'PC';
+  const sameTypeCount = list.filter((v) => v.type === payload.type).length;
   const voucherCode =
     payload.voucherCode?.trim() ||
-    `${prefix}-${String(list.length + 1).padStart(3, '0')}`;
+    `${prefix}-112834${String(sameTypeCount + 1).padStart(6, '0')}`;
 
   const item: CashbookVoucherItem = {
     id: `cb-${Date.now()}`,
@@ -691,13 +882,17 @@ export function createLocalCashbookVoucher(
     transactionDate: payload.transactionDate || new Date().toISOString(),
     type: payload.type,
     category: payload.category,
-    content: payload.content,
+    categoryCode: payload.categoryCode,
+    content: payload.content || payload.note || payload.category,
     cashAmount,
     cardAmount,
     transferAmount,
     totalAmount,
+    payerGroup: payload.payerGroup || 'PARTNER',
     partnerName: payload.partnerName,
     staffName: payload.staffName || '',
+    isBusinessAccounting: payload.isBusinessAccounting ?? true,
+    operatorTokenInfo: payload.operatorTokenInfo,
     importOrderId: payload.importOrderId ?? null,
     externalPaymentId: null,
     note: payload.note || '',
@@ -741,7 +936,10 @@ export function updateLocalCashbookVoucher(
     };
     localStorage.setItem(LS_CASHBOOK_KEY, JSON.stringify(list));
   }
-  return { summary: computeLocalCashbookSummary(list) };
+  return {
+    voucher: idx >= 0 ? list[idx] : undefined,
+    summary: computeLocalCashbookSummary(list),
+  };
 }
 
 export function deleteLocalCashbookVoucher(id: string) {

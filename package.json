@@ -23,8 +23,8 @@
     "db:setup": "yarn --cwd apps/api prisma:setup"
   },
   "devDependencies": {
+    "@types/lodash": "^4.17.27",
     "turbo": "^2.1.0",
     "typescript": "^5.5.4"
   }
 }
-

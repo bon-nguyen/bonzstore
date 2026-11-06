@@ -1,5 +1,6 @@
 import { Slot } from '@radix-ui/react-slot';
 import { cva, type VariantProps } from 'class-variance-authority';
+import { Loader2 } from 'lucide-react';
 import * as React from 'react';
 import { cn } from '../../lib/utils';
 
@@ -37,17 +38,61 @@ export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   asChild?: boolean;
+  loading?: boolean;
+  isLoading?: boolean;
+  loadingText?: React.ReactNode;
+  leftIcon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
-    const Comp = asChild ? Slot : 'button';
+  (
+    {
+      className,
+      variant,
+      size,
+      asChild = false,
+      loading = false,
+      isLoading = false,
+      loadingText,
+      leftIcon,
+      rightIcon,
+      disabled,
+      children,
+      ...props
+    },
+    ref,
+  ) => {
+    const isBusy = Boolean(loading || isLoading);
+
+    if (asChild) {
+      return (
+        <Slot
+          className={cn(buttonVariants({ variant, size, className }))}
+          ref={ref}
+          {...props}
+        >
+          {children}
+        </Slot>
+      );
+    }
+
     return (
-      <Comp
+      <button
         className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
+        disabled={disabled || isBusy}
+        aria-busy={isBusy}
         {...props}
-      />
+      >
+        {isBusy ? (
+          <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
+        ) : (
+          leftIcon
+        )}
+        {isBusy && loadingText !== undefined ? loadingText : children}
+        {!isBusy && rightIcon}
+      </button>
     );
   },
 );

@@ -1,5 +1,35 @@
 export type CashbookVoucherType = 'INCOME' | 'EXPENSE';
 
+export type CashbookPayerGroup = 'PARTNER' | 'CUSTOMER' | 'STAFF' | 'OTHER';
+
+export interface CashbookSourceCategoryItem {
+  id: string;
+  type: CashbookVoucherType;
+  code: string; // Mã nguồn thu / Mã khoản chi (required)
+  name: string; // Tên nguồn thu / Tên khoản chi (required)
+  description: string; // Mô tả nguồn thu / Mô tả khoản chi
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateCashbookSourceCategoryPayload {
+  type: CashbookVoucherType;
+  code: string;
+  name: string;
+  description?: string;
+}
+
+export type UpdateCashbookSourceCategoryPayload =
+  Partial<CreateCashbookSourceCategoryPayload>;
+
+export interface CashbookOperatorTokenInfo {
+  userId: string;
+  email: string;
+  fullName: string;
+  roleCode: string;
+  tokenMasked?: string;
+}
+
 export interface CashbookChannelBreakdown {
   total: number;
   cash: number;
@@ -24,14 +54,18 @@ export interface CashbookVoucherItem {
   voucherCode: string;
   transactionDate: string;
   type: CashbookVoucherType;
-  category: string;
+  category: string; // Tên loại phiếu thu / chi
+  categoryCode?: string; // Mã nguồn thu / khoản chi
   content: string;
   cashAmount: number;
   cardAmount: number;
   transferAmount: number;
   totalAmount: number;
-  partnerName: string; // Người nhận, Nộp
-  staffName: string; // Người thu Chi
+  payerGroup?: CashbookPayerGroup; // Nhóm người nộp / nhận
+  partnerName: string; // Tên người nộp / nhận
+  staffName: string; // Người thu / chi (từ hệ thống)
+  isBusinessAccounting?: boolean; // Hạch toán kết quả kinh doanh
+  operatorTokenInfo?: CashbookOperatorTokenInfo; // Lưu bằng token người thao tác
   importOrderId: number | null;
   externalPaymentId: number | null;
   note: string;
@@ -43,6 +77,7 @@ export interface CashbookPaginatedResponse {
   data: CashbookVoucherItem[];
   summary: CashbookSummaryReport;
   categories: string[];
+  sourceCategories?: CashbookSourceCategoryItem[];
   meta: {
     page: number;
     limit: number;
@@ -58,12 +93,16 @@ export interface CreateCashbookVoucherPayload {
   voucherCode?: string;
   transactionDate?: string;
   category: string;
-  content: string;
+  categoryCode?: string;
+  content?: string;
   cashAmount?: number;
   cardAmount?: number;
   transferAmount?: number;
+  payerGroup?: CashbookPayerGroup;
   partnerName: string;
   staffName?: string;
+  isBusinessAccounting?: boolean;
+  operatorTokenInfo?: CashbookOperatorTokenInfo;
   importOrderId?: number;
   note?: string;
 }
@@ -129,8 +168,8 @@ export interface CashbookChartsAnalyticsResponse {
     packagesBreakdown: Array<{
       packageId: number;
       trackingCode: string;
-      weightKg: number;
-      feeVND: number;
+      weightKg: string;
+      feeVND: string;
       statusName: string;
     }>;
     itemsBreakdown: Array<{
@@ -146,4 +185,3 @@ export interface CashbookChartsAnalyticsResponse {
     }>;
   };
 }
-

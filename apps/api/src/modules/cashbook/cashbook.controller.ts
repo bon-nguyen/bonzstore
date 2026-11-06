@@ -24,7 +24,9 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { CashbookService } from './cashbook.service';
 import {
   CashbookQueryDto,
+  CreateCashbookSourceCategoryDto,
   CreateCashbookVoucherDto,
+  UpdateCashbookSourceCategoryDto,
   UpdateCashbookVoucherDto,
   UpdateOpeningBalanceDto,
 } from './dto/cashbook.dto';
@@ -53,6 +55,56 @@ export class CashbookController {
   })
   async getChartsAnalytics() {
     return this.cashbookService.getChartsAnalytics();
+  }
+
+  @Get('source-categories')
+  @RequirePermissions(PERMISSIONS.DASHBOARD_VIEW)
+  @ApiOperation({
+    summary: 'Danh sách Loại Phiếu Thu (INCOME) / Loại Phiếu Chi (EXPENSE)',
+  })
+  async getSourceCategories(@Query('type') type?: 'INCOME' | 'EXPENSE') {
+    return this.cashbookService.getSourceCategories(type);
+  }
+
+  @Post('source-categories')
+  @Roles(...ADMIN_MANAGER_ROLES)
+  @RequirePermissions(PERMISSIONS.DASHBOARD_VIEW)
+  @ApiOperation({
+    summary: 'Tạo mới Nguồn thu / Khoản chi (Chỉ SUPER_ADMIN & STORE_MANAGER)',
+  })
+  async createSourceCategory(
+    @Body() dto: CreateCashbookSourceCategoryDto,
+    @CurrentUser() currentUser: AuthenticatedUser,
+  ) {
+    return this.cashbookService.createSourceCategory(dto, currentUser);
+  }
+
+  @Patch('source-categories/:id')
+  @Roles(...ADMIN_MANAGER_ROLES)
+  @RequirePermissions(PERMISSIONS.DASHBOARD_VIEW)
+  @ApiOperation({
+    summary: 'Chỉnh sửa Nguồn thu / Khoản chi (Chỉ SUPER_ADMIN & STORE_MANAGER)',
+  })
+  async updateSourceCategory(
+    @Param('id') id: string,
+    @Body() dto: UpdateCashbookSourceCategoryDto,
+    @CurrentUser() currentUser: AuthenticatedUser,
+  ) {
+    return this.cashbookService.updateSourceCategory(id, dto, currentUser);
+  }
+
+  @Delete('source-categories/:id')
+  @HttpCode(HttpStatus.OK)
+  @Roles(...ADMIN_MANAGER_ROLES)
+  @RequirePermissions(PERMISSIONS.DASHBOARD_VIEW)
+  @ApiOperation({
+    summary: 'Xóa Nguồn thu / Khoản chi (Chỉ SUPER_ADMIN & STORE_MANAGER)',
+  })
+  async deleteSourceCategory(
+    @Param('id') id: string,
+    @CurrentUser() currentUser: AuthenticatedUser,
+  ) {
+    return this.cashbookService.deleteSourceCategory(id, currentUser);
   }
 
   @Get()
