@@ -33,15 +33,21 @@ export function CashbookOpeningBalanceModal({
 }: CashbookOpeningBalanceModalProps) {
   const { t } = useI18n();
   const updateOpeningMutation = useUpdateOpeningBalance();
-  const isSubmitting = updateOpeningMutation.isPending;
 
-  const { control, handleSubmit, reset } = useForm<OpeningBalanceFormValues>({
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { isSubmitting: formIsSubmitting },
+  } = useForm<OpeningBalanceFormValues>({
     defaultValues: {
       cash: 0,
       card: 0,
       transfer: 0,
     },
   });
+
+  const isSubmitting = formIsSubmitting || updateOpeningMutation.isPending;
 
   useEffect(() => {
     if (open) {
@@ -62,17 +68,17 @@ export function CashbookOpeningBalanceModal({
 
   if (!open) return null;
 
-  const onSubmit = (values: OpeningBalanceFormValues) => {
-    updateOpeningMutation.mutate(
-      {
+  const onSubmit = async (values: OpeningBalanceFormValues) => {
+    try {
+      await updateOpeningMutation.mutateAsync({
         cash: Number(values.cash || 0),
         card: Number(values.card || 0),
         transfer: Number(values.transfer || 0),
-      },
-      {
-        onSuccess: () => onClose(),
-      },
-    );
+      });
+      onClose();
+    } catch {
+      // Error toast is handled by mutation onError
+    }
   };
 
   return (
@@ -144,4 +150,3 @@ export function CashbookOpeningBalanceModal({
     </div>
   );
 }
-

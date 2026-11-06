@@ -103,8 +103,11 @@ export function NotificationBell() {
     );
   };
 
-  const getModuleShortLabel = (mod: NotificationModuleType) => {
-    switch (mod) {
+  const getModuleShortLabel = (item: AdminNotificationItem) => {
+    if (item.targetLink === '/cashbook') {
+      return t('nav.cashbook');
+    }
+    switch (item.module) {
       case 'PRODUCTS':
         return t('notifications.moduleProducts');
       case 'CATEGORIES':
@@ -269,7 +272,7 @@ export function NotificationBell() {
                         ) : null}
                         {renderActionBadge(item.action)}
                         <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] font-semibold text-muted-foreground">
-                          {getModuleShortLabel(item.module)}
+                          {getModuleShortLabel(item)}
                         </span>
                         <span className="font-mono text-[10px] text-muted-foreground">
                           • {item.actorRole}

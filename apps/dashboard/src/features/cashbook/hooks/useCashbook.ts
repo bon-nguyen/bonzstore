@@ -169,6 +169,7 @@ export function useUpdateOpeningBalance() {
       cashbookApi.updateOpeningBalance(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cashbook'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
       toast.success('Đã cập nhật Số dư Đầu kỳ Sổ Quỹ');
     },
     onError: (err: any) => {
@@ -184,6 +185,7 @@ export function useRestoreCashbookData() {
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ['cashbook'] });
       queryClient.invalidateQueries({ queryKey: ['imports'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
       toast.success(
         res.message || 'Đã khôi phục (Restore) dữ liệu Sổ Quỹ thành công',
       );

@@ -16,6 +16,7 @@ import {
   CashbookVoucherItem,
   CashbookVoucherType,
 } from '../api/types/cashbook.types';
+import { Button } from '../components/ui/button';
 import { Pagination } from '../components/ui/pagination';
 import {
   ADMIN_MANAGER_ROLES,
@@ -29,7 +30,6 @@ import { CashbookVoucherModal } from '../features/cashbook/components/CashbookVo
 import {
   useCashbookVouchers,
   useDeleteCashbookVoucher,
-  useRestoreCashbookData,
 } from '../features/cashbook/hooks/useCashbook';
 import { useI18n } from '../features/i18n/I18nContext';
 import { Column, ResponsiveTable } from '../features/shared/ResponsiveTable';
@@ -89,7 +89,6 @@ export function CashbookPage() {
   });
 
   const deleteMutation = useDeleteCashbookVoucher();
-  const clearAllMutation = useRestoreCashbookData();
 
   const debouncedSetSearch = useMemo(
     () =>
@@ -144,14 +143,14 @@ export function CashbookPage() {
 
   const columns: Column<CashbookVoucherItem>[] = [
     {
-      key: 'transactionDate',
+      key: 'voucherCode',
       header: t('cashbook.colVoucher'),
-      width: 170,
+      width: 145,
       isPrimary: true,
       render: (v) => {
         const isIncome = v.type === 'INCOME';
         return (
-          <div className="flex flex-col gap-0.5">
+          <div className="flex flex-col gap-1">
             <span
               className={cn(
                 'inline-flex w-fit items-center rounded px-2 py-0.5 font-mono text-xs font-bold',
@@ -162,9 +161,6 @@ export function CashbookPage() {
             >
               {v.voucherCode}
             </span>
-            <span className="whitespace-nowrap text-[11px] text-muted-foreground">
-              {formatDateTime(v.transactionDate)}
-            </span>
             {v.importOrderId && (
               <button
                 type="button"
@@ -173,6 +169,27 @@ export function CashbookPage() {
               >
                 Đơn #{v.importOrderId}
               </button>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      key: 'createdAt',
+      header: t('cashbook.colCreatedAt'),
+      width: 150,
+      render: (v) => {
+        const createdDisplay = formatDateTime(v.createdAt || v.transactionDate);
+        const txDisplay = formatDateTime(v.transactionDate);
+        return (
+          <div className="flex flex-col gap-0.5">
+            <span className="whitespace-nowrap font-mono text-xs font-medium text-foreground">
+              {createdDisplay}
+            </span>
+            {v.transactionDate && txDisplay !== createdDisplay && (
+              <span className="whitespace-nowrap text-[10px] text-muted-foreground">
+                GD: {txDisplay}
+              </span>
             )}
           </div>
         );
@@ -226,41 +243,54 @@ export function CashbookPage() {
       },
     },
     {
-      key: 'content',
+      key: 'partnerName',
       header: t('cashbook.colContentPartner'),
-      className: 'min-w-[260px] max-w-md',
+      className: 'min-w-[200px]',
       render: (v) => {
         const isIncome = v.type === 'INCOME';
         const payerGroupKey = v.payerGroup || 'PARTNER';
         return (
-          <div className="space-y-1">
-            <p className="text-xs font-medium text-foreground">{v.content}</p>
-            <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
+          <div className="space-y-1 text-xs">
+            <div className="flex flex-wrap items-center gap-1.5">
               <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-foreground">
                 {t(`cashbook.payerGroup.${payerGroupKey}` as any)}
               </span>
-              <span>
+              <span className="text-muted-foreground">
                 {isIncome
                   ? t('cashbook.payerLabelIncome')
                   : t('cashbook.payerLabelExpense')}{' '}
                 <strong className="text-foreground">{v.partnerName}</strong>
               </span>
-              {v.staffName && (
-                <span>
-                  •{' '}
-                  {isIncome
-                    ? t('cashbook.staffLabelIncome')
-                    : t('cashbook.staffLabelExpense')}{' '}
-                  <strong className="text-foreground">{v.staffName}</strong>
-                </span>
-              )}
             </div>
-            {v.note && (
-              <p className="text-[11px] italic text-muted-foreground">
-                {v.note}
-              </p>
+            {v.staffName && (
+              <div className="text-[11px] text-muted-foreground">
+                {isIncome
+                  ? t('cashbook.staffLabelIncome')
+                  : t('cashbook.staffLabelExpense')}{' '}
+                <strong className="text-foreground">{v.staffName}</strong>
+              </div>
             )}
           </div>
+        );
+      },
+    },
+    {
+      key: 'note',
+      header: t('cashbook.colNote'),
+      className: 'min-w-[180px] max-w-xs',
+      render: (v) => {
+        const noteText =
+          v.note?.trim() ||
+          (v.content && v.content !== v.category ? v.content.trim() : '');
+        return noteText ? (
+          <p
+            className="line-clamp-2 text-xs text-foreground"
+            title={noteText}
+          >
+            {noteText}
+          </p>
+        ) : (
+          <span className="text-xs text-muted-foreground">—</span>
         );
       },
     },
@@ -382,71 +412,50 @@ export function CashbookPage() {
         <div>
           <p className="page-subtitle">{t('cashbook.subtitle')}</p>
           <h1 className="page-title">{t('cashbook.title')}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {t('cashbook.desc')}
-          </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
-          <button
+          <Button
             type="button"
+            variant="outline"
             onClick={() => navigate('/charts')}
-            className="action-btn action-btn-secondary"
+            leftIcon={<BarChart3 className="h-4 w-4 text-primary" />}
           >
-            <BarChart3 className="h-4 w-4 text-primary" />
-            <span>{t('cashbook.viewChartsBtn')}</span>
-          </button>
+            {t('cashbook.viewChartsBtn')}
+          </Button>
 
           <PermissionGate
             roles={ADMIN_MANAGER_ROLES}
             permission={PERMISSIONS.DASHBOARD_VIEW}
           >
-            <button
+            <Button
               type="button"
               onClick={() => openCreateModal('INCOME')}
-              className="action-btn bg-emerald-600 text-white hover:bg-emerald-700"
+              leftIcon={<PlusCircle className="h-4 w-4" />}
+              className="bg-emerald-600 text-white hover:bg-emerald-700"
             >
-              <PlusCircle className="h-4 w-4" />
-              <span>{t('cashbook.createIncomeBtn')}</span>
-            </button>
+              {t('cashbook.createIncomeBtn')}
+            </Button>
 
-            <button
+            <Button
               type="button"
               onClick={() => openCreateModal('EXPENSE')}
-              className="action-btn bg-rose-600 text-white hover:bg-rose-700"
+              leftIcon={<MinusCircle className="h-4 w-4" />}
+              className="bg-rose-600 text-white hover:bg-rose-700"
             >
-              <MinusCircle className="h-4 w-4" />
-              <span>{t('cashbook.createExpenseBtn')}</span>
-            </button>
-
-            {(vouchers.length > 0 ||
-              (summary?.openingBalance?.total ?? 0) > 0) && (
-              <button
-                type="button"
-                onClick={() => clearAllMutation.mutate()}
-                disabled={clearAllMutation.isPending}
-                className="action-btn action-btn-secondary text-destructive"
-              >
-                {clearAllMutation.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Trash2 className="h-4 w-4" />
-                )}
-                <span>Xóa trắng dữ liệu</span>
-              </button>
-            )}
+              {t('cashbook.createExpenseBtn')}
+            </Button>
           </PermissionGate>
         </div>
       </div>
 
       {/* 4 Cashbook Summary Cards */}
-      {summary && (
-        <CashbookSummaryCards
-          summary={summary}
-          canManage={canManage}
-          onEditOpeningBalance={() => setOpeningModalOpen(true)}
-        />
-      )}
+      <CashbookSummaryCards
+        summary={summary}
+        isLoading={isLoading || isFetching}
+        canManage={canManage}
+        onEditOpeningBalance={() => setOpeningModalOpen(true)}
+      />
 
       {/* Search & Filters Bar + Main Cashbook Table */}
       <div className="rounded-xl border border-border bg-card shadow-sm">
@@ -566,15 +575,14 @@ export function CashbookPage() {
               ))}
             </select>
 
-            <button
+            <Button
               type="button"
+              variant="outline"
+              size="sm"
+              loading={isFetching}
               onClick={() => refetch()}
-              className="action-btn action-btn-secondary px-2.5 py-1.5 text-xs"
-            >
-              <RefreshCw
-                className={cn('h-3.5 w-3.5', isFetching && 'animate-spin')}
-              />
-            </button>
+              leftIcon={<RefreshCw className="h-3.5 w-3.5" />}
+            />
           </div>
         </div>
 

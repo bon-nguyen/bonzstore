@@ -1,23 +1,40 @@
 import { ArrowDownLeft, ArrowUpRight, Pencil, Wallet } from 'lucide-react';
 import { CashbookSummaryReport } from '../../../api/types/cashbook.types';
+import { Skeleton } from '../../../components/ui/skeleton';
 import { useI18n } from '../../i18n/I18nContext';
 
 interface CashbookSummaryCardsProps {
-  summary: CashbookSummaryReport;
+  summary?: CashbookSummaryReport;
+  isLoading?: boolean;
   canManage: boolean;
   onEditOpeningBalance: () => void;
 }
 
-function formatVND(val: number): string {
+function formatVND(val?: number): string {
   return `${Math.round(val || 0).toLocaleString('vi-VN')}₫`;
 }
 
 export function CashbookSummaryCards({
   summary,
+  isLoading = false,
   canManage,
   onEditOpeningBalance,
 }: CashbookSummaryCardsProps) {
   const { t } = useI18n();
+
+  const renderValue = (text: string, className: string) =>
+    isLoading ? (
+      <Skeleton className="mt-1 h-6 w-28" />
+    ) : (
+      <p className={className}>{text}</p>
+    );
+
+  const renderSubValue = (text: string, className: string) =>
+    isLoading ? (
+      <Skeleton className="h-4 w-20" />
+    ) : (
+      <span className={className}>{text}</span>
+    );
 
   return (
     <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -32,16 +49,18 @@ export function CashbookSummaryCards({
               <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 {t('cashbook.openingBalanceTitle')}
               </p>
-              <p className="font-mono text-lg font-bold text-foreground">
-                {formatVND(summary.openingBalance.total)}
-              </p>
+              {renderValue(
+                formatVND(summary?.openingBalance.total),
+                'font-mono text-lg font-bold text-foreground',
+              )}
             </div>
           </div>
           {canManage && (
             <button
               type="button"
+              disabled={isLoading}
               onClick={onEditOpeningBalance}
-              className="rounded-lg border border-border px-2 py-1 text-[10px] font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              className="rounded-lg border border-border px-2 py-1 text-[10px] font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
               title={t('cashbook.editOpeningBalanceBtn')}
             >
               <Pencil className="mr-1 inline h-3 w-3" />
@@ -54,25 +73,28 @@ export function CashbookSummaryCards({
             <span className="text-muted-foreground">
               {t('cashbook.channelCash')}
             </span>
-            <span className="font-mono font-semibold text-foreground">
-              {formatVND(summary.openingBalance.cash)}
-            </span>
+            {renderSubValue(
+              formatVND(summary?.openingBalance.cash),
+              'font-mono font-semibold text-foreground',
+            )}
           </div>
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">
               {t('cashbook.channelCard')}
             </span>
-            <span className="font-mono font-semibold text-foreground">
-              {formatVND(summary.openingBalance.card)}
-            </span>
+            {renderSubValue(
+              formatVND(summary?.openingBalance.card),
+              'font-mono font-semibold text-foreground',
+            )}
           </div>
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">
               {t('cashbook.channelTransfer')}
             </span>
-            <span className="font-mono font-semibold text-foreground">
-              {formatVND(summary.openingBalance.transfer)}
-            </span>
+            {renderSubValue(
+              formatVND(summary?.openingBalance.transfer),
+              'font-mono font-semibold text-foreground',
+            )}
           </div>
         </div>
       </div>
@@ -87,12 +109,13 @@ export function CashbookSummaryCards({
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
                 {t('cashbook.totalIncomeTitle', {
-                  count: summary.voucherCounts.incomeCount,
+                  count: summary?.voucherCounts.incomeCount ?? 0,
                 })}
               </p>
-              <p className="font-mono text-lg font-bold text-emerald-600 dark:text-emerald-400">
-                +{formatVND(summary.totalIncome.total)}
-              </p>
+              {renderValue(
+                `+${formatVND(summary?.totalIncome.total)}`,
+                'font-mono text-lg font-bold text-emerald-600 dark:text-emerald-400',
+              )}
             </div>
           </div>
           <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
@@ -104,25 +127,28 @@ export function CashbookSummaryCards({
             <span className="text-muted-foreground">
               {t('cashbook.channelPlusCash')}
             </span>
-            <span className="font-mono font-semibold text-emerald-600 dark:text-emerald-400">
-              +{formatVND(summary.totalIncome.cash)}
-            </span>
+            {renderSubValue(
+              `+${formatVND(summary?.totalIncome.cash)}`,
+              'font-mono font-semibold text-emerald-600 dark:text-emerald-400',
+            )}
           </div>
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">
               {t('cashbook.channelPlusCard')}
             </span>
-            <span className="font-mono font-semibold text-emerald-600 dark:text-emerald-400">
-              +{formatVND(summary.totalIncome.card)}
-            </span>
+            {renderSubValue(
+              `+${formatVND(summary?.totalIncome.card)}`,
+              'font-mono font-semibold text-emerald-600 dark:text-emerald-400',
+            )}
           </div>
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">
               {t('cashbook.channelPlusTransfer')}
             </span>
-            <span className="font-mono font-semibold text-emerald-600 dark:text-emerald-400">
-              +{formatVND(summary.totalIncome.transfer)}
-            </span>
+            {renderSubValue(
+              `+${formatVND(summary?.totalIncome.transfer)}`,
+              'font-mono font-semibold text-emerald-600 dark:text-emerald-400',
+            )}
           </div>
         </div>
       </div>
@@ -137,12 +163,13 @@ export function CashbookSummaryCards({
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-300">
                 {t('cashbook.totalExpenseTitle', {
-                  count: summary.voucherCounts.expenseCount,
+                  count: summary?.voucherCounts.expenseCount ?? 0,
                 })}
               </p>
-              <p className="font-mono text-lg font-bold text-amber-600 dark:text-amber-400">
-                -{formatVND(summary.totalExpense.total)}
-              </p>
+              {renderValue(
+                `-${formatVND(summary?.totalExpense.total)}`,
+                'font-mono text-lg font-bold text-amber-600 dark:text-amber-400',
+              )}
             </div>
           </div>
           <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-600 dark:text-amber-400">
@@ -154,25 +181,28 @@ export function CashbookSummaryCards({
             <span className="text-muted-foreground">
               {t('cashbook.channelPlusCash')}
             </span>
-            <span className="font-mono font-semibold text-amber-600 dark:text-amber-400">
-              {formatVND(summary.totalExpense.cash)}
-            </span>
+            {renderSubValue(
+              formatVND(summary?.totalExpense.cash),
+              'font-mono font-semibold text-amber-600 dark:text-amber-400',
+            )}
           </div>
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">
               {t('cashbook.channelPlusCard')}
             </span>
-            <span className="font-mono font-semibold text-amber-600 dark:text-amber-400">
-              {formatVND(summary.totalExpense.card)}
-            </span>
+            {renderSubValue(
+              formatVND(summary?.totalExpense.card),
+              'font-mono font-semibold text-amber-600 dark:text-amber-400',
+            )}
           </div>
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">
               {t('cashbook.channelPlusTransfer')}
             </span>
-            <span className="font-mono font-semibold text-amber-600 dark:text-amber-400">
-              {formatVND(summary.totalExpense.transfer)}
-            </span>
+            {renderSubValue(
+              formatVND(summary?.totalExpense.transfer),
+              'font-mono font-semibold text-amber-600 dark:text-amber-400',
+            )}
           </div>
         </div>
       </div>
@@ -188,9 +218,10 @@ export function CashbookSummaryCards({
               <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 {t('cashbook.closingBalanceTitle')}
               </p>
-              <p className="font-mono text-lg font-bold text-foreground dark:text-primary">
-                {formatVND(summary.closingBalance.total)}
-              </p>
+              {renderValue(
+                formatVND(summary?.closingBalance.total),
+                'font-mono text-lg font-bold text-foreground dark:text-primary',
+              )}
             </div>
           </div>
           <span className="rounded-full bg-primary/25 px-2 py-0.5 text-[10px] font-bold text-foreground dark:text-primary">
@@ -202,29 +233,31 @@ export function CashbookSummaryCards({
             <span className="text-muted-foreground">
               {t('cashbook.channelCash')}
             </span>
-            <span className="font-mono font-semibold text-foreground">
-              {formatVND(summary.closingBalance.cash)}
-            </span>
+            {renderSubValue(
+              formatVND(summary?.closingBalance.cash),
+              'font-mono font-semibold text-foreground',
+            )}
           </div>
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">
               {t('cashbook.channelCard')}
             </span>
-            <span className="font-mono font-semibold text-foreground">
-              {formatVND(summary.closingBalance.card)}
-            </span>
+            {renderSubValue(
+              formatVND(summary?.closingBalance.card),
+              'font-mono font-semibold text-foreground',
+            )}
           </div>
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">
               {t('cashbook.channelTransfer')}
             </span>
-            <span className="font-mono font-semibold text-foreground">
-              {formatVND(summary.closingBalance.transfer)}
-            </span>
+            {renderSubValue(
+              formatVND(summary?.closingBalance.transfer),
+              'font-mono font-semibold text-foreground',
+            )}
           </div>
         </div>
       </div>
     </div>
   );
 }
-

@@ -348,7 +348,9 @@ export function NotificationSettingsPage() {
       sortKey: 'module',
       render: (item) => (
         <span className="rounded-md border border-border bg-muted/40 px-2 py-1 font-mono text-xs font-semibold text-foreground">
-          {getModuleLabel(item.module)}
+          {item.targetLink === '/cashbook'
+            ? t('nav.cashbook')
+            : getModuleLabel(item.module)}
         </span>
       ),
     },

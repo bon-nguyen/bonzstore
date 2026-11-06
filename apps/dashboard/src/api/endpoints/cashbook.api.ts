@@ -24,6 +24,8 @@ import {
   UpdateCashbookSourceCategoryPayload,
 } from '../types/cashbook.types';
 
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 export const cashbookApi = {
   getAll: async (params?: {
     page?: number;
@@ -38,16 +40,19 @@ export const cashbookApi = {
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
   }): Promise<CashbookPaginatedResponse> => {
+    await delay(180);
     return getFallbackCashbookPaginated(params);
   },
 
   getSummary: async (
     params?: Record<string, any>,
   ): Promise<CashbookSummaryReport> => {
+    await delay(150);
     return getFallbackCashbookPaginated(params).summary;
   },
 
   getChartsAnalytics: async (): Promise<CashbookChartsAnalyticsResponse> => {
+    await delay(180);
     return getFallbackChartsAnalytics();
   },
 
@@ -60,6 +65,7 @@ export const cashbookApi = {
   createSourceCategory: async (
     data: CreateCashbookSourceCategoryPayload,
   ): Promise<CashbookSourceCategoryItem> => {
+    await delay(350);
     const created = createLocalSourceCategory(data);
     try {
       await apiClient.post('/cashbook/source-categories', data);
@@ -73,6 +79,7 @@ export const cashbookApi = {
     id: string,
     data: UpdateCashbookSourceCategoryPayload,
   ): Promise<CashbookSourceCategoryItem> => {
+    await delay(350);
     const updated = updateLocalSourceCategory(id, data);
     try {
       await apiClient.patch(`/cashbook/source-categories/${id}`, data);
@@ -83,6 +90,7 @@ export const cashbookApi = {
   },
 
   deleteSourceCategory: async (id: string) => {
+    await delay(300);
     const deleted = deleteLocalSourceCategory(id);
     try {
       await apiClient.delete(`/cashbook/source-categories/${id}`);
@@ -93,6 +101,7 @@ export const cashbookApi = {
   },
 
   createVoucher: async (data: CreateCashbookVoucherPayload) => {
+    await delay(380);
     const created = createLocalCashbookVoucher(data);
     try {
       await apiClient.post('/cashbook', data);
@@ -106,6 +115,7 @@ export const cashbookApi = {
     id: string,
     data: Partial<CreateCashbookVoucherPayload>,
   ) => {
+    await delay(380);
     const updated = updateLocalCashbookVoucher(id, data);
     try {
       await apiClient.patch(`/cashbook/${id}`, data);
@@ -116,6 +126,7 @@ export const cashbookApi = {
   },
 
   deleteVoucher: async (id: string) => {
+    await delay(350);
     const deleted = deleteLocalCashbookVoucher(id);
     try {
       await apiClient.delete(`/cashbook/${id}`);
@@ -130,6 +141,7 @@ export const cashbookApi = {
     card: number;
     transfer: number;
   }): Promise<CashbookSummaryReport> => {
+    await delay(380);
     const updated = updateLocalOpeningBalance(data);
     try {
       await apiClient.patch('/cashbook/opening-balance', data);
@@ -140,6 +152,7 @@ export const cashbookApi = {
   },
 
   restoreDefaultData: async () => {
+    await delay(400);
     const cleared = restoreLocalAllData();
     try {
       await apiClient.post('/cashbook/restore');

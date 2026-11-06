@@ -1,4 +1,9 @@
 import {
+  AdminNotificationItem,
+  NotificationAction,
+  NotificationModuleType,
+} from '../types/notification.types';
+import {
   CashbookChartsAnalyticsResponse,
   CashbookPaginatedResponse,
   CashbookSourceCategoryItem,
@@ -28,6 +33,109 @@ const LS_CASHBOOK_CATEGORIES_KEY = 'bonzstore_clean_cashbook_categories_v1';
 const LS_OPENING_KEY = 'bonzstore_clean_opening_v1';
 const LS_IMPORT_TOKEN_KEY = 'bonzstore_clean_import_token_v1';
 const LS_IMPORT_ORDERS_KEY = 'bonzstore_clean_import_orders_v1';
+const LS_LOCAL_NOTIFICATIONS_KEY = 'bonzstore_local_notifications_v1';
+
+export function getLocalNotifications(): AdminNotificationItem[] {
+  try {
+    const raw = localStorage.getItem(LS_LOCAL_NOTIFICATIONS_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return parsed;
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return [];
+}
+
+function saveLocalNotifications(list: AdminNotificationItem[]): void {
+  try {
+    localStorage.setItem(
+      LS_LOCAL_NOTIFICATIONS_KEY,
+      JSON.stringify(list.slice(0, 100)),
+    );
+  } catch {
+    // ignore
+  }
+}
+
+export function recordLocalNotification(params: {
+  action: NotificationAction;
+  titleVi: string;
+  titleEn: string;
+  messageVi: string;
+  messageEn: string;
+  targetName: string;
+  targetLink?: string;
+  module?: NotificationModuleType;
+  actorName?: string;
+  actorEmail?: string;
+  actorRole?: string;
+}): AdminNotificationItem {
+  const list = getLocalNotifications();
+  const item: AdminNotificationItem = {
+    id: `notif-local-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    module: params.module || 'PRODUCTS',
+    action: params.action,
+    titleVi: params.titleVi,
+    titleEn: params.titleEn,
+    messageVi: params.messageVi,
+    messageEn: params.messageEn,
+    targetName: params.targetName,
+    targetLink: params.targetLink || '/cashbook',
+    actorName: params.actorName || 'BonzStore Super Admin',
+    actorEmail: params.actorEmail || 'admin@bonzstore.vn',
+    actorRole: params.actorRole || 'SUPER_ADMIN',
+    isRead: false,
+    createdAt: new Date().toISOString(),
+  };
+  saveLocalNotifications([item, ...list]);
+  return item;
+}
+
+export function markLocalNotificationRead(
+  id: string,
+  isRead = true,
+): AdminNotificationItem | null {
+  const list = getLocalNotifications();
+  const idx = list.findIndex((n) => n.id === id);
+  if (idx === -1) return null;
+  list[idx] = { ...list[idx], isRead };
+  saveLocalNotifications(list);
+  return list[idx];
+}
+
+export function markAllLocalNotificationsRead(): number {
+  const list = getLocalNotifications();
+  let count = 0;
+  const next = list.map((n) => {
+    if (!n.isRead) {
+      count += 1;
+      return { ...n, isRead: true };
+    }
+    return n;
+  });
+  saveLocalNotifications(next);
+  return count;
+}
+
+export function clearReadLocalNotifications(): number {
+  const list = getLocalNotifications();
+  const next = list.filter((n) => !n.isRead);
+  const deleted = list.length - next.length;
+  saveLocalNotifications(next);
+  return deleted;
+}
+
+export function removeLocalNotification(id: string): boolean {
+  const list = getLocalNotifications();
+  const next = list.filter((n) => n.id !== id);
+  if (next.length === list.length) return false;
+  saveLocalNotifications(next);
+  return true;
+}
 
 const DEFAULT_CASHBOOK_SOURCE_CATEGORIES: CashbookSourceCategoryItem[] = [
   {
@@ -732,6 +840,7 @@ export function getFallbackCashbookPaginated(
         v.voucherCode.toLowerCase().includes(q) ||
         v.category.toLowerCase().includes(q) ||
         v.content.toLowerCase().includes(q) ||
+        (v.note || '').toLowerCase().includes(q) ||
         v.partnerName.toLowerCase().includes(q) ||
         v.staffName.toLowerCase().includes(q),
     );
@@ -817,6 +926,21 @@ export function createLocalSourceCategory(
   } catch {
     // ignore
   }
+  recordLocalNotification({
+    action: 'CREATE',
+    titleVi:
+      item.type === 'INCOME'
+        ? 'Thêm mới Nguồn Thu sổ quỹ'
+        : 'Thêm mới Khoản Chi sổ quỹ',
+    titleEn:
+      item.type === 'INCOME'
+        ? 'New Income Source Created'
+        : 'New Expense Category Created',
+    messageVi: `Đã tạo ${item.type === 'INCOME' ? 'nguồn thu' : 'khoản chi'} "${item.name}" (${item.code}) trong Sổ Quỹ.`,
+    messageEn: `Created ${item.type.toLowerCase()} source "${item.name}" (${item.code}) in Cashbook.`,
+    targetName: item.code,
+    targetLink: '/cashbook',
+  });
   return item;
 }
 
@@ -849,15 +973,37 @@ export function updateLocalSourceCategory(
   } catch {
     // ignore
   }
+  recordLocalNotification({
+    action: 'UPDATE',
+    titleVi: 'Cập nhật Nguồn Thu / Khoản Chi sổ quỹ',
+    titleEn: 'Cashbook Source Category Updated',
+    messageVi: `Đã cập nhật mục "${updated.name}" (${updated.code}) trong Sổ Quỹ.`,
+    messageEn: `Updated source category "${updated.name}" (${updated.code}) in Cashbook.`,
+    targetName: updated.code,
+    targetLink: '/cashbook',
+  });
   return updated;
 }
 
 export function deleteLocalSourceCategory(id: string): { deletedId: string } {
-  const all = getLocalSourceCategories().filter((c) => c.id !== id);
+  const existing = getLocalSourceCategories();
+  const removed = existing.find((c) => c.id === id);
+  const all = existing.filter((c) => c.id !== id);
   try {
     localStorage.setItem(LS_CASHBOOK_CATEGORIES_KEY, JSON.stringify(all));
   } catch {
     // ignore
+  }
+  if (removed) {
+    recordLocalNotification({
+      action: 'DELETE',
+      titleVi: 'Xóa Nguồn Thu / Khoản Chi sổ quỹ',
+      titleEn: 'Cashbook Source Category Deleted',
+      messageVi: `Đã xóa mục "${removed.name}" (${removed.code}) khỏi Sổ Quỹ.`,
+      messageEn: `Deleted source category "${removed.name}" (${removed.code}) from Cashbook.`,
+      targetName: removed.code,
+      targetLink: '/cashbook',
+    });
   }
   return { deletedId: id };
 }
@@ -902,6 +1048,26 @@ export function createLocalCashbookVoucher(
 
   const next = [item, ...list];
   localStorage.setItem(LS_CASHBOOK_KEY, JSON.stringify(next));
+
+  recordLocalNotification({
+    action: 'CREATE',
+    titleVi:
+      item.type === 'INCOME'
+        ? 'Lập Phiếu Thu sổ quỹ mới'
+        : 'Lập Phiếu Chi sổ quỹ mới',
+    titleEn:
+      item.type === 'INCOME'
+        ? 'New Cashbook Receipt Created'
+        : 'New Cashbook Payment Created',
+    messageVi: `Đã lập ${item.type === 'INCOME' ? 'Phiếu Thu' : 'Phiếu Chi'} ${item.voucherCode} (${item.totalAmount.toLocaleString('vi-VN')}₫) — ${item.category}${item.note ? ` • Ghi chú: ${item.note}` : ''}.`,
+    messageEn: `Created ${item.type} voucher ${item.voucherCode} (${item.totalAmount.toLocaleString('vi-VN')} VND) — ${item.category}.`,
+    targetName: item.voucherCode,
+    targetLink: '/cashbook',
+    actorName: item.operatorTokenInfo?.fullName || item.staffName,
+    actorEmail: item.operatorTokenInfo?.email,
+    actorRole: item.operatorTokenInfo?.roleCode,
+  });
+
   return { voucher: item, summary: computeLocalCashbookSummary(next) };
 }
 
@@ -925,7 +1091,7 @@ export function updateLocalCashbookVoucher(
       payload.transferAmount !== undefined
         ? Number(payload.transferAmount)
         : old.transferAmount;
-    list[idx] = {
+    const updated: CashbookVoucherItem = {
       ...old,
       ...payload,
       cashAmount,
@@ -934,7 +1100,24 @@ export function updateLocalCashbookVoucher(
       totalAmount: cashAmount + cardAmount + transferAmount,
       updatedAt: new Date().toISOString(),
     };
+    list[idx] = updated;
     localStorage.setItem(LS_CASHBOOK_KEY, JSON.stringify(list));
+
+    recordLocalNotification({
+      action: 'UPDATE',
+      titleVi:
+        updated.type === 'INCOME'
+          ? 'Cập nhật Phiếu Thu sổ quỹ'
+          : 'Cập nhật Phiếu Chi sổ quỹ',
+      titleEn: 'Cashbook Voucher Updated',
+      messageVi: `Đã chỉnh sửa phiếu ${updated.voucherCode} (${updated.totalAmount.toLocaleString('vi-VN')}₫) — ${updated.category}${updated.note ? ` • Ghi chú: ${updated.note}` : ''}.`,
+      messageEn: `Updated voucher ${updated.voucherCode} (${updated.totalAmount.toLocaleString('vi-VN')} VND).`,
+      targetName: updated.voucherCode,
+      targetLink: '/cashbook',
+      actorName: updated.operatorTokenInfo?.fullName || updated.staffName,
+      actorEmail: updated.operatorTokenInfo?.email,
+      actorRole: updated.operatorTokenInfo?.roleCode,
+    });
   }
   return {
     voucher: idx >= 0 ? list[idx] : undefined,
@@ -943,8 +1126,26 @@ export function updateLocalCashbookVoucher(
 }
 
 export function deleteLocalCashbookVoucher(id: string) {
-  const list = getStoredVouchers().filter((v) => v.id !== id);
+  const existing = getStoredVouchers();
+  const removed = existing.find((v) => v.id === id);
+  const list = existing.filter((v) => v.id !== id);
   localStorage.setItem(LS_CASHBOOK_KEY, JSON.stringify(list));
+
+  if (removed) {
+    recordLocalNotification({
+      action: 'DELETE',
+      titleVi: 'Xóa phiếu khỏi Sổ Quỹ',
+      titleEn: 'Cashbook Voucher Deleted',
+      messageVi: `Đã xóa ${removed.type === 'INCOME' ? 'Phiếu Thu' : 'Phiếu Chi'} ${removed.voucherCode} (${removed.totalAmount.toLocaleString('vi-VN')}₫) khỏi Sổ Quỹ.`,
+      messageEn: `Deleted voucher ${removed.voucherCode} (${removed.totalAmount.toLocaleString('vi-VN')} VND) from Cashbook.`,
+      targetName: removed.voucherCode,
+      targetLink: '/cashbook',
+      actorName: removed.operatorTokenInfo?.fullName || removed.staffName,
+      actorEmail: removed.operatorTokenInfo?.email,
+      actorRole: removed.operatorTokenInfo?.roleCode,
+    });
+  }
+
   return { deletedId: id, summary: computeLocalCashbookSummary(list) };
 }
 
@@ -963,6 +1164,17 @@ export function updateLocalOpeningBalance(data: {
       Number(data.transfer || 0),
   };
   localStorage.setItem(LS_OPENING_KEY, JSON.stringify(next));
+
+  recordLocalNotification({
+    action: 'UPDATE',
+    titleVi: 'Cập nhật Số dư Đầu kỳ Sổ Quỹ',
+    titleEn: 'Cashbook Opening Balance Updated',
+    messageVi: `Đã cập nhật Số dư Đầu kỳ Sổ Quỹ: Tổng ${next.total.toLocaleString('vi-VN')}₫ (Tiền mặt: ${next.cash.toLocaleString('vi-VN')}₫, Thẻ: ${next.card.toLocaleString('vi-VN')}₫, CK: ${next.transfer.toLocaleString('vi-VN')}₫).`,
+    messageEn: `Updated Cashbook Opening Balance to ${next.total.toLocaleString('vi-VN')} VND.`,
+    targetName: 'Số dư Đầu kỳ',
+    targetLink: '/cashbook',
+  });
+
   return computeLocalCashbookSummary(getStoredVouchers());
 }
 
