@@ -13,12 +13,32 @@ import { PrismaService } from '../../database/prisma.service';
 import { HoabinhMainOrderData } from '../imports/data/hoabinh-order-55479.data';
 import { NotificationsService } from '../notifications/notifications.service';
 import {
+  CashbookPayerGroup,
   CashbookQueryDto,
   CashbookVoucherType,
+  CreateCashbookSourceCategoryDto,
   CreateCashbookVoucherDto,
+  UpdateCashbookSourceCategoryDto,
   UpdateCashbookVoucherDto,
   UpdateOpeningBalanceDto,
 } from './dto/cashbook.dto';
+
+export interface CashbookSourceCategoryItem {
+  id: string;
+  type: CashbookVoucherType;
+  code: string;
+  name: string;
+  description: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CashbookOperatorTokenInfo {
+  userId: string;
+  email: string;
+  fullName: string;
+  roleCode: string;
+}
 
 export interface CashbookChannelBreakdown {
   total: number;
@@ -45,13 +65,17 @@ export interface CashbookVoucherItem {
   transactionDate: string;
   type: CashbookVoucherType;
   category: string;
+  categoryCode?: string;
   content: string;
   cashAmount: number;
   cardAmount: number;
   transferAmount: number;
   totalAmount: number;
+  payerGroup?: CashbookPayerGroup;
   partnerName: string; // Người nhận, Nộp
   staffName: string; // Người thu Chi
+  isBusinessAccounting?: boolean;
+  operatorTokenInfo?: CashbookOperatorTokenInfo;
   importOrderId: number | null;
   externalPaymentId: number | null;
   note: string;
@@ -62,6 +86,7 @@ export interface CashbookVoucherItem {
 interface PersistedCashbookState {
   openingBalance: CashbookChannelBreakdown;
   vouchers: CashbookVoucherItem[];
+  sourceCategories?: CashbookSourceCategoryItem[];
   updatedAt: string;
 }
 
@@ -85,6 +110,7 @@ export class CashbookService implements OnModuleInit {
   private openingBalance: CashbookChannelBreakdown =
     createInitialOpeningBalance();
   private vouchers: CashbookVoucherItem[] = createInitialVouchers();
+  private sourceCategories: CashbookSourceCategoryItem[] = [];
   private initializedFromDb = false;
 
   constructor(
@@ -126,6 +152,9 @@ export class CashbookService implements OnModuleInit {
           if (parsed.openingBalance && Array.isArray(parsed.vouchers)) {
             this.openingBalance = parsed.openingBalance;
             this.vouchers = parsed.vouchers;
+            this.sourceCategories = Array.isArray(parsed.sourceCategories)
+              ? parsed.sourceCategories
+              : [];
             this.initializedFromDb = true;
             return;
           }
@@ -150,6 +179,7 @@ export class CashbookService implements OnModuleInit {
       const payload: PersistedCashbookState = {
         openingBalance: this.openingBalance,
         vouchers: this.vouchers,
+        sourceCategories: this.sourceCategories,
         updatedAt: new Date().toISOString(),
       };
       await this.prisma.client.$executeRawUnsafe(
@@ -430,13 +460,17 @@ export class CashbookService implements OnModuleInit {
     const data = filtered.slice(startIndex, startIndex + limit);
 
     const categories = Array.from(
-      new Set(this.vouchers.map((v) => v.category)),
+      new Set([
+        ...this.sourceCategories.map((c) => c.name),
+        ...this.vouchers.map((v) => v.category),
+      ]),
     );
 
     return {
       data,
       summary,
       categories,
+      sourceCategories: this.sourceCategories,
       meta: {
         page: safePage,
         limit,
@@ -492,23 +526,36 @@ export class CashbookService implements OnModuleInit {
     }
 
     const now = new Date().toISOString();
+    const operatorTokenInfo: CashbookOperatorTokenInfo | undefined = currentUser
+      ? {
+          userId: currentUser.id,
+          email: currentUser.email,
+          fullName: currentUser.fullName || currentUser.email,
+          roleCode: currentUser.role?.code || 'ADMIN',
+        }
+      : undefined;
+
     const newVoucher: CashbookVoucherItem = {
       id: `cb-${randomUUID().slice(0, 8)}`,
       voucherCode,
       transactionDate: dto.transactionDate || now,
       type: dto.type,
       category: trim(dto.category),
-      content: trim(dto.content),
+      categoryCode: dto.categoryCode ? trim(dto.categoryCode) : undefined,
+      content: trim(dto.content || dto.note || dto.category),
       cashAmount,
       cardAmount,
       transferAmount,
       totalAmount,
+      payerGroup: dto.payerGroup || 'OTHER',
       partnerName: trim(dto.partnerName),
       staffName:
         trim(dto.staffName || '') ||
         currentUser?.fullName ||
         currentUser?.email ||
         'Admin BonzStore',
+      isBusinessAccounting: dto.isBusinessAccounting !== false,
+      operatorTokenInfo,
       importOrderId: dto.importOrderId ?? null,
       externalPaymentId: null,
       note: trim(dto.note || ''),
@@ -577,6 +624,15 @@ export class CashbookService implements OnModuleInit {
       );
     }
 
+    const operatorTokenInfo: CashbookOperatorTokenInfo | undefined = currentUser
+      ? {
+          userId: currentUser.id,
+          email: currentUser.email,
+          fullName: currentUser.fullName || currentUser.email,
+          roleCode: currentUser.role?.code || 'ADMIN',
+        }
+      : existing.operatorTokenInfo;
+
     const updated: CashbookVoucherItem = {
       ...existing,
       type: dto.type ?? existing.type,
@@ -585,15 +641,25 @@ export class CashbookService implements OnModuleInit {
         : existing.voucherCode,
       transactionDate: dto.transactionDate ?? existing.transactionDate,
       category: dto.category ? trim(dto.category) : existing.category,
+      categoryCode:
+        dto.categoryCode !== undefined
+          ? trim(dto.categoryCode)
+          : existing.categoryCode,
       content: dto.content ? trim(dto.content) : existing.content,
       cashAmount,
       cardAmount,
       transferAmount,
       totalAmount,
+      payerGroup: dto.payerGroup ?? existing.payerGroup,
       partnerName: dto.partnerName
         ? trim(dto.partnerName)
         : existing.partnerName,
       staffName: dto.staffName ? trim(dto.staffName) : existing.staffName,
+      isBusinessAccounting:
+        dto.isBusinessAccounting !== undefined
+          ? dto.isBusinessAccounting
+          : existing.isBusinessAccounting,
+      operatorTokenInfo,
       importOrderId:
         dto.importOrderId !== undefined
           ? dto.importOrderId
@@ -604,6 +670,18 @@ export class CashbookService implements OnModuleInit {
 
     this.vouchers[idx] = updated;
     await this.persistStateToDb();
+
+    this.notificationsService.recordCrudEvent({
+      module: 'PRODUCTS',
+      action: 'UPDATE',
+      titleVi: 'Cập nhật phiếu Sổ Quỹ',
+      titleEn: 'Cashbook Voucher Updated',
+      messageVi: `Đã cập nhật phiếu ${updated.voucherCode} (${updated.totalAmount.toLocaleString('vi-VN')}₫) — ${updated.content}.`,
+      messageEn: `Updated voucher ${updated.voucherCode} (${updated.totalAmount.toLocaleString('vi-VN')} VND).`,
+      targetName: updated.voucherCode,
+      targetLink: '/cashbook',
+      currentUser,
+    });
 
     return {
       voucher: updated,
@@ -624,11 +702,102 @@ export class CashbookService implements OnModuleInit {
     this.vouchers.splice(idx, 1);
     await this.persistStateToDb();
 
+    this.notificationsService.recordCrudEvent({
+      module: 'PRODUCTS',
+      action: 'DELETE',
+      titleVi: 'Xóa phiếu khỏi Sổ Quỹ',
+      titleEn: 'Cashbook Voucher Deleted',
+      messageVi: `Đã xóa phiếu ${removed.voucherCode} (${removed.totalAmount.toLocaleString('vi-VN')}₫) khỏi Sổ Quỹ.`,
+      messageEn: `Deleted voucher ${removed.voucherCode} from Cashbook.`,
+      targetName: removed.voucherCode,
+      targetLink: '/cashbook',
+      currentUser,
+    });
+
     return {
       deletedId: id,
       voucherCode: removed.voucherCode,
       summary: this.calculateSummaryForList(this.vouchers),
     };
+  }
+
+  async getSourceCategories(type?: CashbookVoucherType) {
+    await this.ensureRestoredOnApiCall();
+    if (type) {
+      return this.sourceCategories.filter((c) => c.type === type);
+    }
+    return this.sourceCategories;
+  }
+
+  async createSourceCategory(
+    dto: CreateCashbookSourceCategoryDto,
+    currentUser?: AuthenticatedUser,
+  ) {
+    await this.ensureRestoredOnApiCall();
+    this.assertCanManageCashbook(currentUser);
+
+    const code = trim(dto.code).toUpperCase();
+    const name = trim(dto.name);
+    if (!code || !name) {
+      throw new BadRequestException(
+        'Mã nguồn và Tên nguồn thu/chi là bắt buộc',
+      );
+    }
+
+    const now = new Date().toISOString();
+    const item: CashbookSourceCategoryItem = {
+      id: `src-${randomUUID().slice(0, 8)}`,
+      type: dto.type,
+      code,
+      name,
+      description: trim(dto.description || ''),
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    this.sourceCategories.unshift(item);
+    await this.persistStateToDb();
+    return item;
+  }
+
+  async updateSourceCategory(
+    id: string,
+    dto: UpdateCashbookSourceCategoryDto,
+    currentUser?: AuthenticatedUser,
+  ) {
+    await this.ensureRestoredOnApiCall();
+    this.assertCanManageCashbook(currentUser);
+
+    const idx = this.sourceCategories.findIndex((c) => c.id === id);
+    if (idx === -1) {
+      throw new NotFoundException(`Không tìm thấy loại phiếu #${id}`);
+    }
+
+    const current = this.sourceCategories[idx];
+    const updated: CashbookSourceCategoryItem = {
+      ...current,
+      type: dto.type ?? current.type,
+      code: dto.code !== undefined ? trim(dto.code).toUpperCase() : current.code,
+      name: dto.name !== undefined ? trim(dto.name) : current.name,
+      description:
+        dto.description !== undefined
+          ? trim(dto.description)
+          : current.description,
+      updatedAt: new Date().toISOString(),
+    };
+
+    this.sourceCategories[idx] = updated;
+    await this.persistStateToDb();
+    return updated;
+  }
+
+  async deleteSourceCategory(id: string, currentUser?: AuthenticatedUser) {
+    await this.ensureRestoredOnApiCall();
+    this.assertCanManageCashbook(currentUser);
+
+    this.sourceCategories = this.sourceCategories.filter((c) => c.id !== id);
+    await this.persistStateToDb();
+    return { deleted: true, id };
   }
 
   async updateOpeningBalance(

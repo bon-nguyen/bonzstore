@@ -1,7 +1,9 @@
 import { Type } from 'class-transformer';
 import {
+  IsBoolean,
   IsIn,
   IsInt,
+  IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
@@ -11,6 +13,7 @@ import {
 import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 
 export type CashbookVoucherType = 'INCOME' | 'EXPENSE';
+export type CashbookPayerGroup = 'PARTNER' | 'CUSTOMER' | 'STAFF' | 'OTHER';
 
 export class CashbookQueryDto extends PaginationQueryDto {
   @IsOptional()
@@ -76,8 +79,13 @@ export class CreateCashbookVoucherDto {
   @IsString()
   category!: string;
 
+  @IsOptional()
   @IsString()
-  content!: string;
+  categoryCode?: string;
+
+  @IsOptional()
+  @IsString()
+  content?: string;
 
   @IsOptional()
   @Type(() => Number)
@@ -97,12 +105,20 @@ export class CreateCashbookVoucherDto {
   @Min(0)
   transferAmount?: number = 0;
 
+  @IsOptional()
+  @IsIn(['PARTNER', 'CUSTOMER', 'STAFF', 'OTHER'])
+  payerGroup?: CashbookPayerGroup;
+
   @IsString()
   partnerName!: string; // Người nhận (chi) hoặc Người nộp (thu)
 
   @IsOptional()
   @IsString()
   staffName?: string; // Người thu / chi
+
+  @IsOptional()
+  @IsBoolean()
+  isBusinessAccounting?: boolean = true;
 
   @IsOptional()
   @Type(() => Number)
@@ -133,6 +149,10 @@ export class UpdateCashbookVoucherDto {
 
   @IsOptional()
   @IsString()
+  categoryCode?: string;
+
+  @IsOptional()
+  @IsString()
   content?: string;
 
   @IsOptional()
@@ -154,12 +174,20 @@ export class UpdateCashbookVoucherDto {
   transferAmount?: number;
 
   @IsOptional()
+  @IsIn(['PARTNER', 'CUSTOMER', 'STAFF', 'OTHER'])
+  payerGroup?: CashbookPayerGroup;
+
+  @IsOptional()
   @IsString()
   partnerName?: string;
 
   @IsOptional()
   @IsString()
   staffName?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isBusinessAccounting?: boolean;
 
   @IsOptional()
   @Type(() => Number)
@@ -188,3 +216,37 @@ export class UpdateOpeningBalanceDto {
   transfer!: number;
 }
 
+export class CreateCashbookSourceCategoryDto {
+  @IsIn(['INCOME', 'EXPENSE'])
+  type!: CashbookVoucherType;
+
+  @IsString()
+  @IsNotEmpty({ message: 'Mã nguồn thu / khoản chi là bắt buộc' })
+  code!: string;
+
+  @IsString()
+  @IsNotEmpty({ message: 'Tên nguồn thu / khoản chi là bắt buộc' })
+  name!: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+}
+
+export class UpdateCashbookSourceCategoryDto {
+  @IsOptional()
+  @IsIn(['INCOME', 'EXPENSE'])
+  type?: CashbookVoucherType;
+
+  @IsOptional()
+  @IsString()
+  code?: string;
+
+  @IsOptional()
+  @IsString()
+  name?: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+}

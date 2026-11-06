@@ -1,9 +1,16 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+   keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { cashbookApi } from '../../../api/endpoints/cashbook.api';
 import {
   CashbookVoucherType,
+  CreateCashbookSourceCategoryPayload,
   CreateCashbookVoucherPayload,
+  UpdateCashbookSourceCategoryPayload,
 } from '../../../api/types/cashbook.types';
 
 export function useCashbookVouchers(params?: {
@@ -22,7 +29,72 @@ export function useCashbookVouchers(params?: {
   return useQuery({
     queryKey: ['cashbook', 'vouchers', params],
     queryFn: () => cashbookApi.getAll(params),
+    placeholderData: keepPreviousData,
     staleTime: 30 * 1000,
+  });
+}
+
+export function useCashbookSourceCategories(type?: CashbookVoucherType) {
+  return useQuery({
+    queryKey: ['cashbook', 'source-categories', type || 'ALL'],
+    queryFn: () => cashbookApi.getSourceCategories(type),
+    staleTime: 30 * 1000,
+  });
+}
+
+export function useCreateCashbookSourceCategory() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: CreateCashbookSourceCategoryPayload) =>
+      cashbookApi.createSourceCategory(data),
+    onSuccess: (res, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['cashbook'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      toast.success(
+        variables.type === 'INCOME'
+          ? `Đã tạo loại nguồn thu "${res.name}" (${res.code})`
+          : `Đã tạo loại khoản chi "${res.name}" (${res.code})`,
+      );
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || 'Không thể tạo nguồn thu / khoản chi');
+    },
+  });
+}
+
+export function useUpdateCashbookSourceCategory() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: UpdateCashbookSourceCategoryPayload;
+    }) => cashbookApi.updateSourceCategory(id, data),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: ['cashbook'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      toast.success(`Đã cập nhật "${res.name}" (${res.code})`);
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || 'Không thể cập nhật nguồn thu / khoản chi');
+    },
+  });
+}
+
+export function useDeleteCashbookSourceCategory() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => cashbookApi.deleteSourceCategory(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cashbook'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      toast.success('Đã xóa loại nguồn thu / khoản chi');
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || 'Không thể xóa nguồn thu / khoản chi');
+    },
   });
 }
 
@@ -66,7 +138,8 @@ export function useUpdateCashbookVoucher() {
     }) => cashbookApi.updateVoucher(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cashbook'] });
-      toast.success('Đã cập nhật phiếu sổ quỹ');
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      toast.success('Đã cập nhật phiếu sổ quỹ và ghi nhận thông báo hệ thống');
     },
     onError: (err: any) => {
       toast.error(err?.message || 'Cập nhật phiếu thất bại');
@@ -80,7 +153,8 @@ export function useDeleteCashbookVoucher() {
     mutationFn: (id: string) => cashbookApi.deleteVoucher(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cashbook'] });
-      toast.success('Đã xóa phiếu khỏi Sổ Quỹ');
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      toast.success('Đã xóa phiếu khỏi Sổ Quỹ và ghi nhận thông báo hệ thống');
     },
     onError: (err: any) => {
       toast.error(err?.message || 'Xóa phiếu thất bại');

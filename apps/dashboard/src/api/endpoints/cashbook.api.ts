@@ -2,19 +2,26 @@ import { apiClient } from '../client';
 import {
   computeLocalCashbookSummary,
   createLocalCashbookVoucher,
+  createLocalSourceCategory,
   deleteLocalCashbookVoucher,
+  deleteLocalSourceCategory,
   getFallbackCashbookPaginated,
   getFallbackChartsAnalytics,
+  getLocalSourceCategories,
   restoreLocalAllData,
   updateLocalCashbookVoucher,
   updateLocalOpeningBalance,
+  updateLocalSourceCategory,
 } from '../data/hoabinh-55479-fallback';
 import {
   CashbookChartsAnalyticsResponse,
   CashbookPaginatedResponse,
+  CashbookSourceCategoryItem,
   CashbookSummaryReport,
   CashbookVoucherType,
+  CreateCashbookSourceCategoryPayload,
   CreateCashbookVoucherPayload,
+  UpdateCashbookSourceCategoryPayload,
 } from '../types/cashbook.types';
 
 export const cashbookApi = {
@@ -42,6 +49,47 @@ export const cashbookApi = {
 
   getChartsAnalytics: async (): Promise<CashbookChartsAnalyticsResponse> => {
     return getFallbackChartsAnalytics();
+  },
+
+  getSourceCategories: async (
+    type?: CashbookVoucherType,
+  ): Promise<CashbookSourceCategoryItem[]> => {
+    return getLocalSourceCategories(type);
+  },
+
+  createSourceCategory: async (
+    data: CreateCashbookSourceCategoryPayload,
+  ): Promise<CashbookSourceCategoryItem> => {
+    const created = createLocalSourceCategory(data);
+    try {
+      await apiClient.post('/cashbook/source-categories', data);
+    } catch {
+      // ignore
+    }
+    return created;
+  },
+
+  updateSourceCategory: async (
+    id: string,
+    data: UpdateCashbookSourceCategoryPayload,
+  ): Promise<CashbookSourceCategoryItem> => {
+    const updated = updateLocalSourceCategory(id, data);
+    try {
+      await apiClient.patch(`/cashbook/source-categories/${id}`, data);
+    } catch {
+      // ignore
+    }
+    return updated;
+  },
+
+  deleteSourceCategory: async (id: string) => {
+    const deleted = deleteLocalSourceCategory(id);
+    try {
+      await apiClient.delete(`/cashbook/source-categories/${id}`);
+    } catch {
+      // ignore
+    }
+    return deleted;
   },
 
   createVoucher: async (data: CreateCashbookVoucherPayload) => {
