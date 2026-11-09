@@ -128,6 +128,9 @@ export class CreateCashbookVoucherDto {
   @IsOptional()
   @IsString()
   note?: string;
+
+  @IsOptional()
+  operatorTokenInfo?: Record<string, any>;
 }
 
 export class UpdateCashbookVoucherDto {
@@ -197,6 +200,9 @@ export class UpdateCashbookVoucherDto {
   @IsOptional()
   @IsString()
   note?: string;
+
+  @IsOptional()
+  operatorTokenInfo?: Record<string, any>;
 }
 
 export class UpdateOpeningBalanceDto {

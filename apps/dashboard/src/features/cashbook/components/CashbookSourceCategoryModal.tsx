@@ -39,16 +39,23 @@ export function CashbookSourceCategoryModal({
   const updateMutation = useUpdateCashbookSourceCategory();
 
   const isIncome = type === 'INCOME';
-  const isSubmitting = createMutation.isPending || updateMutation.isPending;
 
-  const { control, handleSubmit, reset, setError } =
-    useForm<SourceCategoryFormValues>({
-      defaultValues: {
-        code: '',
-        name: '',
-        description: '',
-      },
-    });
+  const {
+    control,
+    handleSubmit,
+    reset,
+    setError,
+    formState: { isSubmitting: formIsSubmitting },
+  } = useForm<SourceCategoryFormValues>({
+    defaultValues: {
+      code: '',
+      name: '',
+      description: '',
+    },
+  });
+
+  const isSubmitting =
+    formIsSubmitting || createMutation.isPending || updateMutation.isPending;
 
   useEffect(() => {
     if (!open) return;
@@ -66,11 +73,12 @@ export function CashbookSourceCategoryModal({
         description: '',
       });
     }
-  }, [open, editingCategory, isIncome, reset]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, editingCategory?.id, isIncome]);
 
   if (!open) return null;
 
-  const onSubmit = (values: SourceCategoryFormValues) => {
+  const onSubmit = async (values: SourceCategoryFormValues) => {
     const cleanCode = values.code.trim().toUpperCase();
     const cleanName = values.name.trim();
     const cleanDesc = values.description.trim();
@@ -84,38 +92,29 @@ export function CashbookSourceCategoryModal({
       return;
     }
 
-    if (editingCategory) {
-      updateMutation.mutate(
-        {
+    try {
+      if (editingCategory) {
+        const updated = await updateMutation.mutateAsync({
           id: editingCategory.id,
           data: {
             code: cleanCode,
             name: cleanName,
             description: cleanDesc,
           },
-        },
-        {
-          onSuccess: (updated) => {
-            onSaved?.(updated);
-            onClose();
-          },
-        },
-      );
-    } else {
-      createMutation.mutate(
-        {
+        });
+        onSaved?.(updated);
+      } else {
+        const created = await createMutation.mutateAsync({
           type,
           code: cleanCode,
           name: cleanName,
           description: cleanDesc,
-        },
-        {
-          onSuccess: (created) => {
-            onSaved?.(created);
-            onClose();
-          },
-        },
-      );
+        });
+        onSaved?.(created);
+      }
+      onClose();
+    } catch {
+      // Error toast is handled by mutation onError
     }
   };
 
@@ -205,4 +204,3 @@ export function CashbookSourceCategoryModal({
     </div>
   );
 }
-

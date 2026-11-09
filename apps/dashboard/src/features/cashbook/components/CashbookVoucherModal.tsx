@@ -118,7 +118,6 @@ export function CashbookVoucherModal({
 
   const createMutation = useCreateCashbookVoucher();
   const updateMutation = useUpdateCashbookVoucher();
-  const isSubmitting = createMutation.isPending || updateMutation.isPending;
 
   const [sourceModalOpen, setSourceModalOpen] = useState(false);
   const [editingSourceCategory, setEditingSourceCategory] =
@@ -136,7 +135,7 @@ export function CashbookVoucherModal({
     setValue,
     setError,
     clearErrors,
-    formState: { errors },
+    formState: { errors, isSubmitting: formIsSubmitting },
   } = useForm<CashbookVoucherFormValues>({
     defaultValues: {
       transactionDate: getLocalDatetimeInputValue(),
@@ -284,9 +283,12 @@ export function CashbookVoucherModal({
     return baseOptions;
   }, [usersResponse, user, defaultSystemStaffLabel]);
 
+  const isSubmitting =
+    formIsSubmitting || createMutation.isPending || updateMutation.isPending;
+
   if (!open) return null;
 
-  const onSubmit = (values: CashbookVoucherFormValues) => {
+  const onSubmit = async (values: CashbookVoucherFormValues) => {
     clearErrors();
     let hasError = false;
 
@@ -338,7 +340,9 @@ export function CashbookVoucherModal({
     const cleanCategory = values.category.trim();
 
     const payload = {
-      voucherCode: values.voucherCode.trim() || undefined,
+      voucherCode: editingVoucher
+        ? editingVoucher.voucherCode
+        : values.voucherCode.trim() || undefined,
       transactionDate: isoDate,
       type: modalType,
       category: cleanCategory,
@@ -355,15 +359,18 @@ export function CashbookVoucherModal({
       operatorTokenInfo,
     };
 
-    if (editingVoucher) {
-      updateMutation.mutate(
-        { id: editingVoucher.id, data: payload },
-        { onSuccess: () => onClose() },
-      );
-    } else {
-      createMutation.mutate(payload, {
-        onSuccess: () => onClose(),
-      });
+    try {
+      if (editingVoucher) {
+        await updateMutation.mutateAsync({
+          id: editingVoucher.id,
+          data: payload,
+        });
+      } else {
+        await createMutation.mutateAsync(payload);
+      }
+      onClose();
+    } catch {
+      // Error toast is handled by mutation onError
     }
   };
 
@@ -376,24 +383,19 @@ export function CashbookVoucherModal({
         <div className="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
           {/* Header */}
           <div className="flex shrink-0 items-center justify-between border-b border-border bg-card px-5 py-4">
-            <div>
-              <h3 className="font-display text-base font-bold text-foreground">
-                {editingVoucher
-                  ? isIncome
-                    ? t('cashbook.modalEditIncomeTitle', {
-                        code: editingVoucher.voucherCode,
-                      })
-                    : t('cashbook.modalEditExpenseTitle', {
-                        code: editingVoucher.voucherCode,
-                      })
-                  : isIncome
-                    ? t('cashbook.modalCreateIncomeTitle')
-                    : t('cashbook.modalCreateExpenseTitle')}
-              </h3>
-              <p className="text-xs text-muted-foreground">
-                {t('cashbook.modalVoucherSub')}
-              </p>
-            </div>
+            <h3 className="font-display text-base font-bold text-foreground">
+              {editingVoucher
+                ? isIncome
+                  ? t('cashbook.modalEditIncomeTitle', {
+                      code: editingVoucher.voucherCode,
+                    })
+                  : t('cashbook.modalEditExpenseTitle', {
+                      code: editingVoucher.voucherCode,
+                    })
+                : isIncome
+                  ? t('cashbook.modalCreateIncomeTitle')
+                  : t('cashbook.modalCreateExpenseTitle')}
+            </h3>
             <button
               type="button"
               disabled={isSubmitting}
@@ -424,7 +426,8 @@ export function CashbookVoucherModal({
                 <RHFInput
                   control={control}
                   name="voucherCode"
-                  disabled={isSubmitting}
+                  disabled={Boolean(editingVoucher) || isSubmitting}
+                  readOnly={Boolean(editingVoucher)}
                   label={t('cashbook.fieldVoucherCode')}
                   placeholder={
                     isIncome

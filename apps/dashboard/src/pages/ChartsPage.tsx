@@ -10,21 +10,12 @@ import {
   RefreshCw,
   Scale,
   ShoppingBag,
-  Trash2,
   TrendingUp,
   Wallet,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  ADMIN_MANAGER_ROLES,
-  PERMISSIONS,
-} from '../constants/rbac.constants';
-import { PermissionGate } from '../features/auth/components/PermissionGate';
-import {
-  useCashbookCharts,
-  useRestoreCashbookData,
-} from '../features/cashbook/hooks/useCashbook';
+import { useCashbookCharts } from '../features/cashbook/hooks/useCashbook';
 import { cn } from '../lib/utils';
 
 function formatVND(amount?: number | null): string {
@@ -45,7 +36,6 @@ function formatCompactVND(amount?: number | null): string {
 export function ChartsPage() {
   const navigate = useNavigate();
   const { data, isLoading, isFetching, refetch } = useCashbookCharts();
-  const restoreMutation = useRestoreCashbookData();
 
   const [hoveredDayIndex, setHoveredDayIndex] = useState<number | null>(null);
   const [chartMetricMode, setChartMetricMode] = useState<
@@ -124,26 +114,6 @@ export function ChartsPage() {
             />
             <span>Làm mới</span>
           </button>
-
-          <PermissionGate
-            roles={ADMIN_MANAGER_ROLES}
-            permission={PERMISSIONS.DASHBOARD_VIEW}
-          >
-            <button
-              type="button"
-              onClick={() => restoreMutation.mutate()}
-              disabled={restoreMutation.isPending}
-              className="action-btn action-btn-secondary text-destructive hover:border-destructive"
-            >
-              <Trash2
-                className={cn(
-                  'h-4 w-4',
-                  restoreMutation.isPending && 'animate-spin',
-                )}
-              />
-              <span>Xóa trắng dữ liệu</span>
-            </button>
-          </PermissionGate>
         </div>
       </div>
 
