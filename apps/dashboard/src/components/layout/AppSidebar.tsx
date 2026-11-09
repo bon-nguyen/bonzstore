@@ -5,7 +5,9 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  FilePlus2,
   FolderTree,
+  History,
   KeyRound,
   LayoutDashboard,
   LucideIcon,
@@ -76,6 +78,20 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
     labelKey: 'nav.imports',
     icon: Truck,
     permission: PERMISSIONS.DASHBOARD_VIEW,
+    children: [
+      {
+        to: '/imports',
+        labelKey: 'nav.importsCreate',
+        icon: FilePlus2,
+        permission: PERMISSIONS.DASHBOARD_VIEW,
+      },
+      {
+        to: '/imports/history',
+        labelKey: 'nav.importsHistory',
+        icon: History,
+        permission: PERMISSIONS.DASHBOARD_VIEW,
+      },
+    ],
   },
   {
     to: '/logistics',
@@ -133,15 +149,21 @@ export function AppSidebar() {
     location.pathname.startsWith('/categories') ||
     location.pathname.startsWith('/tags');
 
+  const isImportsRoute = location.pathname.startsWith('/imports');
+
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
     '/products': true,
+    '/imports': true,
   });
 
   useEffect(() => {
     if (isCatalogRoute) {
       setOpenGroups((prev) => ({ ...prev, '/products': true }));
     }
-  }, [isCatalogRoute]);
+    if (isImportsRoute) {
+      setOpenGroups((prev) => ({ ...prev, '/imports': true }));
+    }
+  }, [isCatalogRoute, isImportsRoute]);
 
   const toggleSidebar = () => {
     setCollapsed((prev) => {
@@ -289,6 +311,7 @@ export function AppSidebar() {
                         <NavLink
                           key={child.to}
                           to={child.to}
+                          end={child.to === item.to}
                           className={({ isActive }) =>
                             cn(
                               'flex items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-semibold transition-colors',

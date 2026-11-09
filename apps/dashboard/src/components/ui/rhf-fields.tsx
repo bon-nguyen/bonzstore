@@ -33,6 +33,8 @@ export interface RHFInputProps<TFieldValues extends FieldValues>
   extends BaseFieldProps<TFieldValues>,
     Omit<InputHTMLAttributes<HTMLInputElement>, 'name' | 'defaultValue'> {
   inputClassName?: string;
+  leftIcon?: ReactNode;
+  rightAddon?: ReactNode;
 }
 
 export function RHFInput<TFieldValues extends FieldValues>({
@@ -43,6 +45,8 @@ export function RHFInput<TFieldValues extends FieldValues>({
   hint,
   className,
   inputClassName,
+  leftIcon,
+  rightAddon,
   disabled,
   ...rest
 }: RHFInputProps<TFieldValues>) {
@@ -57,19 +61,33 @@ export function RHFInput<TFieldValues extends FieldValues>({
               {label} {required && <span className="text-red-500">*</span>}
             </label>
           )}
-          <input
-            {...rest}
-            {...field}
-            value={field.value ?? ''}
-            disabled={disabled}
-            className={cn(
-              BASE_CONTROL_STYLE,
-              'h-9',
-              disabled && DISABLED_CONTROL_STYLE,
-              error && ERROR_CONTROL_STYLE,
-              inputClassName,
+          <div className="relative flex items-center">
+            {leftIcon && (
+              <div className="pointer-events-none absolute top-1/2 left-3 flex -translate-y-1/2 items-center text-slate-400 dark:text-zinc-500">
+                {leftIcon}
+              </div>
             )}
-          />
+            <input
+              {...rest}
+              {...field}
+              value={field.value ?? ''}
+              disabled={disabled}
+              className={cn(
+                BASE_CONTROL_STYLE,
+                'h-9',
+                leftIcon && 'pl-9',
+                rightAddon && 'pr-10',
+                disabled && DISABLED_CONTROL_STYLE,
+                error && ERROR_CONTROL_STYLE,
+                inputClassName,
+              )}
+            />
+            {rightAddon && (
+              <div className="absolute top-1/2 right-1.5 flex -translate-y-1/2 items-center">
+                {rightAddon}
+              </div>
+            )}
+          </div>
           {hint && !error && (
             <p className="text-[11px] text-muted-foreground">{hint}</p>
           )}
@@ -147,6 +165,11 @@ export interface RHFCurrencyInputProps<TFieldValues extends FieldValues>
   labelClassName?: string;
   inputClassName?: string;
   disabled?: boolean;
+  min?: number;
+  max?: number;
+  allowZeroDisplay?: boolean;
+  leftIcon?: ReactNode;
+  rightAddon?: ReactNode;
 }
 
 export function RHFCurrencyInput<TFieldValues extends FieldValues>({
@@ -160,6 +183,11 @@ export function RHFCurrencyInput<TFieldValues extends FieldValues>({
   inputClassName,
   placeholder = '0',
   disabled,
+  min = 0,
+  max,
+  allowZeroDisplay = false,
+  leftIcon,
+  rightAddon,
 }: RHFCurrencyInputProps<TFieldValues>) {
   return (
     <Controller
@@ -168,7 +196,11 @@ export function RHFCurrencyInput<TFieldValues extends FieldValues>({
       render={({ field, fieldState: { error } }) => {
         const numericVal = Number(field.value || 0);
         const displayValue =
-          numericVal > 0 ? numericVal.toLocaleString('vi-VN') : '';
+          numericVal > 0
+            ? numericVal.toLocaleString('vi-VN')
+            : allowZeroDisplay && numericVal === 0
+              ? '0'
+              : '';
 
         return (
           <div className={cn('space-y-1.5', className)}>
@@ -182,30 +214,47 @@ export function RHFCurrencyInput<TFieldValues extends FieldValues>({
                 {label} {required && <span className="text-red-500">*</span>}
               </label>
             )}
-            <input
-              type="text"
-              inputMode="numeric"
-              autoComplete="off"
-              disabled={disabled}
-              placeholder={placeholder}
-              value={displayValue}
-              onChange={(e) => {
-                const rawDigits = e.target.value.replace(/[^\d]/g, '');
-                if (!rawDigits) {
-                  field.onChange(0);
-                  return;
-                }
-                field.onChange(Number(rawDigits));
-              }}
-              onBlur={field.onBlur}
-              className={cn(
-                BASE_CONTROL_STYLE,
-                'h-9 font-mono text-xs font-bold',
-                disabled && DISABLED_CONTROL_STYLE,
-                error && ERROR_CONTROL_STYLE,
-                inputClassName,
+            <div className="relative flex items-center">
+              {leftIcon && (
+                <div className="pointer-events-none absolute top-1/2 left-3 flex -translate-y-1/2 items-center text-slate-400 dark:text-zinc-500">
+                  {leftIcon}
+                </div>
               )}
-            />
+              <input
+                type="text"
+                inputMode="numeric"
+                autoComplete="off"
+                disabled={disabled}
+                placeholder={placeholder}
+                value={displayValue}
+                onChange={(e) => {
+                  const rawDigits = e.target.value.replace(/[^\d]/g, '');
+                  if (!rawDigits) {
+                    field.onChange(min > 0 ? min : 0);
+                    return;
+                  }
+                  let next = Number(rawDigits);
+                  if (typeof min === 'number' && next < min) next = min;
+                  if (typeof max === 'number' && next > max) next = max;
+                  field.onChange(next);
+                }}
+                onBlur={field.onBlur}
+                className={cn(
+                  BASE_CONTROL_STYLE,
+                  'h-9 font-mono text-xs font-bold',
+                  leftIcon && 'pl-9',
+                  rightAddon && 'pr-16',
+                  disabled && DISABLED_CONTROL_STYLE,
+                  error && ERROR_CONTROL_STYLE,
+                  inputClassName,
+                )}
+              />
+              {rightAddon && (
+                <div className="absolute top-1/2 right-1.5 flex -translate-y-1/2 items-center">
+                  {rightAddon}
+                </div>
+              )}
+            </div>
             {hint && !error && (
               <p className="text-[10px] text-muted-foreground">{hint}</p>
             )}
@@ -278,6 +327,7 @@ export interface CreatableSelectOption<TMeta = any> {
   code?: string;
   description?: string;
   badge?: string;
+  avatarUrl?: string;
   meta?: TMeta;
 }
 
@@ -294,6 +344,9 @@ export interface RHFCreatableSelectProps<
   dropdownPlacement?: 'bottom' | 'top' | 'auto';
   onCreateNew?: () => void;
   createNewLabel?: string;
+  showInlineCreateButton?: boolean;
+  inlineCreateTooltip?: string;
+  leftIcon?: ReactNode;
   onEditOption?: (option: CreatableSelectOption<TMeta>) => void;
   editOptionTooltip?: string;
   onValueSelect?: (
@@ -321,6 +374,9 @@ export function RHFCreatableSelect<
   dropdownPlacement = 'auto',
   onCreateNew,
   createNewLabel = 'Tạo mới',
+  showInlineCreateButton = false,
+  inlineCreateTooltip = 'Thêm mới',
+  leftIcon,
   onEditOption,
   editOptionTooltip = 'Chỉnh sửa',
   onValueSelect,
@@ -378,64 +434,93 @@ export function RHFCreatableSelect<
               </label>
             )}
 
-            <button
-              type="button"
-              disabled={disabled}
-              onClick={() => {
-                if (!disabled) {
-                  setOpen((prev) => {
-                    const nextOpen = !prev;
-                    if (nextOpen && containerRef.current) {
-                      if (dropdownPlacement === 'top') {
-                        setOpenUpward(true);
-                      } else if (dropdownPlacement === 'bottom') {
-                        setOpenUpward(false);
-                      } else {
-                        const rect =
-                          containerRef.current.getBoundingClientRect();
-                        const spaceBelow = window.innerHeight - rect.bottom;
-                        setOpenUpward(spaceBelow < 280);
+            <div className="relative flex items-center">
+              <button
+                type="button"
+                disabled={disabled}
+                onClick={() => {
+                  if (!disabled) {
+                    setOpen((prev) => {
+                      const nextOpen = !prev;
+                      if (nextOpen && containerRef.current) {
+                        if (dropdownPlacement === 'top') {
+                          setOpenUpward(true);
+                        } else if (dropdownPlacement === 'bottom') {
+                          setOpenUpward(false);
+                        } else {
+                          const rect =
+                            containerRef.current.getBoundingClientRect();
+                          const spaceBelow = window.innerHeight - rect.bottom;
+                          setOpenUpward(spaceBelow < 280);
+                        }
                       }
-                    }
-                    return nextOpen;
-                  });
-                }
-              }}
-              className={cn(
-                BASE_CONTROL_STYLE,
-                'flex h-9 items-center justify-between gap-2 text-left',
-                open &&
-                  !disabled &&
-                  'border-teal-600/70 ring-2 ring-teal-500/15 dark:border-primary/70 dark:ring-primary/15',
-                disabled && DISABLED_CONTROL_STYLE,
-                error && ERROR_CONTROL_STYLE,
-              )}
-            >
-              <div className="flex min-w-0 flex-1 items-center gap-1.5 truncate">
-                {selectedOption?.code && (
-                  <span className="shrink-0 rounded bg-teal-500/15 px-1.5 py-0.5 font-mono text-[10px] font-bold text-teal-700 dark:bg-primary/20 dark:text-primary">
-                    {selectedOption.code}
-                  </span>
-                )}
-                {displayLabel ? (
-                  <span className="truncate font-semibold text-foreground">
-                    {displayLabel}
-                  </span>
-                ) : (
-                  <span className="truncate font-normal text-slate-400 dark:text-zinc-500">
-                    {disabled && disabledPlaceholder
-                      ? disabledPlaceholder
-                      : placeholder}
-                  </span>
-                )}
-              </div>
-              <ChevronDown
+                      return nextOpen;
+                    });
+                  }
+                }}
                 className={cn(
-                  'h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform',
-                  open && 'rotate-180',
+                  BASE_CONTROL_STYLE,
+                  'flex h-9 items-center justify-between gap-2 text-left',
+                  showInlineCreateButton && onCreateNew && 'pr-10',
+                  open &&
+                    !disabled &&
+                    'border-teal-600/70 ring-2 ring-teal-500/15 dark:border-primary/70 dark:ring-primary/15',
+                  disabled && DISABLED_CONTROL_STYLE,
+                  error && ERROR_CONTROL_STYLE,
                 )}
-              />
-            </button>
+              >
+                <div className="flex min-w-0 flex-1 items-center gap-1.5 truncate">
+                  {selectedOption?.avatarUrl ? (
+                    <img
+                      src={selectedOption.avatarUrl}
+                      alt={selectedOption.label}
+                      className="h-5 w-5 shrink-0 rounded border border-slate-200 bg-white object-contain p-0.5 dark:border-zinc-700"
+                    />
+                  ) : leftIcon ? (
+                    <span className="shrink-0 text-slate-400 dark:text-zinc-500">
+                      {leftIcon}
+                    </span>
+                  ) : null}
+                  {selectedOption?.code && (
+                    <span className="shrink-0 rounded bg-teal-500/15 px-1.5 py-0.5 font-mono text-[10px] font-bold text-teal-700 dark:bg-primary/20 dark:text-primary">
+                      {selectedOption.code}
+                    </span>
+                  )}
+                  {displayLabel ? (
+                    <span className="truncate font-semibold text-foreground">
+                      {displayLabel}
+                    </span>
+                  ) : (
+                    <span className="truncate font-normal text-slate-400 dark:text-zinc-500">
+                      {disabled && disabledPlaceholder
+                        ? disabledPlaceholder
+                        : placeholder}
+                    </span>
+                  )}
+                </div>
+                <ChevronDown
+                  className={cn(
+                    'h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform',
+                    open && 'rotate-180',
+                  )}
+                />
+              </button>
+
+              {showInlineCreateButton && onCreateNew && !disabled && (
+                <button
+                  type="button"
+                  title={inlineCreateTooltip || createNewLabel}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setOpen(false);
+                    onCreateNew();
+                  }}
+                  className="absolute top-1/2 right-1.5 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md bg-emerald-600 text-white shadow-2xs transition hover:bg-emerald-700 active:scale-95"
+                >
+                  <Plus className="h-3.5 w-3.5 stroke-[2.5]" />
+                </button>
+              )}
+            </div>
 
             {open && !disabled && (
               <div
@@ -447,13 +532,13 @@ export function RHFCreatableSelect<
                 {searchable && (
                   <div className="border-b border-border bg-muted/20 p-2">
                     <div className="relative">
-                      <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                      <Search className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
                       <input
                         type="text"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder={searchPlaceholder}
-                        className="w-full rounded-lg border border-slate-300 bg-white py-1.5 pl-8 pr-2.5 text-xs font-medium text-foreground outline-none placeholder:font-normal placeholder:text-slate-400 focus:border-teal-600/70 focus:outline-none focus:ring-2 focus:ring-teal-500/15 dark:border-zinc-700 dark:bg-zinc-900 dark:placeholder:text-zinc-500 dark:focus:border-primary/70"
+                        className="w-full rounded-lg border border-slate-300 bg-white py-1.5 pr-2.5 pl-8 text-xs font-medium text-foreground outline-none placeholder:font-normal placeholder:text-slate-400 focus:border-teal-600/70 focus:outline-none focus:ring-2 focus:ring-teal-500/15 dark:border-zinc-700 dark:bg-zinc-900 dark:placeholder:text-zinc-500 dark:focus:border-primary/70"
                       />
                     </div>
                   </div>
@@ -491,6 +576,13 @@ export function RHFCreatableSelect<
                                 isSelected ? 'opacity-100' : 'opacity-0',
                               )}
                             />
+                            {opt.avatarUrl && (
+                              <img
+                                src={opt.avatarUrl}
+                                alt={opt.label}
+                                className="mt-0.5 h-6 w-6 shrink-0 rounded border border-slate-200 bg-white object-contain p-0.5 dark:border-zinc-700"
+                              />
+                            )}
                             <div className="min-w-0 flex-1">
                               <div className="flex flex-wrap items-center gap-1.5">
                                 {opt.code && (
