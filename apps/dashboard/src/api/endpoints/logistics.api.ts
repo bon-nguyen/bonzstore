@@ -8,17 +8,32 @@ import {
 
 const LS_LOGISTICS_UNITS_KEY = 'bonzstore_logistics_units_clean_v1';
 
+const DEFAULT_FALLBACK_LOGISTICS_UNITS: LogisticsUnit[] = [
+  {
+    id: '1e6b0dbe-862b-4811-9eb4-6a13a2ff9944',
+    name: 'HÒa BÌnh logitics',
+    gmail: '',
+    phone: '',
+    address: '',
+    avatarUrl:
+      'https://hoabinhlogistics.com/Upload/Upload/776187b5-fd9c-4083-b9e0-1ee04e77b336-logo-hoabinh-removebg-preview.png',
+    createdAt: '2026-11-04T16:42:48.927Z',
+    shortName: '',
+    updatedAt: '2026-11-04T16:42:53.837Z',
+  },
+];
+
 function getLocalLogisticsUnits(): LogisticsUnit[] {
   try {
     const raw = localStorage.getItem(LS_LOGISTICS_UNITS_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) return parsed;
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
     }
   } catch {
     // ignore
   }
-  return [];
+  return DEFAULT_FALLBACK_LOGISTICS_UNITS;
 }
 
 function saveLocalLogisticsUnits(units: LogisticsUnit[]): void {

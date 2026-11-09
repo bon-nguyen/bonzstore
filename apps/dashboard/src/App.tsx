@@ -108,6 +108,26 @@ export function App() {
                       }
                     />
                     <Route
+                      path="imports/history"
+                      element={
+                        <ProtectedRoute
+                          requiredPermission={PERMISSIONS.DASHBOARD_VIEW}
+                        >
+                          <ImportsPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="imports/drafts"
+                      element={
+                        <ProtectedRoute
+                          requiredPermission={PERMISSIONS.DASHBOARD_VIEW}
+                        >
+                          <ImportsPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
                       path="logistics"
                       element={
                         <ProtectedRoute
