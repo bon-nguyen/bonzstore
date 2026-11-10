@@ -29,7 +29,7 @@ Xem mục lục đầy đủ tại **[`.feature/docs.md`](file:///c:/Users/Admin
   - [Trang Đăng nhập Quản trị (`/login`)](file:///c:/Users/Admin/Desktop/bonzstore/.feature/dashboard/01-login-page.md)
   - [Trang Tổng quan (`/`)](file:///c:/Users/Admin/Desktop/bonzstore/.feature/dashboard/02-dashboard-home-page.md)
   - [Trang Quản lý Người dùng (`/users`)](file:///c:/Users/Admin/Desktop/bonzstore/.feature/dashboard/03-users-management-page.md)
-  - [Trang Phân quyền RBAC (`/roles`)](file:///c:/Users/Admin/Desktop/bonzstore/.feature/dashboard/04-roles-permissions-page.md)
+- [Trang Phân quyền RBAC (`/roles`)](file:///c:/Users/Admin/Desktop/bonzstore/.feature/dashboard/04-roles-permissions-page.md)
   - [Phân hệ Sản phẩm, Danh mục (`202405`) & Thẻ (`/products`, `/categories`, `/tags`)](file:///c:/Users/Admin/Desktop/bonzstore/.feature/dashboard/05-products-categories-page.md)
   - [Chuông Thông báo Admin & Trang Cài đặt Thông báo (`/settings/notifications`)](file:///c:/Users/Admin/Desktop/bonzstore/.feature/dashboard/06-notifications-settings-page.md)
 - **Backend API Modules**:

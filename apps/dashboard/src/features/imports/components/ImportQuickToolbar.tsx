@@ -12,6 +12,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
+import { Skeleton } from '../../../components/ui/skeleton';
 import { useDebouncedValue } from '../../../hooks/useDebouncedValue';
 import { cn, formatCurrencyVND } from '../../../lib/utils';
 import { useProducts } from '../../catalog/hooks/useCatalog';
@@ -138,10 +139,26 @@ export function ImportQuickToolbar({
                   </button>
                 </div>
 
-                {isSearchingProducts ? (
-                  <div className="flex items-center justify-center gap-2 py-6 text-xs text-slate-500">
-                    <Loader2 className="h-4 w-4 animate-spin text-emerald-600" />
-                    {t('importsForm.loadingProducts')}
+                {isSearchingProducts || isFetchingSearchProducts ? (
+                  <div className="space-y-1.5 p-2">
+                    {Array.from({ length: 4 }).map((_, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between gap-3 rounded-lg px-2 py-1.5"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <Skeleton className="h-9 w-9 rounded-md" />
+                          <div className="space-y-1.5">
+                            <Skeleton className="h-3.5 w-48" />
+                            <Skeleton className="h-2.5 w-32" />
+                          </div>
+                        </div>
+                        <div className="space-y-1.5 text-right">
+                          <Skeleton className="ml-auto h-3.5 w-20" />
+                          <Skeleton className="ml-auto h-2.5 w-16" />
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 ) : searchSkuEntries.length === 0 ? (
                   <div className="space-y-2 px-3 py-5 text-center">
