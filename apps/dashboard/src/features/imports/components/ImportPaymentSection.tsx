@@ -17,6 +17,7 @@ import {
 } from '../../../components/ui/rhf-fields';
 import { cn, formatCurrencyVND } from '../../../lib/utils';
 import { useI18n } from '../../i18n/I18nContext';
+import { PriceSuggestionsBar } from '../../shared/PriceSuggestionsBar';
 import { ImportReceiptFormValues, VAT_PRESETS } from './ImportFormTypes';
 
 export interface ImportPaymentSectionProps {
@@ -56,6 +57,14 @@ export function ImportPaymentSection({
   const orderDiscountValue = useWatch({ control, name: 'orderDiscountValue' });
   const shippingFee = useWatch({ control, name: 'shippingFee' });
   const paymentMethod = useWatch({ control, name: 'paymentMethod' });
+  const amountPaid = useWatch({ control, name: 'amountPaid' }) ?? 0;
+
+  const baseSuggestedPayable =
+    totalWithShipping > 0
+      ? totalWithShipping
+      : totalPayable > 0
+        ? totalPayable
+        : amountPaid;
 
   return (
     <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900">
@@ -354,6 +363,18 @@ export function ImportPaymentSection({
                   }
                 />
               </div>
+
+              {/* Danh sách lựa chọn mệnh giá tái sử dụng từ PriceSuggestionsBar (suggestPrices) */}
+              <PriceSuggestionsBar
+                baseValue={baseSuggestedPayable}
+                selectedValue={amountPaid}
+                onSelectPrice={(suggestedAmount) => {
+                  onMarkAmountPaidTouched();
+                  setValue('amountPaid', suggestedAmount, {
+                    shouldDirty: true,
+                  });
+                }}
+              />
 
               <div className="mt-1.5 flex items-center justify-between text-[11px]">
                 <span className="text-slate-500">

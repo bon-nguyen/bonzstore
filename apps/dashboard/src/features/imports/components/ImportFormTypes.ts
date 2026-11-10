@@ -188,3 +188,42 @@ export function calculateLineSubtotalBeforeTax(
   const disc = calculateLineProductDiscountAmount(line);
   return Math.max(0, gross - disc);
 }
+
+export const suggestPrices = (value: number | number[]): number[] => {
+  const steps = [500000, 200000, 100000, 50000, 20000, 10000, 5000, 2000, 1000];
+  const suggestions = new Set<number>();
+
+  // Handle array input
+  let values: number[];
+  let baseValue: number;
+  value = Array.isArray(value)
+    ? value.filter((v) => typeof v === 'number' && v > 0)
+    : value;
+
+  if (Array.isArray(value)) {
+    values = value;
+    if (value.length > 1) {
+      // Nếu mảng có nhiều giá trị, sử dụng giá trị lớn nhất làm cơ sở cho các gợi ý
+      baseValue = Math.max(...value);
+    } else {
+      // Nếu mảng có một giá trị, sử dụng giá trị đó làm cơ sở cho các gợi ý
+      baseValue = value[0];
+    }
+    // Thêm tất cả các giá trị gốc vào các gợi ý
+    value.forEach((v) => suggestions.add(v));
+  } else {
+    // Xử lý số đơn lẻ
+    values = [value];
+    baseValue = value;
+    suggestions.add(value);
+  }
+
+  // Tạo các gợi ý dựa trên baseValue
+  for (let step of steps) {
+    let nextValue = Math.ceil(baseValue / step) * step;
+    suggestions.add(nextValue);
+  }
+
+  return Array.from(suggestions).sort((a: number, b: number) => a - b);
+};
+
