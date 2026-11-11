@@ -1,5 +1,6 @@
 import {
   Barcode,
+  ChevronDown,
   FileSpreadsheet,
   Loader2,
   Package,
@@ -15,7 +16,7 @@ import { Input } from '../../../components/ui/input';
 import { Skeleton } from '../../../components/ui/skeleton';
 import { useDebouncedValue } from '../../../hooks/useDebouncedValue';
 import { cn, formatCurrencyVND } from '../../../lib/utils';
-import { useProducts } from '../../catalog/hooks/useCatalog';
+import { useInfiniteProducts } from '../../catalog/hooks/useCatalog';
 import { useI18n } from '../../i18n/I18nContext';
 import {
   FlattenedCatalogSkuEntry,
@@ -43,22 +44,37 @@ export function ImportQuickToolbar({
   const debouncedSearch = useDebouncedValue(searchQuery.trim(), 300);
   const searchContainerRef = useRef<HTMLDivElement>(null);
 
-  // Gọi trực tiếp API danh sách sản phẩm hiện tại theo từ khóa tìm kiếm
+  // Gọi trực tiếp API danh sách sản phẩm hiện tại theo từ khóa tìm kiếm (Load more 10 items mỗi lần)
   const {
-    data: searchProductsResponse,
+    data: infiniteProductsData,
     isLoading: isSearchingProducts,
     isFetching: isFetchingSearchProducts,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
     refetch: refetchSearchProducts,
-  } = useProducts({
-    page: 1,
-    limit: 20,
+  } = useInfiniteProducts({
+    limit: 10,
     search: debouncedSearch || undefined,
   });
 
   const searchSkuEntries = useMemo(() => {
-    const products = searchProductsResponse?.data ?? [];
-    return flattenProductsToSkuEntries(products);
-  }, [searchProductsResponse]);
+    const allProducts =
+      infiniteProductsData?.pages.flatMap((page) => page.data ?? []) ?? [];
+    return flattenProductsToSkuEntries(allProducts);
+  }, [infiniteProductsData]);
+
+  const totalProducts =
+    infiniteProductsData?.pages[0]?.meta?.total ?? searchSkuEntries.length;
+
+  const handleDropdownScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+    if (scrollHeight - scrollTop - clientHeight < 50) {
+      if (hasNextPage && !isFetchingNextPage) {
+        fetchNextPage();
+      }
+    }
+  };
 
   useEffect(() => {
     if (!dropdownOpen) return;
@@ -120,12 +136,20 @@ export function ImportQuickToolbar({
             />
 
             {dropdownOpen && (
-              <div className="absolute left-0 z-40 mt-1.5 max-h-80 w-full overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl dark:border-slate-700 dark:bg-slate-900">
-                <div className="flex items-center justify-between border-b border-slate-100 px-2.5 py-1.5 text-[11px] font-semibold text-slate-500 dark:border-slate-800">
+              <div
+                onScroll={handleDropdownScroll}
+                className="absolute left-0 z-40 mt-1.5 max-h-80 w-full overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl dark:border-slate-700 dark:bg-slate-900"
+              >
+                <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white/95 px-2.5 py-1.5 text-[11px] font-semibold text-slate-500 backdrop-blur-xs dark:border-slate-800 dark:bg-slate-900/95">
                   <span>
                     {t('importsForm.searchDropdownHeader', {
                       count: searchSkuEntries.length,
                     })}
+                    {totalProducts > searchSkuEntries.length && (
+                      <span className="ml-1 text-[10px] font-normal text-slate-400">
+                        (Tổng {totalProducts})
+                      </span>
+                    )}
                   </span>
                   <button
                     type="button"
@@ -139,7 +163,7 @@ export function ImportQuickToolbar({
                   </button>
                 </div>
 
-                {isSearchingProducts || isFetchingSearchProducts ? (
+                {isSearchingProducts && searchSkuEntries.length === 0 ? (
                   <div className="space-y-1.5 p-2">
                     {Array.from({ length: 4 }).map((_, idx) => (
                       <div
@@ -179,60 +203,93 @@ export function ImportQuickToolbar({
                     </Button>
                   </div>
                 ) : (
-                  searchSkuEntries.map((entry) => {
-                    const { product, sku, variantLabel, importPrice } = entry;
-                    return (
-                      <button
-                        key={`${product.id}-${sku.id}`}
-                        type="button"
-                        onClick={() => handlePickEntry(entry)}
-                        className="flex w-full items-center justify-between gap-3 rounded-lg px-2.5 py-2 text-left transition hover:bg-emerald-50/80 dark:hover:bg-slate-800"
-                      >
-                        <div className="flex min-w-0 items-center gap-2.5">
-                          {product.thumbnailUrl ? (
-                            <img
-                              src={product.thumbnailUrl}
-                              alt={product.title}
-                              className="h-9 w-9 shrink-0 rounded-md border border-slate-200 object-cover dark:border-slate-700"
-                            />
-                          ) : (
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-400 dark:bg-slate-800">
-                              <Package className="h-4 w-4" />
-                            </div>
-                          )}
-                          <div className="min-w-0">
-                            <div className="truncate text-xs font-semibold text-slate-900 dark:text-slate-100">
-                              {product.title}
-                            </div>
-                            <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-slate-500">
-                              <span className="rounded bg-slate-100 px-1.5 py-0.2 font-mono font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                                {sku.sellerSku}
-                              </span>
-                              {variantLabel && (
-                                <span className="text-emerald-600 dark:text-emerald-400">
-                                  • {variantLabel}
-                                </span>
+                  <>
+                    <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                      {searchSkuEntries.map((entry) => {
+                        const { product, sku, variantLabel, importPrice } = entry;
+                        return (
+                          <button
+                            key={`${product.id}-${sku.id}`}
+                            type="button"
+                            onClick={() => handlePickEntry(entry)}
+                            className="flex w-full items-center justify-between gap-3 rounded-lg px-2.5 py-2 text-left transition hover:bg-emerald-50/80 dark:hover:bg-slate-800"
+                          >
+                            <div className="flex min-w-0 items-center gap-2.5">
+                              {product.thumbnailUrl ? (
+                                <img
+                                  src={product.thumbnailUrl}
+                                  alt={product.title}
+                                  className="h-9 w-9 shrink-0 rounded-md border border-slate-200 object-cover dark:border-slate-700"
+                                />
+                              ) : (
+                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-400 dark:bg-slate-800">
+                                  <Package className="h-4 w-4" />
+                                </div>
                               )}
-                              <span>
-                                • {t('importsForm.stockLabel')}{' '}
-                                {sku.stockQuantity.toLocaleString('vi-VN')}
-                              </span>
+                              <div className="min-w-0">
+                                <div className="truncate text-xs font-semibold text-slate-900 dark:text-slate-100">
+                                  {product.title}
+                                </div>
+                                <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-slate-500">
+                                  <span className="rounded bg-slate-100 px-1.5 py-0.2 font-mono font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                                    {sku.sellerSku}
+                                  </span>
+                                  {variantLabel && (
+                                    <span className="text-emerald-600 dark:text-emerald-400">
+                                      • {variantLabel}
+                                    </span>
+                                  )}
+                                  <span>
+                                    • {t('importsForm.stockLabel')}{' '}
+                                    {sku.stockQuantity.toLocaleString('vi-VN')}
+                                  </span>
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                        </div>
 
-                        <div className="shrink-0 text-right">
-                          <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                            {formatCurrencyVND(importPrice)}
-                          </div>
-                          <div className="text-[10px] text-slate-400">
-                            {t('importsForm.salePriceLabel')}{' '}
-                            {formatCurrencyVND(sku.salePrice)}
-                          </div>
-                        </div>
-                      </button>
-                    );
-                  })
+                            <div className="shrink-0 text-right">
+                              <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                                {formatCurrencyVND(importPrice)}
+                              </div>
+                              <div className="text-[10px] text-slate-400">
+                                {t('importsForm.salePriceLabel')}{' '}
+                                {formatCurrencyVND(sku.salePrice)}
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Nút Load more (mỗi lần 10 items) hoặc tự động cuộn */}
+                    {hasNextPage && (
+                      <div className="sticky bottom-0 mt-1 border-t border-slate-100 bg-white/95 p-1.5 backdrop-blur-xs dark:border-slate-800 dark:bg-slate-900/95">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={isFetchingNextPage}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            fetchNextPage();
+                          }}
+                          className="w-full border-dashed border-emerald-300 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-400 dark:hover:bg-slate-800"
+                        >
+                          {isFetchingNextPage ? (
+                            <>
+                              <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin text-emerald-600" />
+                              {t('importsForm.loadingMore')}
+                            </>
+                          ) : (
+                            <>
+                              <ChevronDown className="mr-1.5 h-3.5 w-3.5 text-emerald-600" />
+                              {t('importsForm.loadMoreBtn')}
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             )}

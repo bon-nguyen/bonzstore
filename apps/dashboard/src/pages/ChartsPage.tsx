@@ -645,7 +645,7 @@ export function ChartsPage() {
                         VĐ: {pkg.trackingCode}
                       </p>
                       <p className="mt-0.5 text-[11px] text-foreground">
-                        Cước: <strong>{formatVND(pkg.feeVND)}</strong> •{' '}
+                        Cước: <strong>{formatVND(Number(pkg.feeVND) || 0)}</strong> •{' '}
                         {pkg.statusName}
                       </p>
                     </div>

@@ -33,8 +33,8 @@ export function ImportCatalogPickerDrawer({
       open={open}
       onClose={onClose}
       title={t('importsForm.pickFromCatalogTooltip')}
-      description={t('importsForm.pageSubtitle')}
-      widthClassName="max-w-2xl"
+      subtitle={t('importsForm.pageSubtitle')}
+      size="xl"
     >
       <div className="space-y-2.5">
         {isLoadingProducts
@@ -129,3 +129,4 @@ export function ImportCatalogPickerDrawer({
     </Drawer>
   );
 }
+

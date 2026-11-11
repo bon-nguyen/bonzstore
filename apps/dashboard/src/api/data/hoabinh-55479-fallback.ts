@@ -1395,8 +1395,8 @@ export function getFallbackChartsAnalytics(): CashbookChartsAnalyticsResponse {
       packagesBreakdown: (latestOrder?.SmallPackages || []).map((pkg) => ({
         packageId: pkg.Id,
         trackingCode: pkg.OrderTransactionCode,
-        weightKg: pkg.PayableWeight || pkg.Weight,
-        feeVND: pkg.TotalPrice,
+        weightKg: Number(pkg.PayableWeight || pkg.Weight || 0),
+        feeVND: Number(pkg.TotalPrice || 0),
         statusName: pkg.StatusName,
       })),
       itemsBreakdown: (latestOrder?.Orders || []).map((it) => ({

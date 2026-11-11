@@ -7,7 +7,7 @@ import {
   DateRangeFilterSection,
 } from '../../../shared/DateRangeFilterSection';
 
-export type PaymentFilterType = 'ALL' | 'CASH' | 'TRANSFER';
+export type PaymentFilterType = 'ALL' | 'CASH' | 'CARD' | 'TRANSFER';
 export type DebtFilterType = 'ALL' | 'PAID' | 'DEBT';
 
 export interface ImportHistoryFilterDrawerProps {
@@ -119,12 +119,13 @@ export function ImportHistoryFilterDrawer({
           <label className="block text-xs font-bold tracking-wider text-foreground uppercase">
             Hình thức thanh toán
           </label>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-4 gap-1.5">
             {(
               [
                 { key: 'ALL', label: 'Tất cả' },
                 { key: 'CASH', label: 'Tiền mặt' },
-                { key: 'TRANSFER', label: 'Chuyển khoản' },
+                { key: 'CARD', label: 'Thẻ' },
+                { key: 'TRANSFER', label: 'CK' },
               ] as const
             ).map((pm) => (
               <button
@@ -177,3 +178,4 @@ export function ImportHistoryFilterDrawer({
     </Drawer>
   );
 }
+

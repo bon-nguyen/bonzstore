@@ -85,13 +85,23 @@ export function VnNumberInput({
   disabled,
   ...rest
 }: VnNumberInputProps) {
-  const numericVal = Number(value || 0);
-  const displayValue =
-    numericVal > 0
-      ? numericVal.toLocaleString('vi-VN')
-      : allowZeroDisplay && numericVal === 0
-        ? '0'
-        : '';
+  const [rawText, setRawText] = React.useState<string>(() => {
+    const num = Number(value || 0);
+    if (num > 0) return num.toLocaleString('vi-VN');
+    return allowZeroDisplay ? '0' : '';
+  });
+  const [isFocused, setIsFocused] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!isFocused) {
+      const num = Number(value || 0);
+      if (num > 0) {
+        setRawText(num.toLocaleString('vi-VN'));
+      } else {
+        setRawText(allowZeroDisplay ? '0' : '');
+      }
+    }
+  }, [value, allowZeroDisplay, isFocused]);
 
   return (
     <Input
@@ -104,17 +114,34 @@ export function VnNumberInput({
       leftIcon={leftIcon}
       rightAddon={rightAddon}
       containerClassName={containerClassName}
-      value={displayValue}
+      value={rawText}
+      onFocus={(e) => {
+        setIsFocused(true);
+        const num = Number(value || 0);
+        setRawText(num > 0 ? String(num) : '');
+        rest.onFocus?.(e);
+      }}
+      onBlur={(e) => {
+        setIsFocused(false);
+        const rawDigits = rawText.replace(/[^\d]/g, '');
+        let num = rawDigits ? Number(rawDigits) : 0;
+        if (typeof min === 'number' && num < min) num = min;
+        if (typeof max === 'number' && num > max) num = max;
+        onValueChange(num);
+        if (num > 0) {
+          setRawText(num.toLocaleString('vi-VN'));
+        } else {
+          setRawText(allowZeroDisplay ? '0' : '');
+        }
+        rest.onBlur?.(e);
+      }}
       onChange={(e) => {
         const rawDigits = e.target.value.replace(/[^\d]/g, '');
-        if (!rawDigits) {
-          onValueChange(min > 0 ? min : 0);
-          return;
-        }
-        let next = Number(rawDigits);
-        if (typeof min === 'number' && next < min) next = min;
-        if (typeof max === 'number' && next > max) next = max;
-        onValueChange(next);
+        setRawText(rawDigits);
+        const num = rawDigits ? Number(rawDigits) : 0;
+        let clamped = num;
+        if (typeof max === 'number' && clamped > max) clamped = max;
+        onValueChange(clamped);
       }}
       className={cn('font-mono text-right font-semibold', className)}
     />
@@ -199,12 +226,26 @@ export function VnCnyInput({
         // Cho phép nhập số và dấu phẩy hoặc dấu chấm thập phân
         const cleaned = inputVal.replace(/[^\d.,]/g, '');
         setRawText(cleaned);
-        const normalized = cleaned.replace(/\./g, '').replace(',', '.');
+
+        let normalized = cleaned;
+        if (cleaned.includes(',') && cleaned.includes('.')) {
+          normalized = cleaned.replace(/\./g, '').replace(',', '.');
+        } else if (cleaned.includes(',')) {
+          normalized = cleaned.replace(',', '.');
+        } else {
+          const parts = cleaned.split('.');
+          if (parts.length > 2) {
+            normalized = cleaned.replace(/\./g, '');
+          }
+        }
+
         const parsed = parseFloat(normalized);
         if (Number.isNaN(parsed)) {
-          onValueChange(min > 0 ? min : 0);
+          onValueChange(0);
         } else {
-          onValueChange(Math.max(min, parsed));
+          let clamped = parsed;
+          if (typeof min === 'number' && clamped < min) clamped = min;
+          onValueChange(clamped);
         }
       }}
       className={cn('font-mono text-right font-semibold', className)}

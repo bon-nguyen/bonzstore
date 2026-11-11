@@ -549,9 +549,14 @@ export function useImportFormManager() {
     setEditingDraftId(draftRecord.id);
 
     recordLocalNotification({
-      title: `Đã lưu tạm phiếu nhập ${draftCode}`,
-      body: `Đơn vị Logistics: ${values.logisticsUnitName} • ${values.items.length} mặt hàng • Tạm tính: ${formatCurrencyVND(totalPayable)}.`,
-      eventType: 'SYSTEM_ANNOUNCEMENT',
+      action: 'CREATE',
+      titleVi: `Đã lưu tạm phiếu nhập ${draftCode}`,
+      titleEn: `Saved draft import receipt ${draftCode}`,
+      messageVi: `Đơn vị Logistics: ${values.logisticsUnitName} • ${values.items.length} mặt hàng • Tạm tính: ${formatCurrencyVND(totalPayable)}.`,
+      messageEn: `Logistics unit: ${values.logisticsUnitName} • ${values.items.length} items.`,
+      targetName: draftCode,
+      targetLink: '/imports',
+      module: 'PRODUCTS',
     });
     queryClient.invalidateQueries({ queryKey: ['notifications'] });
 
@@ -634,12 +639,13 @@ export function useImportFormManager() {
             type: 'EXPENSE',
             category: 'Chi tiền trả nhà cung cấp hàng hóa',
             categoryCode: 'LC-NCC-01',
-            payerGroup: 'SUPPLIER',
+            payerGroup: 'PARTNER',
             partnerName:
               values.logisticsUnitName.trim() || 'HÒa BÌnh logitics',
             cashAmount:
               values.paymentMethod === 'CASH' ? values.amountPaid : 0,
-            cardAmount: 0,
+            cardAmount:
+              values.paymentMethod === 'CARD' ? values.amountPaid : 0,
             transferAmount:
               values.paymentMethod === 'TRANSFER' ? values.amountPaid : 0,
             staffName: values.staffName || 'Nguyễn Thị Hồng Yến Nhiên',
@@ -682,9 +688,14 @@ export function useImportFormManager() {
       persistRecords(nextRecords);
 
       recordLocalNotification({
-        title: `Đã hoàn tất phiếu nhập hàng ${finalReceiptNumber}`,
-        body: `Đơn vị Logistics: ${values.logisticsUnitName} • ${values.items.length} mặt hàng • Tổng thanh toán: ${formatCurrencyVND(calcTotalPayable)}.`,
-        eventType: 'SYSTEM_ANNOUNCEMENT',
+        action: 'CREATE',
+        titleVi: `Đã hoàn tất phiếu nhập hàng ${finalReceiptNumber}`,
+        titleEn: `Completed import receipt ${finalReceiptNumber}`,
+        messageVi: `Đơn vị Logistics: ${values.logisticsUnitName} • ${values.items.length} mặt hàng • Tổng thanh toán: ${formatCurrencyVND(calcTotalPayable)}.`,
+        messageEn: `Logistics unit: ${values.logisticsUnitName} • ${values.items.length} items.`,
+        targetName: finalReceiptNumber,
+        targetLink: '/imports',
+        module: 'PRODUCTS',
       });
 
       queryClient.invalidateQueries({ queryKey: ['products'] });
@@ -801,3 +812,4 @@ export function useImportFormManager() {
     handleDeleteRecord,
   };
 }
+

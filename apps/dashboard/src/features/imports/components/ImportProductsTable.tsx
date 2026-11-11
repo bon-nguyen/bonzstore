@@ -90,7 +90,7 @@ export function ImportProductsTable({
               <th className="w-22 border-r border-emerald-500/50 px-2 py-3 text-center font-semibold">
                 {t('importsForm.colUnit')}
               </th>
-              <th className="w-24 border-r border-emerald-500/50 px-2 py-3 text-right font-semibold">
+              <th className="w-28 border-r border-emerald-500/50 px-2 py-3 text-center font-semibold">
                 {t('importsForm.colQuantity')}
               </th>
               <th className="w-36 border-r border-emerald-500/50 bg-emerald-700/60 px-2.5 py-3 text-right font-semibold">
@@ -180,10 +180,9 @@ export function ImportProductsTable({
                           className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
                         />
                         {item.isGift && (
-                          <Gift
-                            className="h-3.5 w-3.5 text-amber-500"
-                            title={t('importsForm.giftTooltip')}
-                          />
+                          <span title={t('importsForm.giftTooltip')}>
+                            <Gift className="h-3.5 w-3.5 text-amber-500" />
+                          </span>
                         )}
                       </label>
                     </td>
@@ -271,16 +270,41 @@ export function ImportProductsTable({
                       </select>
                     </td>
 
-                    {/* 7. Số lượng (Format số tiếng Việt) */}
+                    {/* 7. Số lượng (Format số tiếng Việt + Nút [-] [+]) */}
                     <td className="border-r border-slate-100 px-2 py-2 dark:border-slate-800">
-                      <VnNumberInput
-                        min={1}
-                        value={item.quantity}
-                        onValueChange={(val) =>
-                          onUpdateRow(idx, { quantity: Math.max(1, val) })
-                        }
-                        className="h-8 px-2 text-xs font-bold"
-                      />
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            onUpdateRow(idx, {
+                              quantity: Math.max(1, (item.quantity || 1) - 1),
+                            })
+                          }
+                          disabled={item.quantity <= 1}
+                          className="flex h-8 w-6 shrink-0 items-center justify-center rounded border border-slate-200 bg-slate-50 text-xs font-bold text-slate-600 transition hover:bg-slate-200 active:scale-95 disabled:opacity-40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                        >
+                          -
+                        </button>
+                        <VnNumberInput
+                          min={1}
+                          value={item.quantity}
+                          onValueChange={(val) =>
+                            onUpdateRow(idx, { quantity: val <= 0 ? 1 : val })
+                          }
+                          className="h-8 min-w-[46px] px-1 text-center text-xs font-bold"
+                        />
+                        <button
+                          type="button"
+                          onClick={() =>
+                            onUpdateRow(idx, {
+                              quantity: (item.quantity || 0) + 1,
+                            })
+                          }
+                          className="flex h-8 w-6 shrink-0 items-center justify-center rounded border border-slate-200 bg-slate-50 text-xs font-bold text-slate-600 transition hover:bg-slate-200 active:scale-95 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                        >
+                          +
+                        </button>
+                      </div>
                     </td>
 
                     {/* 8. Giá vốn (¥ Tệ) -> Tự động đổi sang Đơn giá tiền Việt (VNĐ) */}
@@ -316,30 +340,37 @@ export function ImportProductsTable({
                       </div>
                     </td>
 
-                    {/* 9. Đơn giá vốn (VNĐ) (Format số tiếng Việt) */}
+                    {/* 9. Đơn giá vốn (VNĐ) -> Tự động đổi ngược sang Giá vốn Tệ (¥) */}
                     <td className="border-r border-slate-100 px-2 py-2 dark:border-slate-800">
-                      <VnNumberInput
-                        min={0}
-                        disabled={item.isGift}
-                        allowZeroDisplay
-                        value={item.unitPrice}
-                        onValueChange={(vndVal) => {
-                          const nextVnd = Math.max(0, vndVal);
-                          onUpdateRow(idx, {
-                            unitPrice: nextVnd,
-                            cnyUnitPrice: convertVndToCny(
-                              nextVnd,
-                              exchangeRateCny,
-                            ),
-                          });
-                        }}
-                        rightAddon={
-                          <span className="pointer-events-none pr-1 text-[10px] font-semibold text-slate-400">
-                            ₫
-                          </span>
-                        }
-                        className="h-8 pr-6 pl-2 text-xs font-bold"
-                      />
+                      <div className="space-y-0.5">
+                        <VnNumberInput
+                          min={0}
+                          disabled={item.isGift}
+                          allowZeroDisplay
+                          value={item.unitPrice}
+                          onValueChange={(vndVal) => {
+                            const nextVnd = Math.max(0, vndVal);
+                            onUpdateRow(idx, {
+                              unitPrice: nextVnd,
+                              cnyUnitPrice: convertVndToCny(
+                                nextVnd,
+                                exchangeRateCny,
+                              ),
+                            });
+                          }}
+                          rightAddon={
+                            <span className="pointer-events-none pr-1 text-[10px] font-semibold text-slate-400">
+                              ₫
+                            </span>
+                          }
+                          className="h-8 pr-6 pl-2 text-xs font-bold"
+                        />
+                        {!item.isGift && (item.unitPrice || 0) > 0 && exchangeRateCny > 0 && (
+                          <div className="text-right font-mono text-[10px] text-slate-500 dark:text-slate-400">
+                            ≈ {convertVndToCny(item.unitPrice, exchangeRateCny).toLocaleString('vi-VN', { maximumFractionDigits: 2 })} ¥
+                          </div>
+                        )}
+                      </div>
                     </td>
 
                     {/* 10. Giảm giá sản phẩm (Có 2 loại: Giảm tiền ₫ và Giảm theo %) */}
