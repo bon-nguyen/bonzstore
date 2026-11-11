@@ -35,6 +35,8 @@ export interface ImportLineItemFormValue {
   currentStock?: number;
 }
 
+export type PaymentMethodType = 'CASH' | 'CARD' | 'TRANSFER';
+
 export interface ImportReceiptFormValues {
   importDate: string;
   logisticsUnitId: string;
@@ -50,7 +52,7 @@ export interface ImportReceiptFormValues {
   orderDiscountValue: number;
   shippingFee: number;
   amountPaid: number;
-  paymentMethod: 'CASH' | 'TRANSFER';
+  paymentMethod: PaymentMethodType;
   autoRecordCashbook: boolean;
 }
 

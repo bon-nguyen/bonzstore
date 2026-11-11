@@ -245,7 +245,7 @@ export function DashboardHomePage() {
             </div>
             <div className="mt-4 flex items-center justify-between border-t border-border/60 pt-3">
               <span className="text-[11px] text-muted-foreground">
-                {cashbookSummary?.voucherCount ?? 0} phiếu giao dịch
+                {cashbookSummary?.voucherCounts?.total ?? 0} phiếu giao dịch
               </span>
               <Link
                 to="/cashbook"

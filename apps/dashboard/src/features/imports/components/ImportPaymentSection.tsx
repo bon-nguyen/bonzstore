@@ -1,4 +1,5 @@
 import {
+  ArrowLeftRight,
   Banknote,
   CreditCard,
   FileClock,
@@ -215,24 +216,26 @@ export function ImportPaymentSection({
               </FormField>
             </div>
 
-            {/* 4.7 Hình thức thanh toán (Tiền mặt / Chuyển khoản) */}
+            {/* 4.7 Hình thức thanh toán (Tiền mặt / Thẻ / Chuyển khoản) */}
             <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-3 dark:border-slate-800 dark:bg-slate-800/40">
               <FormField
                 label={t('importsForm.paymentMethodLabel')}
                 description={
                   paymentMethod === 'CASH'
                     ? t('importsForm.paymentCash')
-                    : t('importsForm.paymentTransfer')
+                    : paymentMethod === 'CARD'
+              ? t('importsForm.paymentCard')
+              : t('importsForm.paymentTransfer')
                 }
               >
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-3 gap-1.5">
                   <button
                     type="button"
                     onClick={() =>
                       setValue('paymentMethod', 'CASH', { shouldDirty: true })
                     }
                     className={cn(
-                      'flex h-9 items-center justify-center gap-1.5 rounded-lg border text-xs font-semibold transition',
+                      'flex h-9 items-center justify-center gap-1 rounded-lg border text-xs font-semibold transition',
                       paymentMethod === 'CASH'
                         ? 'border-emerald-600 bg-emerald-600 text-white shadow-2xs'
                         : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300',
@@ -244,18 +247,35 @@ export function ImportPaymentSection({
                   <button
                     type="button"
                     onClick={() =>
-                      setValue('paymentMethod', 'TRANSFER', {
+                      setValue('paymentMethod', 'CARD', {
                         shouldDirty: true,
                       })
                     }
                     className={cn(
-                      'flex h-9 items-center justify-center gap-1.5 rounded-lg border text-xs font-semibold transition',
-                      paymentMethod === 'TRANSFER'
+                      'flex h-9 items-center justify-center gap-1 rounded-lg border text-xs font-semibold transition',
+                      paymentMethod === 'CARD'
                         ? 'border-emerald-600 bg-emerald-600 text-white shadow-2xs'
                         : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300',
                     )}
                   >
                     <CreditCard className="h-3.5 w-3.5" />
+                    {t('importsForm.paymentCard')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setValue('paymentMethod', 'TRANSFER', {
+                        shouldDirty: true,
+                      })
+                    }
+                    className={cn(
+                      'flex h-9 items-center justify-center gap-1 rounded-lg border text-xs font-semibold transition',
+                      paymentMethod === 'TRANSFER'
+                        ? 'border-emerald-600 bg-emerald-600 text-white shadow-2xs'
+                        : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300',
+                    )}
+                  >
+                    <ArrowLeftRight className="h-3.5 w-3.5" />
                     {t('importsForm.paymentTransfer')}
                   </button>
                 </div>
@@ -390,8 +410,8 @@ export function ImportPaymentSection({
                 >
                   {debtRemaining > 0
                     ? t('importsForm.debtRemainingValue', {
-                        amount: formatCurrencyVND(debtRemaining),
-                      })
+                      amount: formatCurrencyVND(debtRemaining),
+                    })
                     : t('importsForm.paidInFullValue')}
                 </span>
               </div>

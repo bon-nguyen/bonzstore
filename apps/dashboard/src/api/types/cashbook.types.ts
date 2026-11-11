@@ -168,8 +168,8 @@ export interface CashbookChartsAnalyticsResponse {
     packagesBreakdown: Array<{
       packageId: number;
       trackingCode: string;
-      weightKg: string;
-      feeVND: string;
+      weightKg: number | string;
+      feeVND: number;
       statusName: string;
     }>;
     itemsBreakdown: Array<{

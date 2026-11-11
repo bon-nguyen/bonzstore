@@ -72,11 +72,8 @@ export function ImportGeneralInfoSection({
             name="importDate"
             type="date"
             leftIcon={<Calendar className="h-4 w-4 text-emerald-600" />}
-            rightAddon={
-              <span className="pointer-events-none mr-6 hidden rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600 sm:inline-block dark:bg-slate-800 dark:text-slate-300">
-                {formatVnDateDisplay(importDate)}
-              </span>
-            }
+            inputClassName="cursor-pointer font-medium"
+            onClick={(e) => (e.target as HTMLInputElement).showPicker?.()}
           />
         </FormField>
 

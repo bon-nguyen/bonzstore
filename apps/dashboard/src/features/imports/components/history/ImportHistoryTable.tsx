@@ -280,7 +280,9 @@ export function ImportHistoryTable({
                       <div className="text-[10px] text-slate-400">
                         {rec.paymentMethod === 'CASH'
                           ? t('importsForm.paymentCash')
-                          : t('importsForm.paymentTransfer')}
+                        : rec.paymentMethod === 'CARD'
+                        ? t('importsForm.paymentCard')
+                            : t('importsForm.paymentTransfer')}
                       </div>
                     </td>
 

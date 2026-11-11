@@ -1,4 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { categoriesApi, productsApi } from '../../../api/endpoints/catalog.api';
 import {
@@ -101,6 +106,25 @@ export function useProducts(params?: ProductQueryParams) {
   return useQuery({
     queryKey: ['products', params],
     queryFn: () => productsApi.getAll(params),
+    staleTime: 30 * 1000,
+  });
+}
+
+export function useInfiniteProducts(params?: Omit<ProductQueryParams, 'page'>) {
+  return useInfiniteQuery({
+    queryKey: ['products', 'infinite', params],
+    queryFn: ({ pageParam = 1 }) =>
+      productsApi.getAll({
+        ...params,
+        page: pageParam as number,
+      }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      if (lastPage?.meta?.hasNextPage) {
+        return (lastPage.meta.page ?? 1) + 1;
+      }
+      return undefined;
+    },
     staleTime: 30 * 1000,
   });
 }

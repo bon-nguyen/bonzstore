@@ -1366,37 +1366,37 @@ export function getFallbackChartsAnalytics(): CashbookChartsAnalyticsResponse {
       costBreakdown:
         totalImportCostVND > 0
           ? [
-              {
-                labelVi: 'Tiền hàng gốc',
-                labelEn: 'Merchandise Cost',
-                amount: productCostVND,
-                percent: Number(
-                  ((productCostVND / totalImportCostVND) * 100).toFixed(1),
-                ),
-              },
-              {
-                labelVi: 'Cước vận chuyển',
-                labelEn: 'Shipping Fee',
-                amount: weightFeeVND,
-                percent: Number(
-                  ((weightFeeVND / totalImportCostVND) * 100).toFixed(1),
-                ),
-              },
-              {
-                labelVi: 'Phí dịch vụ',
-                labelEn: 'Service Fee',
-                amount: buyingFeeVND,
-                percent: Number(
-                  ((buyingFeeVND / totalImportCostVND) * 100).toFixed(1),
-                ),
-              },
-            ]
+            {
+              labelVi: 'Tiền hàng gốc',
+              labelEn: 'Merchandise Cost',
+              amount: productCostVND,
+              percent: Number(
+                ((productCostVND / totalImportCostVND) * 100).toFixed(1),
+              ),
+            },
+            {
+              labelVi: 'Cước vận chuyển',
+              labelEn: 'Shipping Fee',
+              amount: weightFeeVND,
+              percent: Number(
+                ((weightFeeVND / totalImportCostVND) * 100).toFixed(1),
+              ),
+            },
+            {
+              labelVi: 'Phí dịch vụ',
+              labelEn: 'Service Fee',
+              amount: buyingFeeVND,
+              percent: Number(
+                ((buyingFeeVND / totalImportCostVND) * 100).toFixed(1),
+              ),
+            },
+          ]
           : [],
       packagesBreakdown: (latestOrder?.SmallPackages || []).map((pkg) => ({
         packageId: pkg.Id,
         trackingCode: pkg.OrderTransactionCode,
-        weightKg: pkg.PayableWeight || pkg.Weight,
-        feeVND: pkg.TotalPrice,
+        weightKg: Number(pkg.PayableWeight || pkg.Weight || 0),
+        feeVND: Number(pkg.TotalPrice || 0),
         statusName: pkg.StatusName,
       })),
       itemsBreakdown: (latestOrder?.Orders || []).map((it) => ({

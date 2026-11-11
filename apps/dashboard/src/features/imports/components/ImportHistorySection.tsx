@@ -214,7 +214,12 @@ export function ImportHistorySection({
     if (paymentFilter !== 'ALL') {
       tags.push({
         id: 'payment',
-        label: paymentFilter === 'CASH' ? 'Tiền mặt' : 'Chuyển khoản',
+        label:
+          paymentFilter === 'CASH'
+            ? 'Tiền mặt'
+            : paymentFilter === 'CARD'
+              ? 'Thẻ (Card)'
+              : 'Chuyển khoản',
         variant: 'amber',
         onRemove: () => setPaymentFilter('ALL'),
       });

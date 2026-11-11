@@ -7,7 +7,7 @@ import {
   DateRangeFilterSection,
 } from '../../../shared/DateRangeFilterSection';
 
-export type PaymentFilterType = 'ALL' | 'CASH' | 'TRANSFER';
+export type PaymentFilterType = 'ALL' | 'CASH' | 'CARD' | 'TRANSFER';
 export type DebtFilterType = 'ALL' | 'PAID' | 'DEBT';
 
 export interface ImportHistoryFilterDrawerProps {
@@ -119,61 +119,62 @@ export function ImportHistoryFilterDrawer({
           <label className="block text-xs font-bold tracking-wider text-foreground uppercase">
             Hình thức thanh toán
           </label>
-          <div className="grid grid-cols-3 gap-2">
-            {(
-              [
-                { key: 'ALL', label: 'Tất cả' },
-                { key: 'CASH', label: 'Tiền mặt' },
-                { key: 'TRANSFER', label: 'Chuyển khoản' },
-              ] as const
-            ).map((pm) => (
-              <button
-                key={pm.key}
-                type="button"
-                onClick={() => onChangePaymentFilter(pm.key)}
-                className={cn(
-                  'rounded-lg border px-2.5 py-2 text-center text-xs font-semibold transition-colors',
-                  paymentFilter === pm.key
-                    ? 'border-emerald-600 bg-emerald-50 text-emerald-800 dark:border-emerald-500 dark:bg-emerald-950/50 dark:text-emerald-300'
-                    : 'border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground',
-                )}
-              >
-                {pm.label}
-              </button>
-            ))}
+            <div className="grid grid-cols-4 gap-1.5">
+              {(
+                [
+                  { key: 'ALL', label: 'Tất cả' },
+                  { key: 'CASH', label: 'Tiền mặt' },
+                  { key: 'CARD', label: 'Thẻ' },
+                  { key: 'TRANSFER', label: 'CK' },
+                ] as const
+              ).map((pm) => (
+                <button
+                  key={pm.key}
+                  type="button"
+                  onClick={() => onChangePaymentFilter(pm.key)}
+                  className={cn(
+                    'rounded-lg border px-2.5 py-2 text-center text-xs font-semibold transition-colors',
+                    paymentFilter === pm.key
+                      ? 'border-emerald-600 bg-emerald-50 text-emerald-800 dark:border-emerald-500 dark:bg-emerald-950/50 dark:text-emerald-300'
+                      : 'border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground',
+                  )}
+                >
+                  {pm.label}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
 
-        {/* 4. Trạng thái công nợ */}
-        <div className="space-y-2 border-t border-border pt-4">
-          <label className="block text-xs font-bold tracking-wider text-foreground uppercase">
-            Trạng thái công nợ nhà cung cấp
-          </label>
-          <div className="grid grid-cols-3 gap-2">
-            {(
-              [
-                { key: 'ALL', label: 'Tất cả' },
-                { key: 'PAID', label: 'Đã trả đủ' },
-                { key: 'DEBT', label: 'Còn nợ NCC' },
-              ] as const
-            ).map((df) => (
-              <button
-                key={df.key}
-                type="button"
-                onClick={() => onChangeDebtFilter(df.key)}
-                className={cn(
-                  'rounded-lg border px-2.5 py-2 text-center text-xs font-semibold transition-colors',
-                  debtFilter === df.key
-                    ? 'border-emerald-600 bg-emerald-50 text-emerald-800 dark:border-emerald-500 dark:bg-emerald-950/50 dark:text-emerald-300'
-                    : 'border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground',
-                )}
-              >
-                {df.label}
-              </button>
-            ))}
+          {/* 4. Trạng thái công nợ */}
+          <div className="space-y-2 border-t border-border pt-4">
+            <label className="block text-xs font-bold tracking-wider text-foreground uppercase">
+              Trạng thái công nợ nhà cung cấp
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              {(
+                [
+                  { key: 'ALL', label: 'Tất cả' },
+                  { key: 'PAID', label: 'Đã trả đủ' },
+                  { key: 'DEBT', label: 'Còn nợ NCC' },
+                ] as const
+              ).map((df) => (
+                <button
+                  key={df.key}
+                  type="button"
+                  onClick={() => onChangeDebtFilter(df.key)}
+                  className={cn(
+                    'rounded-lg border px-2.5 py-2 text-center text-xs font-semibold transition-colors',
+                    debtFilter === df.key
+                      ? 'border-emerald-600 bg-emerald-50 text-emerald-800 dark:border-emerald-500 dark:bg-emerald-950/50 dark:text-emerald-300'
+                      : 'border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground',
+                  )}
+                >
+                  {df.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
     </Drawer>
   );
 }
